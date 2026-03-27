@@ -9,7 +9,7 @@ class ServerAppTest {
     void testGetWelcomeMessage() {
         String message = ServerApp.getWelcomeMessage();
         assertNotNull(message);
-        assertTrue(message.contains("AuctionUET Server"));
+        assertTrue(message.contains("Broken Server"));
         assertTrue(message.contains("1.0-SNAPSHOT"));
     }
     
