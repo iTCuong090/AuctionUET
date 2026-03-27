@@ -27,6 +27,6 @@
     - Có edge case nào bỏ sót?
 
 ### 5. Merge
-- CI phải pass (GitHub Actions xanh ✅)
+- CI phải pass (GitHub Actions pass)
 - Merge chỉ thực hiện trong buổi họp Chủ nhật
 
