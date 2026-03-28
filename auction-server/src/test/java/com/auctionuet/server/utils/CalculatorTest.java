@@ -1,3 +1,23 @@
+/*
+@Test
+// Đánh dấu đây là một bài kiểm tra. Không có cái này máy sẽ không chạy hàm.
+
+@BeforeEach
+// Chạy trước mỗi bài test. Dùng để reset dữ liệu, làm sạch máy tính trước khi test mới.
+
+@AfterEach
+// Chạy sau mỗi bài test. Dùng để dọn dẹp hoặc ghi nhật ký sau khi test xong một nội dung.
+
+@BeforeAll
+// Chạy duy nhất 1ần trước tất cả. Dùng để mở kết nối nặng hoặc bật nguồn hệ thống (phải đi kèm static).
+
+@AfterAll
+// Chạy duy nhất 1ần sau khi xong hết. Dùng để đóng kết nối, tắt nguồn hoặc giải phóng bộ nhớ.
+
+@DisplayName
+// Đặt tên hiển thị bằng tiếng Việt có dấu cho bài test để báo cáo dễ đọc hơn.
+*/
+
 package com.auctionuet.server.utils;
 
 import org.junit.jupiter.api.*;
@@ -10,13 +30,13 @@ class CalculatorTest {
 
     private Calculator calc;
 
-    @BeforeEach  // Comment: Beforeach chạy ngay trước khi gặp 1 hàm test
+    @BeforeEach
     void setUp() {
         calc = new Calculator();
     }
 
     // === ADD ===
-    @Test
+    @Test // Đánh dấu đây là 1 hàm để kiểm tra
     @DisplayName("Cộng hai số dương")
     void testAddPositiveNumbers() {assertEquals(5, calc.add(2, 3));}
 
