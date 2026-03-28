@@ -60,20 +60,20 @@ class CalculatorTest {
     // === MULTIPLY ===
     @Test
     @DisplayName("Nhân hai số dương")
-    void testMultiplyPositive() { /* ... */ }
+    void testMultiplyPositive() { assertEquals(6,calc.multiply(2,3)); }
 
     @Test
     @DisplayName("Nhân với 0")
-    void testMultiplyByZero() { /* ... */ }
+    void testMultiplyByZero() { assertEquals(0,calc.multiply(2,0)); }
 
     @Test
     @DisplayName("Nhân hai số âm — kết quả dương")
-    void testMultiplyTwoNegatives() { /* ... */ }
+    void testMultiplyTwoNegatives() { assertEquals(6,calc.multiply(-2,-3));}
 
     // === DIVIDE ===
     @Test
     @DisplayName("Chia bình thường")
-    void testDivideNormal() { /* ... */ }
+    void testDivideNormal() { assertEquals(3,calc.divide(9,3)); }
 
     @Test
     @DisplayName("Chia cho 0 — phải throw ArithmeticException")
@@ -93,7 +93,7 @@ class CalculatorTest {
 
     @Test
     @DisplayName("Giai thừa 0! = 1")
-    void testFactorial0() { /* ... */ }
+    void testFactorial0() { assertEquals(120,calc.factorial(5)); }
 
     @Test
     @DisplayName("Giai thừa số âm — throw IllegalArgumentException")
