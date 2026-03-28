@@ -22,7 +22,7 @@ public class Calculator {
      * Trừ hai số.
      */
     public int subtract(int a, int b) {
-        return a - b;
+        return a-b;
     }
 
     /**
