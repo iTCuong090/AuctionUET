@@ -93,7 +93,7 @@ class CalculatorTest {
 
     @Test
     @DisplayName("Giai thừa 0! = 1")
-    void testFactorial0() { assertEquals(120,calc.factorial(5)); }
+    void testFactorial0() {assertEquals(120,calc.factorial(5)); }
 
     @Test
     @DisplayName("Giai thừa số âm — throw IllegalArgumentException")
