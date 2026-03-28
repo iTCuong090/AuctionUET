@@ -14,7 +14,7 @@ public class Calculator {
      * @param b số thứ hai
      * @return tổng a + b
      */
-    public int add(int a, int b) {
+    public int add(int a,int b) {
         return a + b;
     }
 
