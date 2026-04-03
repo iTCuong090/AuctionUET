@@ -1,4 +1,4 @@
-# 🏗️ KẾ HOẠCH 10 TUẦN — HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN (AuctionUET)
+.# 🏗️ KẾ HOẠCH 10 TUẦN — HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN (AuctionUET)
 
 ## 👥 Thành viên nhóm
 
@@ -18,13 +18,7 @@
 
 ### Lịch tuần cố định (áp dụng mỗi tuần)
 
-| Ngày | Hoạt động | Chi tiết |
-|------|-----------|----------|
-| **Thứ 2 (Tối)** | 🎯 **Kick-off Meeting** (30 phút) | Review task tuần mới, phân công rõ ràng, giải đáp thắc mắc từ tuần trước |
-| **Thứ 3–4** | 💻 **Tự học + Code** | Mỗi người làm task cá nhân trên branch riêng |
-| **Thứ 5 (Tối)** | 🔍 **Mid-week Check-in** (15 phút) | Báo tiến độ, nêu blocker, hỗ trợ nhau |
-| **Thứ 6–7** | 💻 **Hoàn thành task + Viết test** | Hoàn thiện code, viết JUnit test, push lên GitHub |
-| **Chủ nhật (Sáng)** | 📝 **Code Review + PR Merge** (1 tiếng) | Review chéo PR, merge vào `main`, demo cho nhau xem |
+Tối thứ 7 hằng tuần, họp để hiểu code của nhau và merge code.
 
 ### Quy tắc Git
 
@@ -34,7 +28,7 @@ PR format:  [Tuần X] Tên người - Mô tả ngắn
 Commit:     feat: thêm class User / fix: sửa lỗi bid validation
 ```
 
-**Mỗi PR cần ít nhất 2 người approve** trước khi merge → đảm bảo ai cũng đọc code người khác.
+**Mỗi PR cần được pass CI/CD**
 
 ### Quy tắc Review chéo (BẮT BUỘC)
 
