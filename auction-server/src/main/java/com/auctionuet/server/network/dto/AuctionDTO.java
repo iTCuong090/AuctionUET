@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.network.dto;
+package com.auctionuet.server.network.dto;
 
 public class AuctionDTO {
 

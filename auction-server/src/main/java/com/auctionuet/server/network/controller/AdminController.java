@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.network.controller;
+package com.auctionuet.server.network.controller;
 
 public class AdminController {
 

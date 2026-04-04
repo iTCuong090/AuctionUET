@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.mapper;
+package com.auctionuet.server.mapper;
 
 public class UserMapper {
 

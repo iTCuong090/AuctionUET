@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.exception;
+package com.auctionuet.server.exception;
 
 public class AuctionException extends Exception {
     public AuctionException(String message) {

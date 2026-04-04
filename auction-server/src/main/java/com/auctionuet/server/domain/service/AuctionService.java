@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.domain.service;
+package com.auctionuet.server.domain.service;
 
 public class AuctionService {
 

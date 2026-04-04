@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.network.protocol;
+package com.auctionuet.server.network.protocol;
 
 public enum ActionType {
 

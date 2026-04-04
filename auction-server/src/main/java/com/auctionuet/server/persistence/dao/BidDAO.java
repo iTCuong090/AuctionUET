@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.persistence.dao;
+package com.auctionuet.server.persistence.dao;
 
 public class BidDAO {
 

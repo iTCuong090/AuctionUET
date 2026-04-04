@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.persistence.schema;
+package com.auctionuet.server.persistence.schema;
 
 public class ItemSchema {
 

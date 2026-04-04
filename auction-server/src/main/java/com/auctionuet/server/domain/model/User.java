@@ -1,4 +1,4 @@
-﻿package com.auctionuet.server.domain.model;
+package com.auctionuet.server.domain.model;
 
 public abstract class User {
 
