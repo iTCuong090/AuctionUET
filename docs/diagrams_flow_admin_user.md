@@ -10,28 +10,28 @@
 sequenceDiagram
     actor Admin
     participant CH as ClientHandler
-    participant UC as UserController
+    participant ADC as AdminController
     participant SM as SessionManager
     participant DAO as UserDAO
     participant JF as users.json
     participant Map as UserMapper
 
     Admin->>CH: JSON: action=GET_ALL_USERS, token
-    CH->>UC: route(GET_ALL_USERS)
-    UC->>SM: validateToken(token) → Admin
-    UC->>UC: user.hasPermission("MANAGE_USERS") → true
+    CH->>ADC: route(GET_ALL_USERS)
+    ADC->>SM: validateToken(token) → Admin
+    ADC->>ADC: user.hasPermission("MANAGE_USERS") → true
 
-    UC->>DAO: findAll()
+    ADC->>DAO: findAll()
     DAO->>JF: Đọc file
     JF-->>DAO: List〈UserSchema〉
-    DAO-->>UC: List〈UserSchema〉
+    DAO-->>ADC: List〈UserSchema〉
 
     loop Mỗi UserSchema
-        UC->>Map: toDTO(toDomain(schema))
-        Map-->>UC: UserDTO (KHÔNG có password)
+        ADC->>Map: toDTO(toDomain(schema))
+        Map-->>ADC: UserDTO (KHÔNG có password)
     end
 
-    UC-->>CH: Response.ok(List〈UserDTO〉)
+    ADC-->>CH: Response.ok(List〈UserDTO〉)
     CH-->>Admin: RESPONSE OK + danh sách UserDTO
 ```
 
@@ -43,36 +43,36 @@ sequenceDiagram
 sequenceDiagram
     actor Admin
     participant CH as ClientHandler
-    participant UC as UserController
+    participant ADC as AdminController
     participant SM as SessionManager
     participant DAO as UserDAO
     participant JF as users.json
 
     Admin->>CH: JSON: action=UPDATE_ROLE, targetUserId, newRole, token
-    CH->>UC: route(UPDATE_ROLE)
-    UC->>SM: validateToken(token) → Admin
-    UC->>UC: user.hasPermission("MANAGE_USERS") → true
+    CH->>ADC: route(UPDATE_ROLE)
+    ADC->>SM: validateToken(token) → Admin
+    ADC->>ADC: user.hasPermission("MANAGE_USERS") → true
 
-    UC->>DAO: findById(targetUserId)
+    ADC->>DAO: findById(targetUserId)
     DAO->>JF: Đọc file
     JF-->>DAO: UserSchema
-    DAO-->>UC: UserSchema
+    DAO-->>ADC: UserSchema
 
     alt User không tồn tại
-        UC-->>CH: Response.error("User không tồn tại")
+        ADC-->>CH: Response.error("User không tồn tại")
         CH-->>Admin: RESPONSE ERROR
     end
 
-    UC->>UC: schema.setRole(newRole)
-    UC->>UC: schema.setUpdatedAt(now)
-    UC->>DAO: update(schema)
+    ADC->>ADC: schema.setRole(newRole)
+    ADC->>ADC: schema.setUpdatedAt(now)
+    ADC->>DAO: update(schema)
     DAO->>JF: Ghi file (WRITE-THROUGH)
 
     Note over SM: Nếu user đang login → cập nhật session
-    UC->>SM: invalidateSessionByUserId(targetUserId)
+    ADC->>SM: invalidateSessionByUserId(targetUserId)
     Note over SM: User sẽ phải login lại để có role mới
 
-    UC-->>CH: Response.ok("Đã cập nhật role")
+    ADC-->>CH: Response.ok("Đã cập nhật role")
     CH-->>Admin: RESPONSE OK
 ```
 
@@ -84,24 +84,24 @@ sequenceDiagram
 sequenceDiagram
     actor Admin
     participant CH as ClientHandler
-    participant UC as UserController
+    participant ADC as AdminController
     participant SM as SessionManager
     participant DAO as UserDAO
     participant JF as users.json
 
     Admin->>CH: JSON: action=DELETE_USER, targetUserId, token
-    CH->>UC: route(DELETE_USER)
-    UC->>SM: validateToken(token) → Admin
-    UC->>UC: user.hasPermission("MANAGE_USERS") → true
-    UC->>UC: Validate: targetUserId ≠ admin.id (không tự xóa mình)
+    CH->>ADC: route(DELETE_USER)
+    ADC->>SM: validateToken(token) → Admin
+    ADC->>ADC: user.hasPermission("MANAGE_USERS") → true
+    ADC->>ADC: Validate: targetUserId ≠ admin.id (không tự xóa mình)
 
-    UC->>SM: invalidateSessionByUserId(targetUserId)
+    ADC->>SM: invalidateSessionByUserId(targetUserId)
     Note over SM: Kick user đang login (nếu có)
 
-    UC->>DAO: delete(targetUserId)
+    ADC->>DAO: delete(targetUserId)
     DAO->>JF: Ghi file (WRITE-THROUGH)
 
-    UC-->>CH: Response.ok("Đã xóa user")
+    ADC-->>CH: Response.ok("Đã xóa user")
     CH-->>Admin: RESPONSE OK
 ```
 
