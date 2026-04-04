@@ -13,7 +13,7 @@ sequenceDiagram
     actor Client
     participant CH as ClientHandler
     participant RR as RequestRouter
-    participant UC as UserController
+    participant ATC as AuthController
     participant Auth as AuthService
     participant PU as PasswordUtils
     participant DAO as UserDAO
@@ -23,8 +23,8 @@ sequenceDiagram
 
     Client->>CH: Gửi JSON: action=LOGIN, username, password
     CH->>RR: deserialize → Request
-    RR->>UC: route(LOGIN)
-    UC->>Auth: login(username, password)
+    RR->>ATC: route(LOGIN)
+    ATC->>Auth: login(username, password)
 
     Note over Auth,JF: Bước 1 — Tìm user trong DB
     Auth->>DAO: findByUsername(username)
@@ -33,8 +33,8 @@ sequenceDiagram
     DAO-->>Auth: UserSchema (chứa hashedPassword, salt)
 
     alt UserSchema == null
-        Auth-->>UC: throw UserNotFoundException
-        UC-->>CH: Response.error("User không tồn tại")
+        Auth-->>ATC: throw UserNotFoundException
+        ATC-->>CH: Response.error("User không tồn tại")
         CH-->>Client: JSON: type=RESPONSE, status=ERROR
     end
 
@@ -43,8 +43,8 @@ sequenceDiagram
     PU-->>Auth: boolean match
 
     alt match == false
-        Auth-->>UC: throw AuthenticationException
-        UC-->>CH: Response.error("Sai mật khẩu")
+        Auth-->>ATC: throw AuthenticationException
+        ATC-->>CH: Response.error("Sai mật khẩu")
         CH-->>Client: JSON: type=RESPONSE, status=ERROR
     end
 
@@ -55,11 +55,11 @@ sequenceDiagram
     Auth->>SM: createSession(user)
     SM-->>Auth: token (UUID string)
 
-    Note over UC,Client: Bước 4 — Trả response
-    Auth-->>UC: LoginResult(token, user)
-    UC->>Map: toDTO(user)
-    Map-->>UC: UserDTO (id, username, role)
-    UC-->>CH: Response.ok(token + UserDTO)
+    Note over ATC,Client: Bước 4 — Trả response
+    Auth-->>ATC: LoginResult(token, user)
+    ATC->>Map: toDTO(user)
+    Map-->>ATC: UserDTO (id, username, role)
+    ATC-->>CH: Response.ok(token + UserDTO)
     CH-->>Client: JSON: type=RESPONSE, status=OK, data={token, userDTO}
 ```
 
@@ -74,7 +74,7 @@ sequenceDiagram
     actor Client
     participant CH as ClientHandler
     participant RR as RequestRouter
-    participant UC as UserController
+    participant ATC as AuthController
     participant Auth as AuthService
     participant VU as ValidationUtils
     participant PU as PasswordUtils
@@ -84,8 +84,8 @@ sequenceDiagram
 
     Client->>CH: JSON: action=REGISTER, username, password, email, role
     CH->>RR: deserialize → Request
-    RR->>UC: route(REGISTER)
-    UC->>Auth: register(username, password, email, role)
+    RR->>ATC: route(REGISTER)
+    ATC->>Auth: register(username, password, email, role)
 
     Note over Auth,VU: Bước 1 — Validate đầu vào
     Auth->>VU: validateUsername(username)
@@ -93,8 +93,8 @@ sequenceDiagram
     Auth->>VU: validateEmail(email)
 
     alt Validation thất bại
-        Auth-->>UC: throw IllegalArgumentException
-        UC-->>CH: Response.error("Dữ liệu không hợp lệ: ...")
+        Auth-->>ATC: throw IllegalArgumentException
+        ATC-->>CH: Response.error("Dữ liệu không hợp lệ: ...")
         CH-->>Client: JSON: type=RESPONSE, status=ERROR
     end
 
@@ -104,8 +104,8 @@ sequenceDiagram
     JF-->>DAO: Kết quả
 
     alt Username đã tồn tại
-        Auth-->>UC: throw DuplicateUserException
-        UC-->>CH: Response.error("Username đã tồn tại")
+        Auth-->>ATC: throw DuplicateUserException
+        ATC-->>CH: Response.error("Username đã tồn tại")
         CH-->>Client: JSON: type=RESPONSE, status=ERROR
     end
 
@@ -121,9 +121,9 @@ sequenceDiagram
     Auth->>DAO: save(userSchema)
     DAO->>JF: Ghi file JSON (WRITE-THROUGH)
 
-    Note over UC,Client: Bước 4 — Trả response
-    Auth-->>UC: Thành công
-    UC-->>CH: Response.ok("Đăng ký thành công")
+    Note over ATC,Client: Bước 4 — Trả response
+    Auth-->>ATC: Thành công
+    ATC-->>CH: Response.ok("Đăng ký thành công")
     CH-->>Client: JSON: type=RESPONSE, status=OK
 ```
 
@@ -136,28 +136,28 @@ sequenceDiagram
     actor Client
     participant CH as ClientHandler
     participant RR as RequestRouter
-    participant UC as UserController
+    participant ATC as AuthController
     participant SM as SessionManager
     participant AM as AuctionManager
     participant LA as LiveAuction
 
     Client->>CH: JSON: action=LOGOUT, token
     CH->>RR: deserialize → Request
-    RR->>UC: route(LOGOUT)
+    RR->>ATC: route(LOGOUT)
 
-    UC->>SM: validateToken(token)
-    SM-->>UC: User
+    ATC->>SM: validateToken(token)
+    SM-->>ATC: User
 
-    Note over UC,LA: Bước 1 — Dọn dẹp subscription
-    UC->>AM: getAuction(subscribedAuctionId)
-    AM-->>UC: LiveAuction
-    UC->>LA: removeObserver(clientHandler)
+    Note over ATC,LA: Bước 1 — Dọn dẹp subscription
+    ATC->>AM: getAuction(subscribedAuctionId)
+    AM-->>ATC: LiveAuction
+    ATC->>LA: removeObserver(clientHandler)
 
-    Note over UC,SM: Bước 2 — Xóa session
-    UC->>SM: removeSession(token)
+    Note over ATC,SM: Bước 2 — Xóa session
+    ATC->>SM: removeSession(token)
 
     Note over CH: Bước 3 — Reset trạng thái ClientHandler
-    UC-->>CH: Response.ok("Đã đăng xuất")
+    ATC-->>CH: Response.ok("Đã đăng xuất")
     CH->>CH: currentUser = null
     CH->>CH: subscribedAuctionId = null
     CH-->>Client: JSON: type=RESPONSE, status=OK

@@ -154,7 +154,9 @@ com.auctionuet.server/
 │   │   └── RequestRouter.java              #   Map ActionType → Controller method
 │   │
 │   └── controller/                         # Xử lý request từ client
-│       ├── UserController.java
+│       ├── AuthController.java             #   Xác thực (LOGIN, REGISTER, LOGOUT)
+│       ├── UserController.java             #   User tự quản lý (GET_PROFILE, UPDATE_PROFILE)
+│       ├── AdminController.java            #   Quản trị hệ thống (GET_ALL_USERS, DELETE_USER, UPDATE_ROLE)
 │       ├── AuctionController.java
 │       └── BidController.java
 │
@@ -430,13 +432,13 @@ Client cần thông báo cho Server biết mình đang xem auction nào:
 
 Enum này liệt kê tất cả các hành động mà Client có thể gửi lên Server, được nhóm theo chức năng:
 
-| Nhóm | Các giá trị |
-|------|----------|
-| **Auth** | `LOGIN`, `REGISTER`, `LOGOUT` |
-| **User** | `GET_PROFILE`, `UPDATE_PROFILE` |
-| **Auction** | `GET_AUCTIONS`, `GET_AUCTION_DETAIL`, `CREATE_AUCTION`, `START_AUCTION`, `SUBSCRIBE`, `UNSUBSCRIBE` |
-| **Bidding** | `PLACE_BID`, `GET_BID_HISTORY` |
-| **Admin** | `GET_ALL_USERS`, `DELETE_USER`, `UPDATE_ROLE` |
+| Nhóm | Các giá trị | Controller |
+|------|----------|------------|
+| **Auth** | `LOGIN`, `REGISTER`, `LOGOUT` | → `AuthController` |
+| **User** | `GET_PROFILE`, `UPDATE_PROFILE` | → `UserController` |
+| **Auction** | `GET_AUCTIONS`, `GET_AUCTION_DETAIL`, `CREATE_AUCTION`, `START_AUCTION`, `SUBSCRIBE`, `UNSUBSCRIBE` | → `AuctionController` |
+| **Bidding** | `PLACE_BID`, `GET_BID_HISTORY` | → `BidController` |
+| **Admin** | `GET_ALL_USERS`, `DELETE_USER`, `UPDATE_ROLE` | → `AdminController` |
 | **Ping** | `PING` |
 
 #### DTO classes — Dữ liệu gửi qua mạng
@@ -462,7 +464,7 @@ Tất cả DTO đều là class **immutable** (mọi trường đều `private f
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant Ctrl as UserController
+    participant Ctrl as AuthController
     participant Auth as AuthService
     participant DAO as UserDAO
     participant JSON as users.json
