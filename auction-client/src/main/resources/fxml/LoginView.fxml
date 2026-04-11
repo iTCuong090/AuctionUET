@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" spacing="20" styleClass="root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.LoginController">
+    <padding><Insets bottom="50" left="200" right="200" top="50"/></padding>
+
+    <Label text="Đăng nhập hệ thống" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+    <TextField fx:id="usernameField" promptText="Tên đăng nhập" />
+    <PasswordField fx:id="passwordField" promptText="Mật khẩu" />
+    <Label fx:id="errorLabel" styleClass="error-label" visible="false" />
+    <Button fx:id="loginButton" text="Đăng nhập" onAction="#handleLogin" maxWidth="Infinity" />
+    <Hyperlink fx:id="registerLink" text="Chưa có tài khoản? Quay về Trang chủ" onAction="#handleBack" />
+</VBox>

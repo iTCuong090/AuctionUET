@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import com.auctionuet.client.view.SceneManager;
 
 import java.net.URL;
 
@@ -15,8 +16,9 @@ public class ClientApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        SceneManager.getInstance().init(primaryStage);
         // Đập bỏ UI code chay, thay bằng FXMLLoader của mày
-        URL fxmlLocation = getClass().getResource("/com/auctionuet/client/views/MainView.fxml");
+        URL fxmlLocation = getClass().getResource("/fxml/MainView.fxml");
         if (fxmlLocation == null) {
             System.err.println("Lỗi: Không tìm thấy file MainView.fxml");
             System.exit(1);
