@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.controllers.MainController">
+<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">
     <top>
         <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="900.0" spacing="20.0" style="-fx-background-color: #1a252f;" BorderPane.alignment="CENTER">
             <children>
@@ -25,12 +25,13 @@
                                 <Font size="14.0" />
                             </font>
                         </Button>
-                        <Button mnemonicParsing="false" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand;" text="Đăng nhập">
+                        <Button mnemonicParsing="false" onAction="#handleLogin" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand;" text="Đăng nhập">
                             <font>
                                 <Font size="14.0" />
                             </font>
                         </Button>
-                        <Button mnemonicParsing="false" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;" text="Đăng ký ngay">
+
+                        <Button mnemonicParsing="false" onAction="#handleRegister" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;" text="Đăng ký ngay">
                             <font>
                                 <Font name="System Bold" size="14.0" />
                             </font>
@@ -48,7 +49,7 @@
     </top>
 
     <center>
-        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25.0" style="-fx-background-image: url('/com/auctionuet/client/views/images/anhnen.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover; -fx-background-position: center center; -fx-background-color: rgba(236, 240, 241, 0.8);" BorderPane.alignment="CENTER">
+        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25.0" style="-fx-background-image: url('/images/anhnen.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover; -fx-background-position: center center; -fx-background-color: rgba(236, 240, 241, 0.8);" BorderPane.alignment="CENTER">
             <children>
                 <Label fx:id="titleLabel" text="Săn Đồ Ngon - Giá Cực Hời" textFill="#2c3e50">
                     <font>
