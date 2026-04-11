@@ -3,36 +3,65 @@ package com.auctionuet.server.persistence.schema;
 import com.auctionuet.server.domain.enums.UserRole;
 import java.time.LocalDateTime;
 
-public class UserSchema {
-    private final String id;
-    private final String username;
-    private final UserRole role;
-    private final String salt;
-    private final String hashedPassword;
-    private final String email;
-    public LocalDateTime creatTimeNow;
-    public LocalDateTime updateTimeNow;
+public class UserSchema extends BaseSchema {
+    private String username;
+    private String hashedPassword;
+    private String passwordSalt;
+    private String email;
+    private UserRole role;
 
-    public UserSchema(String id, LocalDateTime creatTimeNow, LocalDateTime updateTimeNow, String username,
-                      String hashedPassword, String salt, String email, UserRole role) {
-        this.id = id;
-        this.creatTimeNow = creatTimeNow;    // creatTime = UpdateTime = now
-        this.updateTimeNow = updateTimeNow;
+    protected UserSchema() {
+        super();
+    }
+
+    public UserSchema(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
+            String username, String hashedPassword, String passwordSalt,
+            String email, UserRole role) {
+        super(id, createdAt, updatedAt);
         this.username = username;
         this.hashedPassword = hashedPassword;
-        this.salt = salt;
+        this.passwordSalt = passwordSalt;
         this.email = email;
         this.role = role;
     }
 
     public String getUsername() {
-        return this.username;
+        return username;
     }
-    public String getId() {
-        return this.id;
+
+    public void setUsername(String username) {
+        this.username = username;
     }
+
+    public String getHashedPassword() {
+        return hashedPassword;
+    }
+
+    public void setHashedPassword(String hashedPassword) {
+        this.hashedPassword = hashedPassword;
+    }
+
+    public String getPasswordSalt() {
+        return passwordSalt;
+    }
+
+    public void setPasswordSalt(String passwordSalt) {
+        this.passwordSalt = passwordSalt;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public UserRole getRole() {
         return role;
     }
-}
 
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+}

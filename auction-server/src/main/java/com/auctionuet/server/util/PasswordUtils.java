@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class PasswordUtils {
-
     // Chuyển từ mảng byte sang HexString
     private static String convertToHex(byte[] arr) {
         StringBuilder hexString = new StringBuilder(); // Là đối tượng string có thể thay đổi được
@@ -62,6 +61,4 @@ public class PasswordUtils {
         String computedHash = hash(password,salt);
         return computedHash.equals(hashedPassword);
     }
-
 }
-

@@ -2,8 +2,8 @@ package com.auctionuet.server.domain.model;
 import com.auctionuet.server.domain.enums.UserRole;
 
 public class Bidder extends User {
-    public Bidder(String id, String name) {
-        super(id, name, UserRole.BIDDER);
+    public Bidder(String id, String username) {
+        super(id, username, UserRole.BIDDER);
     }
 
     @Override

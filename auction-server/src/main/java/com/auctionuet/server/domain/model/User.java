@@ -2,8 +2,8 @@ package com.auctionuet.server.domain.model;
 import com.auctionuet.server.domain.enums.UserRole;
 
 public abstract class User {
-    private final String username;
     private final String id;
+    private final String username;
     private final UserRole role;
 
     protected User(String id, String username, UserRole role) {
