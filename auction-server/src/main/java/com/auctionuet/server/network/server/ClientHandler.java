@@ -59,7 +59,7 @@ public class ClientHandler implements  Runnable {
                     // Nếu login thành công → cập nhật currentUser
                     if (request.getAction() == ActionType.LOGIN
                             && "OK".equals(response.getStatus())) {
-                        
+                        this.token=request.getToken();
                     }
                     }
                     // 3. Gửi response
