@@ -644,7 +644,7 @@ Bạn chịu trách nhiệm tạo giao diện JavaFX đầu tiên cho dự án. 
 - Layout: dùng **VBox** (vertical), alignment CENTER, spacing 20
 
 **Yêu cầu FXML:**
-- `fx:controller` phải trỏ đúng tới `com.auctionuet.client.controllers.MainController`
+- `fx:controller` phải trỏ đúng tới `com.auctionuet.client.view.MainController`
 - Mỗi element có `fx:id` tương ứng
 - Button có `onAction="#onStartClicked"`
 
@@ -653,7 +653,7 @@ Bạn chịu trách nhiệm tạo giao diện JavaFX đầu tiên cho dự án. 
 **Đặt tại:** `auction-client/src/main/java/com/auctionuet/client/controllers/MainController.java`
 
 ```java
-package com.auctionuet.client.controllers;
+package com.auctionuet.client.view;
 
 // YÊU CẦU: Viết comment giải thích TẤT CẢ annotation và method
 
@@ -662,14 +662,19 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 public class MainController {
-    
+
     // 1. Khai báo các @FXML fields tương ứng với fx:id trong FXML
-    @FXML private Label titleLabel;
-    @FXML private Label subtitleLabel;
-    @FXML private Button startButton;
-    @FXML private Label statusLabel;
-    @FXML private Label versionLabel;
-    
+    @FXML
+    private Label titleLabel;
+    @FXML
+    private Label subtitleLabel;
+    @FXML
+    private Button startButton;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label versionLabel;
+
     // 2. Method initialize() — tự động gọi sau khi FXML load xong
     @FXML
     public void initialize() {
@@ -677,7 +682,7 @@ public class MainController {
         statusLabel.setText("");
         // Comment: giải thích tại sao cần initialize
     }
-    
+
     // 3. Handler cho nút Start
     @FXML
     private void onStartClicked() {

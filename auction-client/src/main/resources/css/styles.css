@@ -1,0 +1,17 @@
+.root { -fx-background-color: #1a1a2e; }
+.text-field, .password-field {
+    -fx-background-color: #16213e; -fx-text-fill: #e0e0e0;
+    -fx-border-color: #0f3460; -fx-border-radius: 8; -fx-background-radius: 8;
+    -fx-padding: 10; -fx-font-size: 14;
+}
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #e94560; -fx-effect: dropshadow(gaussian, #e94560, 10, 0, 0, 0);
+}
+.button {
+    -fx-background-color: linear-gradient(to right, #e94560, #0f3460);
+    -fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;
+    -fx-padding: 12 40; -fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand;
+}
+.button:hover { -fx-background-color: linear-gradient(to right, #ff6b6b, #1a5276); }
+.error-label { -fx-text-fill: #e94560; -fx-font-size: 12; }
+.hyperlink { -fx-text-fill: #4ecdc4; -fx-font-size: 12; }

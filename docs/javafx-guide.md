@@ -2,7 +2,7 @@
 
 ## 1. Cách FXML và Controller liên kết nhau
 Có thể hiểu đơn giản FXML là phần "xác" (giao diện), còn Controller là phần "hồn" (code xử lý logic). Chúng nó liên kết với nhau qua 2 bước:
-- Tại FXML:Thẻ root (ngoài cùng) phải có thuộc tính `fx:controller="com.auctionuet.client.controllers.MainController"` để trỏ đúng đường dẫn đến class Java.
+- Tại FXML:Thẻ root (ngoài cùng) phải có thuộc tính `fx:controller="com.auctionuet.client.view.MainController"` để trỏ đúng đường dẫn đến class Java.
 - Tại Controller:Các thành phần giao diện bên FXML (ví dụ nút bấm, chữ) phải được đặt `fx:id` (VD: `fx:id="startButton"`). Trong Controller, ta khai báo biến trùng tên 100% với `fx:id` đó và gắn thêm annotation `@FXML` lên đầu để JavaFX tự động map chúng lại với nhau.
 
 ## 2. Lifecycle của JavaFX Application
