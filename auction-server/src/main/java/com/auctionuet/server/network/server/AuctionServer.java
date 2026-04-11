@@ -20,7 +20,7 @@ public class AuctionServer {
         try {
             AuthService authService = new AuthService(new UserDAO());
             AuthController authController = new AuthController(authService);
-            RequestRouter router = new RequestRouter(authController);
+            this.router = new RequestRouter(authController);
             isRunning=true;
             serverSocket=new ServerSocket(port);
             System.out.println("[SERVER] Listening on port " + port);
