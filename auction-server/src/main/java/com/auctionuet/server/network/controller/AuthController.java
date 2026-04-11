@@ -10,6 +10,7 @@ import com.auctionuet.server.mapper.UserMapper;
 import com.auctionuet.server.network.dto.UserDTO;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.server.domain.service.LoginResult;
 
 import java.util.Map;
 

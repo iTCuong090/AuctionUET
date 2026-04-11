@@ -60,15 +60,15 @@ public class AuthServiceTest {
 
     @Test
     void testRegisterDuplicate() {
-        authService.register("dupuser", "pass", "t@uet.vn", UserRole.BIDDER);
+        authService.register("dupuser", "password123", "t@uet.vn", UserRole.BIDDER);
         assertThrows(DuplicateUserException.class, () -> 
-            authService.register("dupuser", "pass2", "t2@uet.vn", UserRole.SELLER));
+            authService.register("dupuser", "password456", "t2@uet.vn", UserRole.SELLER));
     }
 
     @Test
     void testValidateToken() {
-        authService.register("sessionuser", "pass", "t@uet.vn", UserRole.BIDDER);
-        LoginResult result = authService.login("sessionuser", "pass");
+        authService.register("sessionuser", "password123", "t@uet.vn", UserRole.BIDDER);
+        LoginResult result = authService.login("sessionuser", "password123");
         
         User user = sessionManager.validateToken(result.getToken());
         assertNotNull(user);
@@ -77,8 +77,8 @@ public class AuthServiceTest {
 
     @Test
     void testLogout() {
-        authService.register("logoutuser", "pass", "t@uet.vn", UserRole.BIDDER);
-        LoginResult result = authService.login("logoutuser", "pass");
+        authService.register("logoutuser", "password123", "t@uet.vn", UserRole.BIDDER);
+        LoginResult result = authService.login("logoutuser", "password123");
         
         sessionManager.removeSession(result.getToken());
         assertThrows(AuthenticationException.class, () -> sessionManager.validateToken(result.getToken()));
