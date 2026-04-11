@@ -48,7 +48,9 @@ public class AuthService {
         //Kiểm tra validation input phía server
         ValidationUtils.validateUsername(username);
         ValidationUtils.validatePassword(password);
-        ValidationUtils.validateEmail(email);
+        if (email != null) {
+            ValidationUtils.validateEmail(email);
+        }
 
 
         //Kiểm tra xem username đã tồn tại chưa.

@@ -49,7 +49,7 @@ public class TestHelper {
 
     public static void cleanTestData() {
         // 1. Chỉ định đường dẫn đến file JSON test
-        java.io.File file = new java.io.File("data/test_users.json");
+        java.io.File file = new java.io.File("data/users.json");
 
         // 2. Kiểm tra xem file có tồn tại không trước khi xóa
         if (file.exists()) {

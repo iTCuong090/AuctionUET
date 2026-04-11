@@ -13,8 +13,14 @@ public class Response {
     public static Response ok(Object data){
         return new Response("RESPONSE","OK",data,null,null);
     }
-    public static Response error(Object data){
-        return new Response("RESPONSE","ERROR",data,null,null);
+    public static Response ok(String message){
+        return new Response("RESPONSE","OK",null,null,message);
+    }
+    public static Response ok(String message, Object data){
+        return new Response("RESPONSE","OK",data,null,message);
+    }
+    public static Response error(String message){
+        return new Response("RESPONSE","ERROR",null,null,message);
     }
     public static Response push(String event,Object data){
         return new Response("RESPONSE","OK",data,event,null);

@@ -43,7 +43,7 @@ public class AuthController {
             String password = request.getDataString("password");
             String email = request.getDataString("email");
             String roleStr = request.getDataString("role");
-            UserRole role = UserRole.valueOf(roleStr);
+            UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
             authService.register(username, password, email, role);
             return Response.ok("Đăng ký thành công");
         }

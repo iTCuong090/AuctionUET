@@ -31,8 +31,10 @@ public class AuctionServer {
                 new Thread(handler).start();
             }
         } catch (IOException e) {
-            System.out.println("[SERVER] Lỗi khi mở Sever.");
-            e.printStackTrace();
+            if (isRunning) {
+                System.out.println("[SERVER] Lỗi khi mở Sever.");
+                e.printStackTrace();
+            }
         }
     }
     public void stop() {

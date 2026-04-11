@@ -37,12 +37,12 @@ public class AuthIntegrationTest {
     void testFullAuthFlow() throws Exception {
 
         // REGISTER
-        String regJson = "{\"action\":\"REGISTER\",\"username\":\"testuser\",\"password\":\"test12345\",\"email\":\"test@uet.vn\",\"role\":\"BIDDER\"}";
+        String regJson = "{\"action\":\"REGISTER\",\"data\":{\"username\":\"testuser\",\"password\":\"test12345\",\"email\":\"test@uet.vn\",\"role\":\"BIDDER\"}}";
         Response regRes = TestHelper.sendRawRequest(PORT, regJson);
         assertEquals("OK", regRes.getStatus());
 
         // LOGIN
-        String loginJson = "{\"action\":\"LOGIN\",\"username\":\"testuser\",\"password\":\"test12345\"}";
+        String loginJson = "{\"action\":\"LOGIN\",\"data\":{\"username\":\"testuser\",\"password\":\"test12345\"}}";
         Response loginRes = TestHelper.sendRawRequest(PORT, loginJson);
         assertEquals("OK", loginRes.getStatus());
 
@@ -85,7 +85,7 @@ public class AuthIntegrationTest {
     @DisplayName("Test 2: Register Duplicate Username")
     void testRegisterDuplicateUsername() throws Exception {
 
-        String regJson = "{\"action\":\"REGISTER\",\"username\":\"cuong\",\"password\":\"123456\"}";
+        String regJson = "{\"action\":\"REGISTER\",\"data\":{\"username\":\"cuong\",\"password\":\"12345678\"}}";
 
         Response res1 = TestHelper.sendRawRequest(PORT, regJson);
         assertEquals("OK", res1.getStatus());
@@ -104,10 +104,10 @@ public class AuthIntegrationTest {
     void testLoginWrongPassword() throws Exception {
 
         TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"REGISTER\",\"username\":\"cuong\",\"password\":\"correct123\"}");
+                "{\"action\":\"REGISTER\",\"data\":{\"username\":\"cuong\",\"password\":\"correct123\"}}");
 
         Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"LOGIN\",\"username\":\"cuong\",\"password\":\"wrongpass\"}");
+                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"cuong\",\"password\":\"wrongpass\"}}");
 
         assertEquals("ERROR", res.getStatus());
         assertNotNull(res.getMessage());
@@ -121,7 +121,7 @@ public class AuthIntegrationTest {
     void testLoginNonExistentUser() throws Exception {
 
         Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"LOGIN\",\"username\":\"ghost\",\"password\":\"123456\"}");
+                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"ghost\",\"password\":\"12345678\"}}");
 
         assertEquals("ERROR", res.getStatus());
         assertNotNull(res.getMessage());
@@ -152,18 +152,18 @@ public class AuthIntegrationTest {
 
         // CLIENT A
         TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"REGISTER\",\"username\":\"userA\",\"password\":\"123456\"}");
+                "{\"action\":\"REGISTER\",\"data\":{\"username\":\"userA\",\"password\":\"12345678\"}}");
         Response resA = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"LOGIN\",\"username\":\"userA\",\"password\":\"123456\"}");
+                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"userA\",\"password\":\"12345678\"}}");
 
         assertEquals("OK", resA.getStatus());
         String tokenA = ((Map<String, Object>) resA.getData()).get("token").toString();
 
         // CLIENT B
         TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"REGISTER\",\"username\":\"userB\",\"password\":\"123456\"}");
+                "{\"action\":\"REGISTER\",\"data\":{\"username\":\"userB\",\"password\":\"12345678\"}}");
         Response resB = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"LOGIN\",\"username\":\"userB\",\"password\":\"123456\"}");
+                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"userB\",\"password\":\"12345678\"}}");
 
         assertEquals("OK", resB.getStatus());
         String tokenB = ((Map<String, Object>) resB.getData()).get("token").toString();
