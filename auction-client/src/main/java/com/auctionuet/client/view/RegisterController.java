@@ -22,12 +22,24 @@ public class RegisterController {
 
     @FXML
     public void handleRegister() {
-        // Lấy dữ liệu từ màn hình (Tùy ông đặt tên biến là gì thì gõ cho chuẩn nhé)
+        // Lấy dữ liệu từ màn hình
         String username = usernameField.getText();
         String password = passwordField.getText();
         String confirm = confirmField.getText();
-        String email = emailField.getText(); // Nếu tuần 2 ông chưa làm ô nhập Email thì cứ để tạm email = "test@gmail.com";
-        String role = "BIDDER"; // Mặc định người đăng ký là người đấu giá
+        String email = emailField.getText();
+        // Lấy giá trị mà người dùng đã chọn trong menu thả xuống (ComboBox)
+        String selectedRole = roleComboBox.getValue();
+        String role;
+
+        // Kiểm tra xem người dùng đã chọn chức vụ chưa
+        if (selectedRole == null) {
+            errorLabel.setText("Lỗi: Vui lòng chọn vai trò (Bidder hoặc Seller)!");
+            errorLabel.setVisible(true);
+            return; // Chặn lại, không cho chạy tiếp xuống tầng hầm mạng
+        } else {
+            // Nếu đã chọn, chuyển chữ đó thành in hoa (BIDDER hoặc SELLER) để Server chuẩn hóa dữ liệu
+            role = selectedRole.toUpperCase();
+        }
 
         // 1. Kiểm tra lởm trên máy khách
         if (username.isBlank() || password.isBlank() || email.isBlank()) {

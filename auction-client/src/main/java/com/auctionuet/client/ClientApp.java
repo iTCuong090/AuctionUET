@@ -17,7 +17,7 @@ public class ClientApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         SceneManager.getInstance().init(primaryStage);
-        // Đập bỏ UI code chay, thay bằng FXMLLoader của mày
+        // Đập bỏ UI code chay, thay bằng FXMLLoader
         URL fxmlLocation = getClass().getResource("/fxml/MainView.fxml");
         if (fxmlLocation == null) {
             System.err.println("Lỗi: Không tìm thấy file MainView.fxml");

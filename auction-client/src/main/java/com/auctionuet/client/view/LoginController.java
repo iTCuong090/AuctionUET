@@ -17,7 +17,7 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // 1. Kiểm tra lởm trên máy khách (đỡ tốn công gửi Server)
+        // 1. Kiểm tra lởm trên máy khách
         if (username.isBlank() || password.isBlank()) {
             errorLabel.setText("Lỗi: Không được để trống!");
             errorLabel.setVisible(true);

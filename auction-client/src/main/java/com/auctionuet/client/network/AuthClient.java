@@ -10,7 +10,7 @@ import java.util.Map;
 public class AuthClient {
 
     public Response login(String username, String password) throws Exception {
-        // Nhét dữ liệu vào một cái Map (chuẩn ý thằng Khánh)
+
         Map<String, Object> data = new HashMap<>();
         data.put("username", username);
         data.put("password", password);
