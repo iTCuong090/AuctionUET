@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auctionuet.client.view.DashboardController"
+      alignment="CENTER" spacing="30" style="-fx-background-color: #1e1e1e; -fx-padding: 50;">
+
+    <Label fx:id="welcomeLabel" text="Xin chào, User!" style="-fx-font-size: 24px; -fx-text-fill: white; -fx-font-weight: bold;"/>
+
+    <Label text="Chào mừng đến với Sàn Đấu Giá UET" style="-fx-text-fill: #aaaaaa;"/>
+
+    <Button fx:id="logoutButton" text="Đăng xuất" onAction="#handleLogout"
+            style="-fx-background-color: #ff4c4c; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20;"/>
+
+</VBox>
