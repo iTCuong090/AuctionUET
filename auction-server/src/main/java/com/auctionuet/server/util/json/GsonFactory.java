@@ -16,4 +16,10 @@ public class GsonFactory {
                 .setPrettyPrinting()
                 .create();
     }
+    public static Gson createForNetwork() {
+        return new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                // KHÔNG gọi .setPrettyPrinting() ở đây
+                .create();
+    }
 }

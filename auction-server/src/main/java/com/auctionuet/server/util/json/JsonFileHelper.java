@@ -1,6 +1,5 @@
-package com.auctionuet.server.persistence.json;
+package com.auctionuet.server.util.json;
 
-import com.auctionuet.server.util.json.GsonFactory;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
