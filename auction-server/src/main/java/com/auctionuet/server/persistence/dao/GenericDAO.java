@@ -1,4 +1,4 @@
-package com.auctionuet.server.persistence.schema.dao;
+package com.auctionuet.server.persistence.dao;
 
 import com.auctionuet.server.persistence.schema.BaseSchema;
 

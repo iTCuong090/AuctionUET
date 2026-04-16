@@ -3,7 +3,7 @@ package com.auctionuet.server.domain.manager;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
-import com.auctionuet.server.persistence.schema.dao.UserDAO;
+import com.auctionuet.server.persistence.dao.UserDAO;
 
 public class DataManager {
 

@@ -5,7 +5,7 @@ import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
 import com.auctionuet.server.exception.UserNotFoundException;
-import com.auctionuet.server.persistence.schema.dao.UserDAO;
+import com.auctionuet.server.persistence.dao.UserDAO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
