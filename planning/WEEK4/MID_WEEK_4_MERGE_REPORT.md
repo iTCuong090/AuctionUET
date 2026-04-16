@@ -79,7 +79,7 @@ Merge dạng **fast-forward** (không có thay đổi nào trên `develop-week-4
 > **Giải quyết**: 
 > - **Giữ** phiên bản đầy đủ từ `persistence` ở vị trí `persistence/dao/`
 > - **Xóa** các file stub rỗng ở `persistence/schema/dao/` (AuctionDAO, BidDAO, ItemDAO)
-> - Nhánh domain cũng đã di chuyển `GenericDAO` và `UserDAO` → giữ vị trí mới `persistence/schema/dao/`
+> - Nhánh domain cũng đã di chuyển `GenericDAO` và `UserDAO` → giữ vị trí của Cường như ban đầu.
 
 ---
 
