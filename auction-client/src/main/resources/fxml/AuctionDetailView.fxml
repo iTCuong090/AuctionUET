@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="800.0" style="-fx-background-color: #1a1a2e; -fx-background: #1a1a2e; -fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.AuctionDetailController">
+   <content>
+      <VBox spacing="30.0" style="-fx-background-color: #1a1a2e;">
+         <padding>
+            <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
+         </padding>
+         <children>
+            <Label text="🏛 Chi tiết phiên đấu giá">
+               <font><Font name="System Bold" size="26.0" /></font>
+               <textFill>
+                  <LinearGradient endX="1.0" endY="1.0">
+                     <stops>
+                        <Stop>
+                           <color>
+                              <Color green="0.7091954946517944" blue="1.0" />
+                           </color>
+                        </Stop>
+                        <Stop offset="1.0">
+                           <color>
+                              <Color red="1.0" green="1.0" blue="1.0" />
+                           </color>
+                        </Stop>
+                     </stops>
+                  </LinearGradient>
+               </textFill>
+            </Label>
+
+            <HBox spacing="30.0">
+               <children>
+                  <StackPane prefHeight="220.0" prefWidth="220.0" style="-fx-background-color: #16213e; -fx-background-radius: 12;">
+                     <children>
+                        <ImageView fx:id="productImageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+                        <Label text="[Ảnh sản phẩm]" textFill="#a0a0b0" />
+                     </children>
+                  </StackPane>
+
+                  <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="nameLabel" text="Tên sản phẩm" textFill="#4ecdc4">
+                           <font><Font name="System Bold" size="22.0" /></font>
+                        </Label>
+                        <Label fx:id="sellerLabel" text="Seller: --" textFill="#a0a0b0" />
+                        <Label fx:id="typeLabel" text="Loại: --" textFill="#a0a0b0" />
+                        <Label fx:id="specLabel" text="Thông số: --" textFill="#e0e0e0" />
+                        <Label fx:id="conditionLabel" text="Tình trạng: --" textFill="#e0e0e0" />
+                        <Label fx:id="descriptionLabel" lineSpacing="5.0" text="Mô tả chi tiết sản phẩm..." textFill="#bdc3c7" wrapText="true">
+                           <VBox.margin><Insets top="10.0" /></VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <VBox spacing="15.0" style="-fx-background-color: #16213e; -fx-padding: 25; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
+               <children>
+                  <Label fx:id="currentPriceLabel" text="💰 Giá hiện tại: 0 VNĐ" textFill="#e94560">
+                     <font><Font name="System Bold" size="20.0" /></font>
+                  </Label>
+                  <Label fx:id="leaderLabel" text="👤 Người dẫn đầu: --" textFill="WHITE">
+                     <font><Font size="16.0" /></font>
+                  </Label>
+                  <Label fx:id="timeLeftLabel" text="⏰ Thời gian còn lại: --" textFill="#f39c12">
+                     <font><Font name="System Bold" size="16.0" /></font>
+                  </Label>
+                  <Label fx:id="statusLabel" text="📊 Trạng thái: --" textFill="WHITE">
+                     <font><Font size="16.0" /></font>
+                  </Label>
+               </children>
+            </VBox>
+
+            <VBox alignment="CENTER">
+               <children>
+                  <Button fx:id="btnStartAuction" managed="false" mnemonicParsing="false" onAction="#handleStartAuction" prefHeight="50.0" prefWidth="300.0" text="🚀 Bắt đầu phiên đấu giá" visible="false" />
+               </children>
+            </VBox>
+         </children>
+         <effect>
+            <InnerShadow>
+               <color>
+                  <Color green="0.6919540166854858" blue="1.0" />
+               </color>
+            </InnerShadow>
+         </effect>
+      </VBox>
+   </content>
+</ScrollPane>

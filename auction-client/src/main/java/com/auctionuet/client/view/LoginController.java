@@ -5,6 +5,11 @@ import javafx.scene.control.*;
 import com.auctionuet.client.network.ServerConnection;
 import com.auctionuet.client.network.AuthClient;
 import com.auctionuet.client.network.protocol.Response;
+import com.auctionuet.client.model.ClientSession;
+
+// Import thư viện bóc tách JSON
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class LoginController {
     @FXML private TextField usernameField;
@@ -24,29 +29,60 @@ public class LoginController {
             return;
         }
 
-        // 2. Bật chế độ chờ (Tránh việc khách bấm nút 2 lần liên tiếp)
+        // 2. Bật chế độ chờ
         errorLabel.setText("Đang kết nối Server...");
-        errorLabel.setStyle("-fx-text-fill: blue;"); // Đổi màu xanh cho có hi vọng
+        errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
-        loginButton.setDisable(true); // Khóa mẹ nút Đăng nhập lại
+        loginButton.setDisable(true);
 
-        // 3. Vứt việc nặng nhọc cho thằng lính đánh thuê (Background Thread)
+        // 3. Ném việc cho Background Thread
         new Thread(() -> {
             try {
                 // Mở ống nước
                 ServerConnection.getInstance().connect("localhost", 8888);
 
-                // Gọi thằng phiên dịch mang gói hàng đi
+                // Gọi AuthClient mang hàng đi
                 AuthClient client = new AuthClient();
                 Response res = client.login(username, password);
 
-                // 4. Nhận được hàng về, nhờ Cô Lễ Tân (Platform.runLater) báo cáo lên màn hình
+                // 4. Nhận kết quả và đẩy lên giao diện
                 javafx.application.Platform.runLater(() -> {
                     if ("OK".equals(res.getStatus())) {
-                        System.out.println("Đăng nhập thành công!");
+                        try {
+                            // Lấy cục data Server trả về
+                            String dataStr = res.getData().toString();
 
-                        // Chuyển sang màn hình Dashboard
-                        SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
+                            // ==========================================
+                            // 5. CỖ MÁY BÓC TÁCH DỮ LIỆU THÔNG MINH
+                            // ==========================================
+
+                            // Nếu là FakeServer (Nó chỉ nhả ra chuỗi "token-gia-vo-day" chứ không phải ngoặc nhọn JSON)
+                            if (!dataStr.trim().startsWith("{")) {
+                                ClientSession.getInstance().setToken(dataStr);
+                                ClientSession.getInstance().setUsername(username); // Lấy tên ông vừa nhập vào ô text
+                                ClientSession.getInstance().setRole("SELLER");     // Ép cứng role để test UI
+                                System.out.println("⚠️ CẢNH BÁO: Đang dùng FakeServer. Tự động mock data cho UI!");
+                            }
+                            // Nếu là Server Thật (Trả về JSON chuẩn có ngoặc nhọn { })
+                            else {
+                                JsonObject dataObj = JsonParser.parseString(dataStr).getAsJsonObject();
+
+                                ClientSession.getInstance().setToken(dataObj.get("token").getAsString());
+                                ClientSession.getInstance().setUsername(dataObj.get("username").getAsString());
+                                ClientSession.getInstance().setRole(dataObj.get("role").getAsString());
+
+                                System.out.println("✅ Server Thật - Đăng nhập thành công! User: " + ClientSession.getInstance().getUsername());
+                            }
+
+                            // Chuyển sang màn hình Dashboard
+                            SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
+
+                        } catch (Exception ex) {
+                            System.out.println("❌ Lỗi trong quá trình bóc tách JSON hoặc chuyển trang!");
+                            ex.printStackTrace();
+                            errorLabel.setText("❌ Lỗi xử lý dữ liệu từ Server!");
+                            errorLabel.setStyle("-fx-text-fill: red;");
+                        }
 
                     } else {
                         // Trả về ERROR thì hiện lời chửi của Server
@@ -57,9 +93,9 @@ public class LoginController {
                 });
 
             } catch (Exception e) {
-                // Nếu Server chưa bật, nó văng Exception vào đây
+                // Nếu Server chưa bật
                 javafx.application.Platform.runLater(() -> {
-                    errorLabel.setText("❌ Không tìm thấy Server. Thằng Khánh chưa bật!");
+                    errorLabel.setText("❌ Không tìm thấy Server. Hãy kiểm tra lại kết nối!");
                     errorLabel.setStyle("-fx-text-fill: red;");
                     loginButton.setDisable(false);
                     e.printStackTrace();
