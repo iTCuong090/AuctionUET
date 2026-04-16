@@ -11,8 +11,7 @@
     <TextField fx:id="emailField" promptText="Email" />
     <PasswordField fx:id="passwordField" promptText="Mật khẩu (≥ 8 ký tự)" />
     <PasswordField fx:id="confirmField" promptText="Nhập lại mật khẩu" />
-    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò" maxWidth="Infinity" style="-fx-font-size: 14; -fx-background-color: #16213e; -fx-text-fill: white; -fx-border-color: #0f3460; -fx-border-radius: 8;" />
-    <Label fx:id="errorLabel" styleClass="error-label" visible="false" />
+    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò" maxWidth="Infinity" styleClass="combo-box" />    <Label fx:id="errorLabel" styleClass="error-label" visible="false" />
     <Button fx:id="registerButton" text="Đăng ký" onAction="#handleRegister" maxWidth="Infinity" />
     <Hyperlink fx:id="loginLink" text="Quay về Trang chủ" onAction="#handleBack" />
 </VBox>
