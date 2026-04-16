@@ -9,14 +9,12 @@ public class Seller extends User{
     @Override
     public boolean hasPermission(String action) {
         return switch (action) {
-            case "VIEW_AUCTION" -> true;
-            case "CREATE_AUCTION" -> true;
-            case "GET_PROFILE" -> true;
-            case "UPDATE_PROFILE" -> true;
-            case "VIEW_BID_HISTORY" -> true;
-            case "PLACE_BID" -> false;
-            case "MANAGE_USERS" -> false;
-            default -> false;  // mặc định: không cho phép
+            case "CREATE_ITEM", "UPDATE_ITEM", "DELETE_ITEM", "GET_MY_ITEMS",
+                 "CREATE_AUCTION", "START_AUCTION",
+                 "VIEW_AUCTION", "VIEW_BID_HISTORY",
+                 "GET_PROFILE", "UPDATE_PROFILE"
+                    -> true;
+            default -> false;
         };
     }
 
