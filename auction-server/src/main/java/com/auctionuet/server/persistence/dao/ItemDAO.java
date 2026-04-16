@@ -6,16 +6,17 @@ import com.auctionuet.server.util.json.JsonFileHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ItemDAO implements GenericDAO<ItemSchema> {
 
     private final String filePath;
 
+    // Constructor mặc định, mặc định đường dẫn là items.json.
     public ItemDAO() {
         this.filePath = "data/items.json";
     }
 
+    // Constructor custom, nhận đường dẫn bất kì, dùng để test.
     public ItemDAO(String filePath) {
         this.filePath = filePath;
     }
@@ -29,8 +30,13 @@ public class ItemDAO implements GenericDAO<ItemSchema> {
 
     @Override
     public ItemSchema findById(String id) {
-        return JsonFileHelper.readList(filePath, ItemSchema.class)
-                .stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+        List<ItemSchema> list = JsonFileHelper.readList(filePath, ItemSchema.class);
+        for (ItemSchema entity : list) {
+            if (entity.getId().equals(id)) {
+                return entity;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -59,12 +65,24 @@ public class ItemDAO implements GenericDAO<ItemSchema> {
     }
 
     public List<ItemSchema> findBySellerId(String sellerId) {
-        return JsonFileHelper.readList(filePath, ItemSchema.class)
-                .stream().filter(e -> sellerId.equals(e.getSellerId())).collect(Collectors.toList());
+        List<ItemSchema> list = JsonFileHelper.readList(filePath, ItemSchema.class);
+        List<ItemSchema> result = new java.util.ArrayList<>();
+        for (ItemSchema entity : list) {
+            if (sellerId.equals(entity.getSellerId())) {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 
     public List<ItemSchema> findByType(ItemType type) {
-        return JsonFileHelper.readList(filePath, ItemSchema.class)
-                .stream().filter(e -> type.equals(e.getType())).collect(Collectors.toList());
+        List<ItemSchema> list = JsonFileHelper.readList(filePath, ItemSchema.class);
+        List<ItemSchema> result = new java.util.ArrayList<>();
+        for (ItemSchema entity : list) {
+            if (type.equals(entity.getType())) {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 }

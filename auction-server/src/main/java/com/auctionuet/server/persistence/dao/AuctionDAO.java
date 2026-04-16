@@ -6,7 +6,6 @@ import com.auctionuet.server.util.json.JsonFileHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AuctionDAO implements GenericDAO<AuctionSchema> {
 
@@ -29,8 +28,13 @@ public class AuctionDAO implements GenericDAO<AuctionSchema> {
 
     @Override
     public AuctionSchema findById(String id) {
-        return JsonFileHelper.readList(filePath, AuctionSchema.class)
-                .stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+        List<AuctionSchema> list = JsonFileHelper.readList(filePath, AuctionSchema.class);
+        for (AuctionSchema entity : list) {
+            if (entity.getId().equals(id)) {
+                return entity;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -59,17 +63,34 @@ public class AuctionDAO implements GenericDAO<AuctionSchema> {
     }
 
     public List<AuctionSchema> findByStatus(AuctionStatus status) {
-        return JsonFileHelper.readList(filePath, AuctionSchema.class)
-                .stream().filter(e -> status.equals(e.getStatus())).collect(Collectors.toList());
+        List<AuctionSchema> list = JsonFileHelper.readList(filePath, AuctionSchema.class);
+        List<AuctionSchema> result = new java.util.ArrayList<>();
+        for (AuctionSchema entity : list) {
+            if (status.equals(entity.getStatus())) {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 
     public List<AuctionSchema> findBySellerId(String sellerId) {
-        return JsonFileHelper.readList(filePath, AuctionSchema.class)
-                .stream().filter(e -> sellerId.equals(e.getSellerId())).collect(Collectors.toList());
+        List<AuctionSchema> list = JsonFileHelper.readList(filePath, AuctionSchema.class);
+        List<AuctionSchema> result = new java.util.ArrayList<>();
+        for (AuctionSchema entity : list) {
+            if (sellerId.equals(entity.getSellerId())) {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 
     public AuctionSchema findByItemId(String itemId) {
-        return JsonFileHelper.readList(filePath, AuctionSchema.class)
-                .stream().filter(e -> itemId.equals(e.getItemId())).findFirst().orElse(null);
+        List<AuctionSchema> list = JsonFileHelper.readList(filePath, AuctionSchema.class);
+        for (AuctionSchema entity : list) {
+            if (itemId.equals(entity.getItemId())) {
+                return entity;
+            }
+        }
+        return null;
     }
 }

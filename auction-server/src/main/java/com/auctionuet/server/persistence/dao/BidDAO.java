@@ -5,7 +5,6 @@ import com.auctionuet.server.util.json.JsonFileHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class BidDAO implements GenericDAO<BidSchema> {
 
@@ -28,8 +27,13 @@ public class BidDAO implements GenericDAO<BidSchema> {
 
     @Override
     public BidSchema findById(String id) {
-        return JsonFileHelper.readList(filePath, BidSchema.class)
-                .stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+        List<BidSchema> list = JsonFileHelper.readList(filePath, BidSchema.class);
+        for (BidSchema entity : list) {
+            if (entity.getId().equals(id)) {
+                return entity;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -58,7 +62,13 @@ public class BidDAO implements GenericDAO<BidSchema> {
     }
 
     public List<BidSchema> findByAuctionId(String auctionId) {
-        return JsonFileHelper.readList(filePath, BidSchema.class)
-                .stream().filter(e -> auctionId.equals(e.getAuctionId())).collect(Collectors.toList());
+        List<BidSchema> list = JsonFileHelper.readList(filePath, BidSchema.class);
+        List<BidSchema> result = new java.util.ArrayList<>();
+        for (BidSchema entity : list) {
+            if (auctionId.equals(entity.getAuctionId())) {
+                result.add(entity);
+            }
+        }
+        return result;
     }
 }
