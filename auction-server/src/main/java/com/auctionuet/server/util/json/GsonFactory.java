@@ -7,12 +7,16 @@ import java.time.LocalDateTime;
 
 public class GsonFactory {
     public static Gson create() {
-        // Tại đây, cắm các Adapter cần thiết theo ý muốn của ta để Gson làm việc được
-        // với
-        // Class phức tạp.
+        RuntimeTypeAdapterFactory<com.auctionuet.server.persistence.schema.ItemSchema> itemFactory =
+            RuntimeTypeAdapterFactory.of(com.auctionuet.server.persistence.schema.ItemSchema.class, "itemType")
+                .recognizeSubtypes()
+                .registerSubtype(com.auctionuet.server.persistence.schema.ElectronicsSchema.class, "ELECTRONICS")
+                .registerSubtype(com.auctionuet.server.persistence.schema.ArtSchema.class, "ART")
+                .registerSubtype(com.auctionuet.server.persistence.schema.VehicleSchema.class, "VEHICLE");
+
         return new GsonBuilder()
+                .registerTypeAdapterFactory(itemFactory)
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                // Cắm thêm Adapter bằng .registerTypeAdapter().
                 .setPrettyPrinting()
                 .create();
     }
