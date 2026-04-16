@@ -2,7 +2,7 @@ package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.network.controller.AuthController;
-import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.persistence.schema.dao.UserDAO;
 
 import java.io.IOException;
 import java.net.ServerSocket;

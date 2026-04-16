@@ -2,6 +2,7 @@ package com.auctionuet.server.persistence.dao;
 
 import com.auctionuet.server.domain.enums.AuctionStatus;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
+import com.auctionuet.server.persistence.schema.dao.GenericDAO;
 import com.auctionuet.server.util.json.JsonFileHelper;
 
 import java.time.LocalDateTime;

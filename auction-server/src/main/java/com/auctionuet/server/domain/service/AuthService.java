@@ -6,7 +6,7 @@ import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
 import com.auctionuet.server.exception.UserNotFoundException;
 import com.auctionuet.server.mapper.UserMapper;
-import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.persistence.schema.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
 import com.auctionuet.server.util.PasswordUtils;
 import com.auctionuet.server.util.ValidationUtils;

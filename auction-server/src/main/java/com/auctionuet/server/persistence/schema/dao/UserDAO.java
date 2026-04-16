@@ -1,4 +1,4 @@
-package com.auctionuet.server.persistence.dao;
+package com.auctionuet.server.persistence.schema.dao;
 
 import com.auctionuet.server.util.json.JsonFileHelper;
 import com.auctionuet.server.persistence.schema.UserSchema;
