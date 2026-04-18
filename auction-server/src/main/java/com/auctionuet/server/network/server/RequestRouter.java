@@ -1,19 +1,21 @@
 package com.auctionuet.server.network.server;
 
-import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.SessionManager;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AuthController;
+import com.auctionuet.server.network.controller.ItemController;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 
 public class RequestRouter {
     private AuthController authController;
+    private ItemController itemController;
     private AuctionController auctionController;
 
-    public RequestRouter(AuthController authController, AuctionController auctionController) {
+    public RequestRouter(AuthController authController, ItemController itemController, AuctionController auctionController) {
         this.authController = authController;
+        this.itemController = itemController;
         this.auctionController = auctionController;
     }
 
@@ -30,13 +32,13 @@ public class RequestRouter {
             case LOGOUT:
                 return authController.handleLogout(request);
 
-            // Item (tuần 4 — MỚI)
+            // Item Management (tuần 4)
             case CREATE_ITEM:
-                return auctionController.handleCreateItem(request);
-//            case GET_MY_ITEMS:
-//                return auctionController.handleGetMyItems(request);
+                return itemController.handleCreateItem(request);
+            case GET_MY_ITEMS:
+                return itemController.handleGetMyItems(request);
 
-            // Auction (tuần 4 — MỚI)
+            // Auction Management (tuần 4)
             case CREATE_AUCTION:
                 return auctionController.handleCreateAuction(request);
             case START_AUCTION:

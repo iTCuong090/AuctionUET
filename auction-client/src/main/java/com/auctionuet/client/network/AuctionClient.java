@@ -37,7 +37,7 @@ public class AuctionClient {
 
         // 4. Kiểm tra và Parse kết quả về DTO
         if ("OK".equals(response.getStatus())) {
-            return gson.fromJson(response.getData().toString(), AuctionDTO.class);
+            return gson.fromJson(gson.toJson(response.getData()), AuctionDTO.class);
         } else {
             throw new Exception(response.getMessage());
         }
@@ -73,7 +73,7 @@ public class AuctionClient {
         if ("OK".equals(response.getStatus())) {
             // Dùng TypeToken để bóc tách danh sách List<AuctionDTO>
             Type listType = new TypeToken<List<AuctionDTO>>(){}.getType();
-            return gson.fromJson(response.getData().toString(), listType);
+            return gson.fromJson(gson.toJson(response.getData()), listType);
         } else {
             throw new Exception(response.getMessage());
         }
@@ -92,7 +92,7 @@ public class AuctionClient {
         Response response = ServerConnection.getInstance().sendRequest(request);
 
         if ("OK".equals(response.getStatus())) {
-            return gson.fromJson(response.getData().toString(), AuctionDTO.class);
+            return gson.fromJson(gson.toJson(response.getData()), AuctionDTO.class);
         } else {
             throw new Exception(response.getMessage());
         }

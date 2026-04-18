@@ -22,7 +22,7 @@ public class ItemClient {
         Response response = ServerConnection.getInstance().sendRequest(request);
 
         if ("OK".equals(response.getStatus())) {
-            return gson.fromJson(response.getData().toString(), ItemDTO.class);
+            return gson.fromJson(gson.toJson(response.getData()), ItemDTO.class);
         } else {
             throw new Exception(response.getMessage());
         }
@@ -37,7 +37,7 @@ public class ItemClient {
 
         if ("OK".equals(response.getStatus())) {
             Type listType = new TypeToken<List<ItemDTO>>(){}.getType();
-            return gson.fromJson(response.getData().toString(), listType);
+            return gson.fromJson(gson.toJson(response.getData()), listType);
         } else {
             throw new Exception(response.getMessage());
         }

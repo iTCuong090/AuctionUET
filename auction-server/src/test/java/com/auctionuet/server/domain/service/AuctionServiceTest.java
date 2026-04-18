@@ -27,6 +27,7 @@ public class AuctionServiceTest {
 
     private ItemDAO itemDAO;
     private AuctionDAO auctionDAO;
+    private ItemService itemService;
     private AuctionService auctionService;
     private final String itemFile = "data/test_items_service.json";
     private final String auctionFile = "data/test_auctions_service.json";
@@ -35,7 +36,8 @@ public class AuctionServiceTest {
     public void setup() {
         itemDAO = new ItemDAO(itemFile);
         auctionDAO = new AuctionDAO(auctionFile);
-        auctionService = new AuctionService(itemDAO, auctionDAO);
+        itemService = new ItemService(itemDAO);
+        auctionService = new AuctionService(itemService, auctionDAO);
         new File(itemFile).delete();
         new File(auctionFile).delete();
     }
@@ -79,7 +81,7 @@ public class AuctionServiceTest {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
 
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
         assertNotNull(item);
         assertEquals("Phone", item.getName());
         assertEquals("seller1", item.getSellerId());
@@ -94,15 +96,32 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
 
         assertThrows(AuctionException.class, () -> {
-            auctionService.createItem(bidder, dto);
+            itemService.createItem(bidder, dto);
         });
+    }
+
+    @Test
+    public void testGetItemsBySeller() throws Exception {
+        User seller = new MockUser("seller1", "seller", null, true);
+        ItemDTO dto1 = createElectronicsDTO();
+        ItemDTO dto2 = new ItemDTO(null, "Laptop", null, 1500.0, ItemType.ELECTRONICS, null, null, null, new HashMap<>());
+
+        itemService.createItem(seller, dto1);
+        itemService.createItem(seller, dto2);
+
+        List<ItemSchema> myItems = itemService.getItemsBySellerId("seller1");
+        assertEquals(2, myItems.size());
+
+        // User khác không có item nào
+        List<ItemSchema> otherItems = itemService.getItemsBySellerId("seller2");
+        assertEquals(0, otherItems.size());
     }
 
     @Test
     public void testCreateAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         assertNotNull(auction);
@@ -115,7 +134,7 @@ public class AuctionServiceTest {
         User seller1 = new MockUser("seller1", "seller1", null, true);
         User seller2 = new MockUser("seller2", "seller2", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller1, dto);
+        ItemSchema item = itemService.createItem(seller1, dto);
 
         assertThrows(AuctionException.class, () -> {
             auctionService.createAuction(seller2, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
@@ -126,7 +145,7 @@ public class AuctionServiceTest {
     public void testStartAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());
@@ -139,7 +158,7 @@ public class AuctionServiceTest {
     public void testStartAuctionAlreadyRunning() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());
@@ -153,7 +172,7 @@ public class AuctionServiceTest {
     public void testGetAuctions() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
 
         auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 2", "Desc");
@@ -167,7 +186,7 @@ public class AuctionServiceTest {
     public void testEndAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemSchema item = auctionService.createItem(seller, dto);
+        ItemSchema item = itemService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());

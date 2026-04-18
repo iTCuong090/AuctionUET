@@ -2,6 +2,7 @@ package com.auctionuet.server.network.controller;
 
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.AuctionService;
+import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.service.SessionManager;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.exception.AuthenticationException;
@@ -11,7 +12,6 @@ import com.auctionuet.server.network.dto.AuctionDTO;
 import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
-import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 
@@ -21,37 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller chuyên xử lý các request liên quan tới Auction Management.
+ * Logic về Item đã được tách sang ItemController.
+ */
 public class AuctionController {
 
     private final AuctionService auctionService;
+    private final ItemService itemService;
     private final SessionManager sessionManager;
-    private final ItemDAO itemDAO;
 
-    public AuctionController(AuctionService auctionService, ItemDAO itemDAO) {
+    public AuctionController(AuctionService auctionService, ItemService itemService) {
         this.auctionService = auctionService;
+        this.itemService = itemService;
         this.sessionManager = SessionManager.getInstance();
-        this.itemDAO = itemDAO;
-    }
-
-    // ──────────────────── ITEM ────────────────────
-
-    public Response handleCreateItem(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            Map<String, Object> data = validateRequestData(request);
-            ItemDTO itemDTO = ItemMapper.fromRequestData(data);
-            ItemSchema created = auctionService.createItem(user, itemDTO);
-            ItemDTO responseDTO = ItemMapper.toDTO(created, user.getUsername());
-            return Response.ok(responseDTO);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (AuctionException e) {
-            return Response.error(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return Response.error("Dữ liệu không hợp lệ: " + e.getMessage());
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
-        }
     }
 
     // ──────────────────── AUCTION ────────────────────
@@ -72,7 +55,7 @@ public class AuctionController {
             );
 
             // Convert to DTO for response
-            ItemSchema itemSchema = itemDAO.findById(auctionSchema.getItemId());
+            ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
             ItemDTO itemDTO = (itemSchema != null)
                     ? ItemMapper.toDTO(itemSchema, user.getUsername())
                     : null;
@@ -112,7 +95,7 @@ public class AuctionController {
             List<AuctionSchema> auctions = auctionService.getAuctions();
             List<AuctionDTO> auctionDTOList = new ArrayList<>();
             for (AuctionSchema auction : auctions) {
-                ItemSchema itemSchema = itemDAO.findById(auction.getItemId());
+                ItemSchema itemSchema = itemService.getItemById(auction.getItemId());
                 if (itemSchema == null) {
                     System.err.println("Cảnh báo: Bỏ qua đấu giá " + auction.getId() + " do không tìm thấy vật phẩm!");
                     continue;
@@ -144,7 +127,7 @@ public class AuctionController {
             if (schema == null) {
                 return Response.error("Không tìm thấy phiên đấu giá");
             }
-            ItemSchema itemSchema = itemDAO.findById(schema.getItemId());
+            ItemSchema itemSchema = itemService.getItemById(schema.getItemId());
             if (itemSchema == null) {
                 return Response.error("Lỗi: Không tìm thấy vật phẩm của phiên đấu giá này!");
             }

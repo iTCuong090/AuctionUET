@@ -3,8 +3,10 @@ package com.auctionuet.server.network.server;
 import com.auctionuet.server.domain.manager.DataManager;
 import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.AuthService;
+import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AuthController;
+import com.auctionuet.server.network.controller.ItemController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
@@ -30,14 +32,16 @@ public class AuctionServer {
 
             // Tạo Service
             AuthService authService = new AuthService(userDAO);
-            AuctionService auctionService = new AuctionService(itemDAO, auctionDAO);
+            ItemService itemService = new ItemService(itemDAO);
+            AuctionService auctionService = new AuctionService(itemService, auctionDAO);
 
             // Tạo Controller
             AuthController authController = new AuthController(authService);
-            AuctionController auctionController = new AuctionController(auctionService, itemDAO);
+            ItemController itemController = new ItemController(itemService);
+            AuctionController auctionController = new AuctionController(auctionService, itemService);
 
             // Tạo Router
-            this.router = new RequestRouter(authController, auctionController);
+            this.router = new RequestRouter(authController, itemController, auctionController);
 
             isRunning=true;
             serverSocket=new ServerSocket(port);
@@ -67,4 +71,3 @@ public class AuctionServer {
         }
     }
 }
-

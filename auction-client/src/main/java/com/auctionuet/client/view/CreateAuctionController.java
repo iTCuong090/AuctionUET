@@ -1,5 +1,6 @@
 package com.auctionuet.client.view;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -9,9 +10,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.model.ItemDTO;
+import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.client.network.protocol.ItemType;
 
 public class CreateAuctionController {
@@ -23,6 +27,8 @@ public class CreateAuctionController {
     @FXML private TextArea descArea;
     @FXML private DatePicker startDatePicker, endDatePicker;
     @FXML private ComboBox<String> startHourCombo, startMinuteCombo, endHourCombo, endMinuteCombo;
+
+    private final ItemClient itemClient = new ItemClient();
 
     @FXML
     public void initialize() {
@@ -121,14 +127,36 @@ public class CreateAuctionController {
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
+    /**
+     * Gọi server lấy danh sách item thật của user đang đăng nhập.
+     * Không dùng mock data nữa.
+     */
     private void loadMyItems() {
-        ObservableList<ItemDTO> items = FXCollections.observableArrayList();
+        String token = ClientSession.getInstance().getToken();
+        if (token == null || token.isEmpty()) {
+            System.err.println("[CreateAuction] Chưa đăng nhập, không thể tải danh sách item.");
+            return;
+        }
 
-        // Tạo thử vài cái DTO ảo để test UI
-        ItemDTO i1 = new ItemDTO(); i1.setId("I1"); i1.setName("iPhone 15");
-        i1.setStartingPrice(25000000);
-
-        items.add(i1);
-        itemComboBox.setItems(items);
+        // Chạy trên thread riêng để không block UI
+        new Thread(() -> {
+            try {
+                List<ItemDTO> items = itemClient.getMyItems(token);
+                Platform.runLater(() -> {
+                    ObservableList<ItemDTO> observableItems = FXCollections.observableArrayList(items);
+                    itemComboBox.setItems(observableItems);
+                    if (items.isEmpty()) {
+                        statusLabel.setText("⚠️ Bạn chưa có sản phẩm nào. Hãy tạo sản phẩm trước!");
+                        statusLabel.setStyle("-fx-text-fill: #f39c12;");
+                    }
+                    System.out.println("[CreateAuction] Đã tải " + items.size() + " item từ server.");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showError("Không thể tải danh sách sản phẩm: " + e.getMessage());
+                });
+                System.err.println("[CreateAuction] Lỗi tải item: " + e.getMessage());
+            }
+        }).start();
     }
 }
