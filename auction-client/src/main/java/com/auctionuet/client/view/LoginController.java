@@ -44,8 +44,8 @@ public class LoginController {
                 javafx.application.Platform.runLater(() -> {
                     if ("OK".equals(res.getStatus())) {
                         try {
-                            String dataStr = res.getData().toString();
                             Gson gson = new Gson();
+                            String dataStr = gson.toJson(res.getData());
 
                             // NẾU DÙNG MOCK DATA (Server chưa code xong)
                             if (!dataStr.trim().startsWith("{")) {
@@ -61,8 +61,8 @@ public class LoginController {
                                 JsonObject dataObj = JsonParser.parseString(dataStr).getAsJsonObject();
                                 String exactToken = dataObj.get("token").getAsString();
 
-                                // Ép thẳng chuỗi JSON thành UserDTO (Gson sẽ tự động bỏ qua field 'token' không liên quan)
-                                UserDTO loggedInUser = gson.fromJson(dataStr, UserDTO.class);
+                                // Lấy object "user" từ dataObj rồi map qua UserDTO
+                                UserDTO loggedInUser = gson.fromJson(dataObj.get("user"), UserDTO.class);
 
                                 ClientSession.getInstance().login(exactToken, loggedInUser);
                                 System.out.println("✅ Server Thật - Đăng nhập thành công! Role: " + loggedInUser.getRole());
