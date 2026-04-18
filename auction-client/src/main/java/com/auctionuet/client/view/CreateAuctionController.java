@@ -16,6 +16,7 @@ import java.util.Map;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.model.ItemDTO;
 import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.protocol.ItemType;
 
 public class CreateAuctionController {
@@ -29,6 +30,7 @@ public class CreateAuctionController {
     @FXML private ComboBox<String> startHourCombo, startMinuteCombo, endHourCombo, endMinuteCombo;
 
     private final ItemClient itemClient = new ItemClient();
+    private final AuctionClient auctionClient = new AuctionClient();
 
     @FXML
     public void initialize() {
@@ -118,8 +120,36 @@ public class CreateAuctionController {
         System.out.println("=== CHUẨN BỊ GỬI REQUEST TẠO AUCTION LÊN SERVER ===");
         requestData.forEach((k, v) -> System.out.println(k + ": " + v));
 
-        statusLabel.setText("✅ Tạo phiên đấu giá thành công! Đang chuyển trang...");
-        statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+        String token = ClientSession.getInstance().getToken();
+        if (token == null || token.isEmpty()) {
+            showError("Vui lòng đăng nhập lại!");
+            return;
+        }
+
+        statusLabel.setText("Đang xử lý...");
+        statusLabel.setStyle("-fx-text-fill: #f39c12;");
+
+        new Thread(() -> {
+            try {
+                auctionClient.createAuction(
+                        token,
+                        selectedItem.getId(),
+                        start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                        end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                        title,
+                        descArea.getText()
+                );
+                
+                Platform.runLater(() -> {
+                    statusLabel.setText("✅ Tạo phiên đấu giá thành công! Đang chuyển trang...");
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showError("Lỗi từ server: " + e.getMessage());
+                });
+            }
+        }).start();
     }
 
     private void showError(String msg) {
