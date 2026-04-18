@@ -117,6 +117,9 @@ public class AuctionService {
         return auctionDAO.findByStatus(status);
     }
 
+    public AuctionSchema getAuctionById(String Id){
+        return auctionDAO.findById(Id);
+    }
     public List<AuctionSchema> getAuctionsBySeller(String sellerId) {
         return auctionDAO.findBySellerId(sellerId);
     }
