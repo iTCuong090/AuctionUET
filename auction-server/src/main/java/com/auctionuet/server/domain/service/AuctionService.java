@@ -1,21 +1,18 @@
 package com.auctionuet.server.domain.service;
 
-import com.auctionuet.server.domain.enums.ItemType;
 import com.auctionuet.server.domain.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.exception.AuctionException;
+import com.auctionuet.server.mapper.ItemMapper;
+import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.schema.ItemSchema;
-import com.auctionuet.server.persistence.schema.ElectronicsSchema;
-import com.auctionuet.server.persistence.schema.ArtSchema;
-import com.auctionuet.server.persistence.schema.VehicleSchema;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class AuctionService {
@@ -30,52 +27,16 @@ public class AuctionService {
         this.auctionManager = AuctionManager.getInstance();
     }
 
-    public ItemSchema createItem(User seller, Map<String, Object> itemData) throws AuctionException, IllegalArgumentException {
+    public ItemSchema createItem(User seller, ItemDTO itemDTO) throws AuctionException, IllegalArgumentException {
         if (!seller.hasPermission("CREATE_ITEM")) {
             throw new AuctionException("Không có quyền CREATE_ITEM");
         }
-        
-        String name = (String) itemData.get("name");
-        Double startingPrice = null;
-        Object spObj = itemData.get("startingPrice");
-        if (spObj instanceof Number) {
-            startingPrice = ((Number) spObj).doubleValue();
-        } else if (spObj instanceof String) {
-            startingPrice = Double.parseDouble((String) spObj);
-        }
 
-        ItemType type = ItemType.valueOf(itemData.getOrDefault("type", "ELECTRONICS").toString());
-        
-        if (name == null || name.isEmpty() || startingPrice == null || startingPrice <= 0) {
+        if (itemDTO.getName() == null || itemDTO.getName().isEmpty() || itemDTO.getStartingPrice() <= 0) {
             throw new IllegalArgumentException("Dữ liệu item không hợp lệ");
         }
 
-        String id = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now();
-        String description = (String) itemData.get("description");
-        String imageUrl = (String) itemData.get("imageUrl");
-        String condition = (String) itemData.get("condition");
-
-        ItemSchema schema;
-        if (type == ItemType.ELECTRONICS) {
-            String brand = (String) itemData.get("brand");
-            int warranty = itemData.containsKey("warrantyMonths") ? Integer.parseInt(itemData.get("warrantyMonths").toString()) : 0;
-            schema = new ElectronicsSchema(id, now, now, name, description, startingPrice, type, seller.getId(), imageUrl, condition, 0, brand, warranty);
-        } else if (type == ItemType.ART) {
-            String artist = (String) itemData.get("artist");
-            int year = itemData.containsKey("year") ? Integer.parseInt(itemData.get("year").toString()) : 0;
-            String medium = (String) itemData.get("medium");
-            schema = new ArtSchema(id, now, now, name, description, startingPrice, type, seller.getId(), imageUrl, condition, 0, artist, year, medium);
-        } else if (type == ItemType.VEHICLE) {
-            String make = (String) itemData.get("make");
-            String model = (String) itemData.get("model");
-            int mileage = itemData.containsKey("mileage") ? Integer.parseInt(itemData.get("mileage").toString()) : 0;
-            int vehicleYear = itemData.containsKey("vehicleYear") ? Integer.parseInt(itemData.get("vehicleYear").toString()) : 0;
-            schema = new VehicleSchema(id, now, now, name, description, startingPrice, type, seller.getId(), imageUrl, condition, 0, make, model, mileage, vehicleYear);
-        } else {
-            throw new IllegalArgumentException("Loại item không được hỗ trợ");
-        }
-
+        ItemSchema schema = ItemMapper.toNewSchema(itemDTO, seller.getId());
         itemDAO.save(schema);
         return schema;
     }

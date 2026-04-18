@@ -5,6 +5,8 @@ import com.auctionuet.server.domain.enums.ItemType;
 import com.auctionuet.server.domain.enums.UserRole;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
+import com.auctionuet.server.mapper.ItemMapper;
+import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
@@ -66,16 +68,18 @@ public class AuctionServiceTest {
         }
     }
 
+    private ItemDTO createElectronicsDTO() {
+        Map<String, Object> extra = new HashMap<>();
+        extra.put("brand", "Samsung");
+        return new ItemDTO(null, "Phone", null, 500.0, ItemType.ELECTRONICS, null, null, null, extra);
+    }
+
     @Test
     public void testCreateItemBySeller() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        data.put("brand", "Samsung");
+        ItemDTO dto = createElectronicsDTO();
 
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemSchema item = auctionService.createItem(seller, dto);
         assertNotNull(item);
         assertEquals("Phone", item.getName());
         assertEquals("seller1", item.getSellerId());
@@ -87,24 +91,18 @@ public class AuctionServiceTest {
     @Test
     public void testCreateItemByBidder() {
         User bidder = new MockUser("bidder1", "bidder", null, false);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
+        ItemDTO dto = createElectronicsDTO();
 
         assertThrows(AuctionException.class, () -> {
-            auctionService.createItem(bidder, data);
+            auctionService.createItem(bidder, dto);
         });
     }
 
     @Test
     public void testCreateAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         assertNotNull(auction);
@@ -116,11 +114,8 @@ public class AuctionServiceTest {
     public void testCreateAuctionWrongOwner() throws Exception {
         User seller1 = new MockUser("seller1", "seller1", null, true);
         User seller2 = new MockUser("seller2", "seller2", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller1, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller1, dto);
 
         assertThrows(AuctionException.class, () -> {
             auctionService.createAuction(seller2, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
@@ -130,11 +125,8 @@ public class AuctionServiceTest {
     @Test
     public void testStartAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());
@@ -146,11 +138,8 @@ public class AuctionServiceTest {
     @Test
     public void testStartAuctionAlreadyRunning() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());
@@ -163,11 +152,8 @@ public class AuctionServiceTest {
     @Test
     public void testGetAuctions() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller, dto);
 
         auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 2", "Desc");
@@ -180,11 +166,8 @@ public class AuctionServiceTest {
     @Test
     public void testEndAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", null, true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Phone");
-        data.put("startingPrice", 500.0);
-        data.put("type", "ELECTRONICS");
-        ItemSchema item = auctionService.createItem(seller, data);
+        ItemDTO dto = createElectronicsDTO();
+        ItemSchema item = auctionService.createItem(seller, dto);
 
         AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
         auctionService.startAuction(seller, auction.getId());
