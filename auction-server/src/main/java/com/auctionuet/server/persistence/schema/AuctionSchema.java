@@ -14,7 +14,7 @@ public class AuctionSchema extends BaseSchema {
     private double highestBid;
     private String winnerId;
 
-    protected AuctionSchema() {
+    public AuctionSchema() {
     }
 
     public AuctionSchema(String id, LocalDateTime createdAt, LocalDateTime updatedAt,

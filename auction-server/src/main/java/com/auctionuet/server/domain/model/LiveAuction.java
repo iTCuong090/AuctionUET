@@ -119,9 +119,11 @@ public class LiveAuction {
     public String getCurrentWinnerId() {
         return currentWinnerId;
     }
-
-    // tạo bản sao list để ko ai sửa được list
     public List<BidRecord> getBidHistory() {
         return new ArrayList<>(bidHistory);
+    }
+
+    public void setStatus(AuctionStatus status) {
+        this.status = status;
     }
 }

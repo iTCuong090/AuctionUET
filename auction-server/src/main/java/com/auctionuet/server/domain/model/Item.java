@@ -2,7 +2,7 @@ package com.auctionuet.server.domain.model;
 
 import com.auctionuet.server.domain.enums.ItemType;
 
-public abstract class Item {
+public class Item {
     private final String id;            // ID sản phẩm (liên kết với ItemSchema.id)
     private final String name;          // Tên sản phẩm
     private final String description;   // Mô tả
