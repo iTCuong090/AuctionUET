@@ -1,14 +1,21 @@
 package com.auctionuet.client.view;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+
 import java.util.HashMap;
 import java.util.Map;
 
+// Import các class mạng và dữ liệu
+import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.model.ItemDTO;
+import com.auctionuet.client.network.ItemClient;
+
 public class CreateItemController {
 
-    // --- Khai báo móc nối FXML ---
+    // --- Khai báo FXML ---
     @FXML private ComboBox<String> typeComboBox;
     @FXML private ComboBox<String> conditionComboBox;
     @FXML private TextField nameField, priceField, imageUrlField;
@@ -16,7 +23,7 @@ public class CreateItemController {
     @FXML private Label statusLabel;
     @FXML private Button submitBtn;
 
-    // Các VBox chứa form động
+    // Các Box chứa Form động
     @FXML private VBox electronicsBox, artBox, vehicleBox;
 
     // Các trường dữ liệu động
@@ -26,51 +33,40 @@ public class CreateItemController {
 
     @FXML
     public void initialize() {
-        // 1. Nạp đạn cho các ComboBox
+        // Nạp dữ liệu cho ComboBox
         typeComboBox.getItems().addAll("ELECTRONICS", "ART", "VEHICLE");
         conditionComboBox.getItems().addAll("NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR");
 
-        // 2. Lắng nghe sự kiện: Khách chọn Loại hàng nào thì đổi Form đó
+        // Lắng nghe đổi Form động
         typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             switchDynamicForm(newValue);
         });
     }
 
-    // TUYỆT CHIÊU BIẾN HÌNH FORM
     private void switchDynamicForm(String type) {
-        // Lột sạch (Ẩn hết đi)
-        hideBox(electronicsBox);
-        hideBox(artBox);
-        hideBox(vehicleBox);
+        // Tắt hết
+        electronicsBox.setVisible(false); electronicsBox.setManaged(false);
+        artBox.setVisible(false); artBox.setManaged(false);
+        vehicleBox.setVisible(false); vehicleBox.setManaged(false);
 
         if (type == null) return;
 
-        // Mặc áo mới (Hiện cái form tương ứng lên)
+        // Bật cái tương ứng
         switch (type) {
-            case "ELECTRONICS": showBox(electronicsBox); break;
-            case "ART":         showBox(artBox);         break;
-            case "VEHICLE":     showBox(vehicleBox);     break;
+            case "ELECTRONICS": electronicsBox.setVisible(true); electronicsBox.setManaged(true); break;
+            case "ART":         artBox.setVisible(true); artBox.setManaged(true); break;
+            case "VEHICLE":     vehicleBox.setVisible(true); vehicleBox.setManaged(true); break;
         }
     }
 
-    // Hàm phụ trợ Ẩn/Hiện đỉnh cao
-    private void hideBox(VBox box) {
-        box.setVisible(false);
-        box.setManaged(false); // Gỡ nó ra khỏi luồng Layout để khỏi chiếm chỗ
-    }
-
-    private void showBox(VBox box) {
-        box.setVisible(true);
-        box.setManaged(true);  // Nhét nó lại vào luồng Layout
-    }
-
+    // Gắn hàm này vào sự kiện onAction của cái Nút bấm trên Scene Builder
     @FXML
     public void handleSubmit() {
-        // 1. Validate (Kiểm tra lởm)
         String type = typeComboBox.getValue();
         String name = nameField.getText();
         String priceStr = priceField.getText();
 
+        // 1. Kiểm tra lởm (Validate)
         if (type == null || name.isBlank() || priceStr.isBlank()) {
             showError("Lỗi: Vui lòng nhập Tên, Giá và Chọn loại sản phẩm!");
             return;
@@ -85,7 +81,7 @@ public class CreateItemController {
             return;
         }
 
-        // 2. Đóng gói hàng hóa vào 1 cái Map (Chuẩn bị gửi cho Server)
+        // 2. Gói dữ liệu theo chuẩn ItemDTO của Server
         Map<String, Object> itemData = new HashMap<>();
         itemData.put("type", type);
         itemData.put("name", name);
@@ -94,37 +90,73 @@ public class CreateItemController {
         itemData.put("condition", conditionComboBox.getValue());
         itemData.put("imageUrl", imageUrlField.getText());
 
-        // Quét thêm các trường động tùy theo Loại hàng
+        Map<String, Object> extraFields = new HashMap<>();
         switch (type) {
             case "ELECTRONICS":
-                itemData.put("brand", brandField.getText());
-                itemData.put("warrantyMonths", warrantyField.getText()); // Tạm để String, sau Server tự parse
+                extraFields.put("brand", brandField.getText());
+                extraFields.put("warrantyMonths", warrantyField.getText());
                 break;
             case "ART":
-                itemData.put("artist", artistField.getText());
-                itemData.put("year", artYearField.getText());
-                itemData.put("medium", mediumField.getText());
+                extraFields.put("artist", artistField.getText());
+                extraFields.put("year", artYearField.getText());
+                extraFields.put("medium", mediumField.getText());
                 break;
             case "VEHICLE":
-                itemData.put("make", makeField.getText());
-                itemData.put("model", modelField.getText());
-                itemData.put("mileage", mileageField.getText());
-                itemData.put("year", vehicleYearField.getText());
+                extraFields.put("make", makeField.getText());
+                extraFields.put("model", modelField.getText());
+                extraFields.put("mileage", mileageField.getText());
+                extraFields.put("year", vehicleYearField.getText());
                 break;
         }
+        itemData.put("extraFields", extraFields);
 
-        // 3. Nửa đầu tuần: In ra Console test thử trước
-        System.out.println("==== DỮ LIỆU CHUẨN BỊ GỬI LÊN SERVER ====");
-        itemData.forEach((key, value) -> System.out.println(key + " : " + value));
+        // 3. GỌI NETWORK THEO YÊU CẦU C.3
+        String currentToken = ClientSession.getInstance().getToken();
 
-        statusLabel.setText("✅ Thu thập dữ liệu thành công! (Xem Console)");
-        statusLabel.setStyle("-fx-text-fill: #2ecc71;"); // Đổi màu xanh lá
+        if (currentToken == null || currentToken.isEmpty()) {
+            showError("Lỗi: Bạn chưa đăng nhập!");
+            return;
+        }
 
-        // TODO (Nửa sau tuần): Gọi ItemClient.createItem() ở đây
+        // Disable nút bấm và hiện dòng trạng thái
+        submitBtn.setDisable(true);
+        statusLabel.setText("⏳ Đang gửi dữ liệu lên Server...");
+        statusLabel.setStyle("-fx-text-fill: #f39c12;"); // Màu cam
+
+        // Ném việc gọi mạng vào luồng phụ
+        new Thread(() -> {
+            try {
+                // CHÍNH LÀ CHỖ NÀY ĐÂY: Controller gọi hàm createItem của ItemClient
+                ItemClient client = new ItemClient();
+                ItemDTO result = client.createItem(currentToken, itemData);
+
+                // Gửi thành công thì nhờ luồng chính cập nhật giao diện
+                Platform.runLater(() -> {
+                    statusLabel.setText("✅ Đăng sản phẩm thành công! ID: " + result.getId());
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;"); // Màu xanh lá
+
+                    // Reset form nếu muốn
+                    nameField.clear();
+                    priceField.clear();
+                    descArea.clear();
+                });
+
+            } catch (Exception e) {
+                // Có lỗi (Mất mạng, Server chửi...) thì báo đỏ
+                Platform.runLater(() -> {
+                    showError(e.getMessage());
+                });
+            } finally {
+                // Dù thành công hay thất bại cũng phải nhả cái nút bấm ra
+                Platform.runLater(() -> {
+                    submitBtn.setDisable(false);
+                });
+            }
+        }).start();
     }
 
     private void showError(String msg) {
         statusLabel.setText("❌ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #e94560;"); // Đổi màu đỏ
+        statusLabel.setStyle("-fx-text-fill: #e94560;"); // Màu đỏ
     }
 }
