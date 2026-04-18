@@ -6,7 +6,6 @@ import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.persistence.schema.*;
 import com.auctionuet.server.util.IdGenerator;
 
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +21,7 @@ public class ItemMapper {
         );
     }
 
-    // TO DTO
+    // TO DTO (Schema → DTO, chiều ra cho client xem)
     public static ItemDTO toDTO(ItemSchema schema, String sellerUsername) {
         Map<String, Object> extraFields = new HashMap<>();
 
@@ -47,44 +46,102 @@ public class ItemMapper {
         );
     }
 
-    public static ItemSchema toNewSchema(Map<String, Object> data, String sellerId) {
-        String typeStr = (String) data.get("type");
-        ItemType type = ItemType.valueOf(typeStr);
+    // FROM REQUEST DATA (Map → DTO, chiều vào từ client gửi lên)
+    public static ItemDTO fromRequestData(Map<String, Object> data) {
+        if (data == null) {
+            throw new IllegalArgumentException("Item data không được null");
+        }
 
+        try {
+            String name = (String) data.get("name");
+            String description = (String) data.get("description");
+            String imageUrl = (String) data.get("imageUrl");
+            String condition = (String) data.get("condition");
+
+            double startingPrice = 0;
+            Object spObj = data.get("startingPrice");
+            if (spObj instanceof Number) {
+                startingPrice = ((Number) spObj).doubleValue();
+            } else if (spObj instanceof String) {
+                startingPrice = Double.parseDouble((String) spObj);
+            }
+
+            String typeStr = data.getOrDefault("type", "ELECTRONICS").toString();
+            ItemType type;
+            try {
+                type = ItemType.valueOf(typeStr);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Loại item không hợp lệ: " + typeStr);
+            }
+
+            // Thu thập extra fields theo loại item
+            Map<String, Object> extraFields = new HashMap<>();
+            switch (type) {
+                case ELECTRONICS -> {
+                    extraFields.put("brand", data.get("brand"));
+                    extraFields.put("warrantyMonths", data.get("warrantyMonths"));
+                }
+                case ART -> {
+                    extraFields.put("artist", data.get("artist"));
+                    extraFields.put("year", data.get("year"));
+                    extraFields.put("medium", data.get("medium"));
+                }
+                case VEHICLE -> {
+                    extraFields.put("make", data.get("make"));
+                    extraFields.put("model", data.get("model"));
+                    extraFields.put("mileage", data.get("mileage"));
+                    extraFields.put("vehicleYear", data.get("vehicleYear"));
+                }
+            }
+
+            return new ItemDTO(
+                    null, name, description, startingPrice, type,
+                    null, imageUrl, condition, extraFields
+            );
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException("Sai kiểu dữ liệu trong item data: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Giá trị số không hợp lệ: " + e.getMessage());
+        }
+    }
+
+    // TO SCHEMA (DTO → Schema, tự sinh id/timestamps, logic extraFields ở đây)
+    public static ItemSchema toNewSchema(ItemDTO dto, String sellerId) {
         String id = IdGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
-        String name = (String) data.get("name");
-        String description = (String) data.get("description");
-        double startingPrice = ((Number) data.get("startingPrice")).doubleValue();
-        String imageUrl = (String) data.getOrDefault("imageUrl", "");
-        String condition = (String) data.getOrDefault("condition", "GOOD");
+        ItemType type = dto.getType();
+
+        Map<String, Object> extra = dto.getExtraFields();
+        if (extra == null) {
+            extra = new HashMap<>();
+        }
 
         return switch (type) {
             case ELECTRONICS -> new ElectronicsSchema(
-                    id, now, now, name, description, startingPrice, type, sellerId,
-                    imageUrl, condition, 0,
-                    (String) data.getOrDefault("brand", ""),
-                    data.containsKey("warrantyMonths")
-                            ? ((Number) data.get("warrantyMonths")).intValue() : 0
+                    id, now, now,
+                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    (String) extra.getOrDefault("brand", ""),
+                    extra.containsKey("warrantyMonths")
+                            ? ((Number) extra.get("warrantyMonths")).intValue() : 0
             );
-
             case ART -> new ArtSchema(
-                    id, now, now, name, description, startingPrice, type, sellerId,
-                    imageUrl, condition, 0,
-                    (String) data.getOrDefault("artist", ""),
-                    data.containsKey("year") ? ((Number) data.get("year")).intValue() : 0,
-                    (String) data.getOrDefault("medium", "")
+                    id, now, now,
+                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    (String) extra.getOrDefault("artist", ""),
+                    extra.containsKey("year") ? ((Number) extra.get("year")).intValue() : 0,
+                    (String) extra.getOrDefault("medium", "")
             );
-
             case VEHICLE -> new VehicleSchema(
-                    id, now, now, name, description, startingPrice, type, sellerId,
-                    imageUrl, condition, 0,
-                    (String) data.getOrDefault("make", ""),
-                    (String) data.getOrDefault("model", ""),
-                    data.containsKey("mileage") ? ((Number) data.get("mileage")).intValue() : 0,
-                    data.containsKey("vehicleYear") ? ((Number) data.get("vehicleYear")).intValue() : 0
+                    id, now, now,
+                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    (String) extra.getOrDefault("make", ""),
+                    (String) extra.getOrDefault("model", ""),
+                    extra.containsKey("mileage") ? ((Number) extra.get("mileage")).intValue() : 0,
+                    extra.containsKey("vehicleYear") ? ((Number) extra.get("vehicleYear")).intValue() : 0
             );
         };
     }
 }
-
