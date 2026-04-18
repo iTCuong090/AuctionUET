@@ -1,13 +1,12 @@
 package com.auctionuet.client.model;
-
+import com.auctionuet.client.network.protocol.UserRole;
 public class ClientSession {
     // Biến lưu trữ duy nhất (Singleton)
     private static ClientSession instance;
 
     // Các "hộc tủ" chứa dữ liệu
     private String token;
-    private String username;
-    private String role; // "BIDDER", "SELLER", "ADMIN"
+    private UserDTO currentUser; // ĐÃ ĐỔI: Dùng UserDTO thay vì các chuỗi rời rạc
 
     // Chặn không cho tạo instance mới từ bên ngoài
     private ClientSession() {}
@@ -21,38 +20,21 @@ public class ClientSession {
     }
 
     // ==========================================
-    // GETTER VÀ SETTER ĐẦY ĐỦ CHO TỪNG BIẾN
+    // GETTER VÀ SETTER
     // ==========================================
 
     public String getToken() {
         return token;
     }
 
-    public void setToken(String token) {
+    public UserDTO getCurrentUser() {
+        return currentUser;
+    }
+
+    // Hàm gộp lúc đăng nhập thành công
+    public void login(String token, UserDTO user) {
         this.token = token;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    // Hàm gộp của ông (tôi vẫn giữ lại phòng khi ông lười, muốn set 3 cái cùng lúc)
-    public void setSession(String token, String username, String role) {
-        this.token = token;
-        this.username = username;
-        this.role = role;
+        this.currentUser = user;
     }
 
     // ==========================================
@@ -60,7 +42,12 @@ public class ClientSession {
     // ==========================================
     public void clearSession() {
         this.token = null;
-        this.username = null;
-        this.role = null;
+        this.currentUser = null;
+    }
+
+    // Kiểm tra Role bằng Enum cực kỳ an toàn
+    public boolean isSeller() {
+        if (currentUser == null || currentUser.getRole() == null) return false;
+        return currentUser.getRole() == UserRole.SELLER;
     }
 }

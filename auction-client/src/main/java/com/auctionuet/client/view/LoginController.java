@@ -6,8 +6,10 @@ import com.auctionuet.client.network.ServerConnection;
 import com.auctionuet.client.network.AuthClient;
 import com.auctionuet.client.network.protocol.Response;
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.model.UserDTO;
 
 // Import thư viện bóc tách JSON
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -22,59 +24,50 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // 1. Kiểm tra lởm trên máy khách
         if (username.isBlank() || password.isBlank()) {
             errorLabel.setText("Lỗi: Không được để trống!");
             errorLabel.setVisible(true);
             return;
         }
 
-        // 2. Bật chế độ chờ
         errorLabel.setText("Đang kết nối Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         loginButton.setDisable(true);
 
-        // 3. Ném việc cho Background Thread
         new Thread(() -> {
             try {
-                // Mở ống nước
                 ServerConnection.getInstance().connect("localhost", 8888);
-
-                // Gọi AuthClient mang hàng đi
                 AuthClient client = new AuthClient();
                 Response res = client.login(username, password);
 
-                // 4. Nhận kết quả và đẩy lên giao diện
                 javafx.application.Platform.runLater(() -> {
                     if ("OK".equals(res.getStatus())) {
                         try {
-                            // Lấy cục data Server trả về
                             String dataStr = res.getData().toString();
+                            Gson gson = new Gson();
 
-                            // ==========================================
-                            // 5. CỖ MÁY BÓC TÁCH DỮ LIỆU THÔNG MINH
-                            // ==========================================
-
-                            // Nếu là FakeServer (Nó chỉ nhả ra chuỗi "token-gia-vo-day" chứ không phải ngoặc nhọn JSON)
+                            // NẾU DÙNG MOCK DATA (Server chưa code xong)
                             if (!dataStr.trim().startsWith("{")) {
-                                ClientSession.getInstance().setToken(dataStr);
-                                ClientSession.getInstance().setUsername(username); // Lấy tên ông vừa nhập vào ô text
-                                ClientSession.getInstance().setRole("SELLER");     // Ép cứng role để test UI
-                                System.out.println("⚠️ CẢNH BÁO: Đang dùng FakeServer. Tự động mock data cho UI!");
+                                // Tự nặn ra một cái JSON ảo có role SELLER để qua cửa
+                                String mockJson = "{\"username\":\"" + username + "\", \"role\":\"SELLER\"}";
+                                UserDTO mockUser = gson.fromJson(mockJson, UserDTO.class);
+
+                                ClientSession.getInstance().login(dataStr, mockUser);
+                                System.out.println("⚠️ CẢNH BÁO: Đang dùng FakeServer. Tự động mock data!");
                             }
-                            // Nếu là Server Thật (Trả về JSON chuẩn có ngoặc nhọn { })
+                            // NẾU LÀ SERVER THẬT
                             else {
                                 JsonObject dataObj = JsonParser.parseString(dataStr).getAsJsonObject();
+                                String exactToken = dataObj.get("token").getAsString();
 
-                                ClientSession.getInstance().setToken(dataObj.get("token").getAsString());
-                                ClientSession.getInstance().setUsername(dataObj.get("username").getAsString());
-                                ClientSession.getInstance().setRole(dataObj.get("role").getAsString());
+                                // Ép thẳng chuỗi JSON thành UserDTO (Gson sẽ tự động bỏ qua field 'token' không liên quan)
+                                UserDTO loggedInUser = gson.fromJson(dataStr, UserDTO.class);
 
-                                System.out.println("✅ Server Thật - Đăng nhập thành công! User: " + ClientSession.getInstance().getUsername());
+                                ClientSession.getInstance().login(exactToken, loggedInUser);
+                                System.out.println("✅ Server Thật - Đăng nhập thành công! Role: " + loggedInUser.getRole());
                             }
 
-                            // Chuyển sang màn hình Dashboard
                             SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
 
                         } catch (Exception ex) {
@@ -85,7 +78,6 @@ public class LoginController {
                         }
 
                     } else {
-                        // Trả về ERROR thì hiện lời chửi của Server
                         errorLabel.setText("❌ " + res.getMessage());
                         errorLabel.setStyle("-fx-text-fill: red;");
                     }
@@ -93,7 +85,6 @@ public class LoginController {
                 });
 
             } catch (Exception e) {
-                // Nếu Server chưa bật
                 javafx.application.Platform.runLater(() -> {
                     errorLabel.setText("❌ Không tìm thấy Server. Hãy kiểm tra lại kết nối!");
                     errorLabel.setStyle("-fx-text-fill: red;");

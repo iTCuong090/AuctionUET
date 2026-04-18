@@ -7,6 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.model.UserDTO;
 
 import java.io.IOException;
 
@@ -20,71 +21,74 @@ public class DashboardController {
 
     @FXML
     public void initialize() {
-        // 1. Hiển thị tên người dùng lên Header
+        // 1. Lấy thông tin User từ Session mới
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
 
-        String name = ClientSession.getInstance().getUsername();
-        String role = ClientSession.getInstance().getRole();
-        userNameLabel.setText("◎ " + name + " (" + role + ")");
+        if (currentUser != null) {
+            String name = currentUser.getUsername();
+            // Lấy tên của Role từ Enum
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().name() : "UNKNOWN";
+            userNameLabel.setText("◎ " + name + " (" + roleName + ")");
+        } else {
+            userNameLabel.setText("◎ Guest");
+        }
 
-        // 2. Phân quyền: Ẩn các nút không thuộc về Role
-        setupPermissions(role);
+        // 2. Phân quyền: Ẩn các nút dựa trên Role (Test D.1, D.2)
+        setupPermissions();
 
-        // 3. Mặc định vừa vào thì hiện màn hình Home hoặc Danh sách đấu giá
+        // 3. Mặc định vừa vào thì hiện màn hình Danh sách đấu giá
         loadView("/fxml/AuctionListView.fxml");
 
-        // 4. Gắn sự kiện cho các nút
-        btnHome.setOnAction(e -> loadView("/fxml/HomeView.fxml"));
-        btnMyItems.setOnAction(e -> loadView("/fxml/MyItemsView.fxml"));
-        btnCreateAuction.setOnAction(e -> loadView("/fxml/CreateAuctionView.fxml"));
-        btnAuctionList.setOnAction(e -> loadView("/fxml/AuctionListView.fxml"));
-        btnProfile.setOnAction(e -> loadView("/fxml/ProfileView.fxml"));
-        btnLogout.setOnAction(e -> handleLogout());
         // 4. Gắn sự kiện cho các nút (Bấm vào đâu thì sáng nút đó)
         btnHome.setOnAction(e -> {
             loadView("/fxml/HomeView.fxml");
-            setActiveButton(btnHome); // Sáng nút Home
+            setActiveButton(btnHome);
         });
 
         btnMyItems.setOnAction(e -> {
-            loadView("/fxml/MyItemsView.fxml");
-            setActiveButton(btnMyItems); // Sáng nút My Items
+            loadView("/fxml/CreateItemView.fxml"); // Đổi thành CreateItemView tạm vì MyItemsView chưa làm
+            setActiveButton(btnMyItems);
         });
 
         btnCreateAuction.setOnAction(e -> {
             loadView("/fxml/CreateAuctionView.fxml");
-            setActiveButton(btnCreateAuction); // Sáng nút Create
+            setActiveButton(btnCreateAuction);
         });
 
         btnAuctionList.setOnAction(e -> {
             loadView("/fxml/AuctionListView.fxml");
-            setActiveButton(btnAuctionList); // Sáng nút Auction List
+            setActiveButton(btnAuctionList);
         });
 
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
-            setActiveButton(btnProfile); // Sáng nút Profile
+            setActiveButton(btnProfile);
         });
 
         btnLogout.setOnAction(e -> handleLogout());
 
-        // Tùy chọn: Khi vừa bật app lên, ép nó sáng sẵn nút Auction List (vì mặc định đang load màn này)
+        // Ép nó sáng sẵn nút Auction List khi vừa mở lên
         setActiveButton(btnAuctionList);
     }
 
+    private void setupPermissions() {
+        // Sử dụng hàm isSeller() siêu tiện lợi trong ClientSession
+        boolean isSeller = ClientSession.getInstance().isSeller();
 
-    private void setupPermissions(String role) {
-        if ("BIDDER".equals(role)) {
-            // Thằng đi mua thì không được đăng hàng hay tạo phiên
+        if (!isSeller) {
+            // Nếu KHÔNG phải Seller (tức là BIDDER hoặc GUEST) -> Ẩn các nút tạo hàng
             hideButton(btnMyItems);
             hideButton(btnCreateAuction);
         }
-        // Admin hay Seller thì cứ để hiện hết hoặc tùy chỉnh thêm ở đây
+        // Nếu là Seller -> Các nút vẫn hiển thị bình thường (do FXML mặc định là visible)
     }
 
     // Tuyệt chiêu ẩn nút mà không để lại khoảng trống
     private void hideButton(Button btn) {
-        btn.setVisible(false);
-        btn.setManaged(false);
+        if (btn != null) {
+            btn.setVisible(false);
+            btn.setManaged(false);
+        }
     }
 
     // Hàm "thần thánh" để đổi ruột màn hình
@@ -92,10 +96,7 @@ public class DashboardController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
-
-            // Xóa cái cũ, nhét cái mới vào vùng CENTER
             contentArea.getChildren().setAll(root);
-
         } catch (IOException e) {
             System.err.println("Lỗi load màn hình: " + fxmlPath);
             e.printStackTrace();
@@ -104,21 +105,23 @@ public class DashboardController {
 
     // Tuyệt chiêu đổi màu nút Sidebar
     private void setActiveButton(Button clickedButton) {
-        // 1. Lột sạch áo "active" của tất cả các nút
-        btnHome.getStyleClass().remove("active");
-        btnMyItems.getStyleClass().remove("active");
-        btnCreateAuction.getStyleClass().remove("active");
-        btnAuctionList.getStyleClass().remove("active");
-        btnProfile.getStyleClass().remove("active");
+        // Lột sạch áo "active" của tất cả các nút
+        if (btnHome != null) btnHome.getStyleClass().remove("active");
+        if (btnMyItems != null) btnMyItems.getStyleClass().remove("active");
+        if (btnCreateAuction != null) btnCreateAuction.getStyleClass().remove("active");
+        if (btnAuctionList != null) btnAuctionList.getStyleClass().remove("active");
+        if (btnProfile != null) btnProfile.getStyleClass().remove("active");
 
-        // 2. Khoác áo "active" cho cái nút vừa được bấm (nếu nó chưa có)
+        // Khoác áo "active" cho cái nút vừa được bấm
         if (clickedButton != null && !clickedButton.getStyleClass().contains("active")) {
             clickedButton.getStyleClass().add("active");
         }
     }
+
     private void handleLogout() {
-        // Xóa session và quay về màn hình đăng nhập
-        ClientSession.getInstance().setSession(null, null, null);
+        // Dọn dẹp session bằng hàm mới clearSession() thay vì setSession()
+        ClientSession.getInstance().clearSession();
+        // Quay về đăng nhập
         SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
     }
 }
