@@ -1,4 +1,4 @@
-package com.auctionuet.server;
+package com.auctionuet.server.IntegrationTest;
 
 import java.io.*;
 import java.net.Socket;
