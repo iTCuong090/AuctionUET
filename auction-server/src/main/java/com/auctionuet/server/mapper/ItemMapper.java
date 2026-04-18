@@ -122,15 +122,14 @@ public class ItemMapper {
                     dto.getName(), dto.getDescription(), dto.getStartingPrice(),
                     type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
                     (String) extra.getOrDefault("brand", ""),
-                    extra.containsKey("warrantyMonths")
-                            ? ((Number) extra.get("warrantyMonths")).intValue() : 0
+                    safeInt(extra.get("warrantyMonths"))
             );
             case ART -> new ArtSchema(
                     id, now, now,
                     dto.getName(), dto.getDescription(), dto.getStartingPrice(),
                     type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
                     (String) extra.getOrDefault("artist", ""),
-                    extra.containsKey("year") ? ((Number) extra.get("year")).intValue() : 0,
+                    safeInt(extra.get("year")),
                     (String) extra.getOrDefault("medium", "")
             );
             case VEHICLE -> new VehicleSchema(
@@ -139,9 +138,22 @@ public class ItemMapper {
                     type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
                     (String) extra.getOrDefault("make", ""),
                     (String) extra.getOrDefault("model", ""),
-                    extra.containsKey("mileage") ? ((Number) extra.get("mileage")).intValue() : 0,
-                    extra.containsKey("vehicleYear") ? ((Number) extra.get("vehicleYear")).intValue() : 0
+                    safeInt(extra.get("mileage")),
+                    safeInt(extra.get("vehicleYear"))
             );
         };
+    }
+
+    /**
+     * Safely extract an int from an Object that may be null, a Number, or a String.
+     */
+    private static int safeInt(Object value) {
+        if (value == null) return 0;
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

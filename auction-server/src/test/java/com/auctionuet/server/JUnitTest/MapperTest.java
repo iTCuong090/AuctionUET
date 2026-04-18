@@ -47,7 +47,9 @@ class MapperTest {
                 "startingPrice", 500.0,
                 "artist", "Nghe nhan A"
         );
-        ItemSchema schema = ItemMapper.toNewSchema(data, "seller_id");
+        // Cường refactored: Map → ItemDTO (fromRequestData) → Schema (toNewSchema)
+        ItemDTO dto = ItemMapper.fromRequestData(data);
+        ItemSchema schema = ItemMapper.toNewSchema(dto, "seller_id");
 
         assertTrue(schema instanceof ArtSchema);
         assertEquals("Nghe nhan A", ((ArtSchema)schema).getArtist());

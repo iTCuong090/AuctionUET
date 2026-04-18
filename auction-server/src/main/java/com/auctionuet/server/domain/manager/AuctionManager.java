@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +23,7 @@ public class AuctionManager {
     }
 
     private final Map<String, LiveAuction> liveAuctions = new ConcurrentHashMap<>();
-    private ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     public LiveAuction loadAuction(AuctionSchema schema) {
         LiveAuction auction = AuctionMapper.toDomain(schema);

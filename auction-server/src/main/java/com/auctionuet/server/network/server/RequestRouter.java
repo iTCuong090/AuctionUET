@@ -48,6 +48,14 @@ public class RequestRouter {
 
             // Utils
             case PING:
+                // If token is provided, validate it (used by client to check session)
+                if (request.getToken() != null && !request.getToken().isEmpty()) {
+                    try {
+                        SessionManager.getInstance().validateToken(request.getToken());
+                    } catch (AuthenticationException e) {
+                        return Response.error("Token không hợp lệ hoặc đã hết hạn");
+                    }
+                }
                 return Response.ok("PONG");
 
             default:

@@ -3,6 +3,7 @@ package com.auctionuet.server.IntegrationTest;
 import com.auctionuet.server.network.protocol.Response;
 import org.junit.jupiter.api.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -61,10 +62,12 @@ public class AuctionIntegrationTest {
         assertNotNull(item);
         String itemId = item.get("id").toString();
 
+        String startTime = LocalDateTime.now().plusMinutes(5).toString();
+        String endTime = LocalDateTime.now().plusDays(1).toString();
         Response auctionRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + sToken + "\",\"data\":{\"itemId\":\"" + itemId + "\"}}");
+                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + sToken + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"Auction Test\",\"description\":\"Desc\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
 
-        assertEquals("OK", auctionRes.getStatus());
+        assertEquals("OK", auctionRes.getStatus(), auctionRes.getMessage());
         Map<String, Object> auction = (Map<String, Object>) auctionRes.getData();
         assertNotNull(auction);
         String auctionId = auction.get("id").toString();
@@ -86,7 +89,7 @@ public class AuctionIntegrationTest {
         assertFalse(list.isEmpty());
 
         Response detailRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"GET_AUCTION_DETAIL\",\"token\":\"" + bToken + "\",\"data\":{\"id\":\"" + auctionId + "\"}}");
+                "{\"action\":\"GET_AUCTION_DETAIL\",\"token\":\"" + bToken + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
 
         assertEquals("OK", detailRes.getStatus());
         Map<String, Object> detail = (Map<String, Object>) detailRes.getData();
@@ -134,8 +137,10 @@ public class AuctionIntegrationTest {
 
         String tokenB = registerAndLogin("sellerBBB", "SELLER");
 
+        String startTime = LocalDateTime.now().plusMinutes(5).toString();
+        String endTime = LocalDateTime.now().plusDays(1).toString();
         Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + tokenB + "\",\"data\":{\"itemId\":\"" + itemId + "\"}}");
+                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + tokenB + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"A\",\"description\":\"D\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
 
         assertEquals("ERROR", res.getStatus());
     }
@@ -153,10 +158,12 @@ public class AuctionIntegrationTest {
         assertEquals("OK", itemRes.getStatus());
         String itemId = ((Map<String, Object>) itemRes.getData()).get("id").toString();
 
+        String startTime = LocalDateTime.now().plusMinutes(5).toString();
+        String endTime = LocalDateTime.now().plusDays(1).toString();
         Response auctionRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"itemId\":\"" + itemId + "\"}}");
+                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"Auction\",\"description\":\"Desc\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
 
-        assertEquals("OK", auctionRes.getStatus());
+        assertEquals("OK", auctionRes.getStatus(), auctionRes.getMessage());
         String auctionId = ((Map<String, Object>) auctionRes.getData()).get("id").toString();
 
         TestHelper.sendRawRequest(PORT,
