@@ -1,7 +1,12 @@
 package com.auctionuet.server.network.server;
 
+import com.auctionuet.server.domain.manager.DataManager;
+import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.AuthService;
+import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AuthController;
+import com.auctionuet.server.persistence.dao.AuctionDAO;
+import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 
 import java.io.IOException;
@@ -18,9 +23,22 @@ public class AuctionServer {
     }
     public void start(){
         try {
-            AuthService authService = new AuthService(new UserDAO());
+            // Tạo DAO
+            UserDAO userDAO = DataManager.getInstance().getUserDAO();
+            ItemDAO itemDAO = DataManager.getInstance().getItemDAO();
+            AuctionDAO auctionDAO = DataManager.getInstance().getAuctionDAO();
+
+            // Tạo Service
+            AuthService authService = new AuthService(userDAO);
+            AuctionService auctionService = new AuctionService(itemDAO, auctionDAO);
+
+            // Tạo Controller
             AuthController authController = new AuthController(authService);
-            this.router = new RequestRouter(authController);
+            AuctionController auctionController = new AuctionController(auctionService);
+
+            // Tạo Router
+            RequestRouter router = new RequestRouter(authController, auctionController);
+
             isRunning=true;
             serverSocket=new ServerSocket(port);
             System.out.println("[SERVER] Listening on port " + port);
