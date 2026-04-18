@@ -105,8 +105,25 @@ public class AuctionListController {
         btnDetail.setMaxWidth(Double.MAX_VALUE);
 
         btnDetail.setOnAction(e -> {
-            // TODO: Nửa sau tuần 4, thay đoạn in log này bằng lệnh chuyển trang SceneManager
-            System.out.println("Mở màn hình chi tiết cho Auction ID: " + item.getId());
+            try {
+                // 1. Tải bản vẽ của màn hình Chi tiết (File FXML)
+                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AuctionDetailView.fxml"));
+                javafx.scene.Parent root = loader.load();
+
+                // 2. Tóm lấy thằng Quản lý của phòng VIP (AuctionDetailController)
+                AuctionDetailController detailController = loader.getController();
+
+                // 3. TRUYỀN ID SANG PHÒNG VIP!
+                // (Chính hành động này sẽ làm cái hàm màu xám bên kia SÁNG LÊN!)
+                detailController.setAuctionData(item.getId());
+
+                // 4. Đổi ruột màn hình hiện tại thành màn hình Chi tiết
+                btnDetail.getScene().setRoot(root);
+
+            } catch (Exception ex) {
+                System.out.println("❌ Lỗi chuyển màn hình: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         });
 
         card.getChildren().addAll(title, price, statusBadge, infoBox, btnDetail);
