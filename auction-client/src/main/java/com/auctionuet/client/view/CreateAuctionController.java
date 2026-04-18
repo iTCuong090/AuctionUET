@@ -1,5 +1,6 @@
 package com.auctionuet.client.view;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -8,15 +9,16 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
+// Import DTO và Client mạng
 import com.auctionuet.client.model.ItemDTO;
-import com.auctionuet.client.network.protocol.ItemType;
+import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.client.network.AuctionClient;
 
 public class CreateAuctionController {
 
-    // ĐÃ SỬA: Đổi sang nhận ItemDTO thật
     @FXML private ComboBox<ItemDTO> itemComboBox;
     @FXML private Label previewName, previewPrice, previewType, durationLabel, statusLabel;
     @FXML private TextField titleField;
@@ -26,13 +28,16 @@ public class CreateAuctionController {
 
     @FXML
     public void initialize() {
+        // GỌI API LẤY KHO ĐỒ THẬT KHI VỪA MỞ MÀN HÌNH
         loadMyItems();
 
         itemComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 previewName.setText("Tên: " + newVal.getName());
                 previewPrice.setText(String.format("Giá khởi điểm: %,.0f VNĐ", newVal.getStartingPrice()));
-                previewType.setText("Loại: " + newVal.getType());
+
+                String typeStr = newVal.getType() != null ? newVal.getType().name() : "Chưa rõ";
+                previewType.setText("Loại: " + typeStr);
 
                 if (titleField.getText().isEmpty()) {
                     titleField.setText("Đấu giá: " + newVal.getName());
@@ -102,33 +107,78 @@ public class CreateAuctionController {
             showError("Thời gian kết thúc không hợp lệ!"); return;
         }
 
-        Map<String, Object> requestData = new HashMap<>();
-        requestData.put("itemId", selectedItem.getId());
-        requestData.put("title", title);
-        requestData.put("description", descArea.getText());
-        requestData.put("startTime", start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        requestData.put("endTime", end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) {
+            showError("Lỗi: Bạn chưa đăng nhập!"); return;
+        }
 
-        System.out.println("=== CHUẨN BỊ GỬI REQUEST TẠO AUCTION LÊN SERVER ===");
-        requestData.forEach((k, v) -> System.out.println(k + ": " + v));
+        // Định dạng thời gian chuẩn ISO để gửi Server
+        String startTimeStr = start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String endTimeStr = end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String description = descArea.getText();
 
-        statusLabel.setText("✅ Tạo phiên đấu giá thành công! Đang chuyển trang...");
-        statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+        statusLabel.setText("⏳ Đang tạo phiên đấu giá...");
+        statusLabel.setStyle("-fx-text-fill: #f39c12;"); // Màu cam
+
+        // ==============================================================
+        // GỌI MẠNG TẠO PHIÊN ĐẤU GIÁ (LUỒNG PHỤ)
+        // ==============================================================
+        new Thread(() -> {
+            try {
+                AuctionClient client = new AuctionClient();
+                // Bắn qua mạng theo chuẩn C.2
+                client.createAuction(token, selectedItem.getId(), startTimeStr, endTimeStr, title, description);
+
+                Platform.runLater(() -> {
+                    statusLabel.setText("✅ Tạo phiên đấu giá thành công!");
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;"); // Màu xanh lá
+
+                    // Tạo xong đá văng khách về màn hình Danh sách Đấu giá
+                    SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Lỗi từ Server: " + e.getMessage()));
+            }
+        }).start();
     }
 
     private void showError(String msg) {
         statusLabel.setText("❌ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #e94560;");
+        statusLabel.setStyle("-fx-text-fill: #e94560;"); // Màu đỏ
     }
 
+    // ==============================================================
+    // LẤY DANH SÁCH MÓN HÀNG THẬT TỪ SERVER (THAY CHO MOCK DATA)
+    // ==============================================================
     private void loadMyItems() {
-        ObservableList<ItemDTO> items = FXCollections.observableArrayList();
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) return;
 
-        // Tạo thử vài cái DTO ảo để test UI
-        ItemDTO i1 = new ItemDTO(); i1.setId("I1"); i1.setName("iPhone 15");
-        i1.setStartingPrice(25000000);
+        itemComboBox.setPromptText("⏳ Đang tải kho đồ...");
+        itemComboBox.setDisable(true);
 
-        items.add(i1);
-        itemComboBox.setItems(items);
+        new Thread(() -> {
+            try {
+                ItemClient client = new ItemClient();
+                List<ItemDTO> myItems = client.getMyItems(token);
+
+                Platform.runLater(() -> {
+                    ObservableList<ItemDTO> items = FXCollections.observableArrayList(myItems);
+                    itemComboBox.setItems(items);
+
+                    if (items.isEmpty()) {
+                        itemComboBox.setPromptText("❌ Kho đồ trống. Hãy đăng SP!");
+                    } else {
+                        itemComboBox.setPromptText("✅ Chọn sản phẩm...");
+                    }
+                    itemComboBox.setDisable(false);
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    itemComboBox.setPromptText("❌ Lỗi tải dữ liệu!");
+                    itemComboBox.setDisable(false);
+                });
+            }
+        }).start();
     }
 }
