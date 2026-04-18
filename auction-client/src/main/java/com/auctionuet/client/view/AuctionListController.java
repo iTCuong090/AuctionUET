@@ -114,7 +114,6 @@ public class AuctionListController {
                 AuctionDetailController detailController = loader.getController();
 
                 // 3. TRUYỀN ID SANG PHÒNG VIP!
-                // (Chính hành động này sẽ làm cái hàm màu xám bên kia SÁNG LÊN!)
                 detailController.setAuctionData(item.getId());
 
                 // 4. Đổi ruột màn hình hiện tại thành màn hình Chi tiết
