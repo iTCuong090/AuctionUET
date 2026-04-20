@@ -106,18 +106,32 @@ public class AuctionListController {
 
         btnDetail.setOnAction(e -> {
             try {
-                // 1. Tải bản vẽ của màn hình Chi tiết (File FXML)
+                // 1. Tải bản vẽ của màn hình Chi tiết
                 javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AuctionDetailView.fxml"));
-                javafx.scene.Parent root = loader.load();
+                javafx.scene.Parent detailRoot = loader.load();
 
-                // 2. Tóm lấy thằng Quản lý của phòng VIP (AuctionDetailController)
+                // 2. Tóm lấy thằng Quản lý và truyền ID
                 AuctionDetailController detailController = loader.getController();
-
-                // 3. TRUYỀN ID SANG PHÒNG VIP!
                 detailController.setAuctionData(item.getId());
 
-                // 4. Đổi ruột màn hình hiện tại thành màn hình Chi tiết
-                btnDetail.getScene().setRoot(root);
+                // ==========================================
+                // 3. ĐƯA VÀO GIỮA DASHBOARD (THAY VÌ POPUP)
+                // ==========================================
+                // Bóp lấy cái Khung to nhất của màn hình hiện tại (chính là cái Dashboard)
+                javafx.scene.Parent currentRoot = btnDetail.getScene().getRoot();
+
+                // TH TRƯỜNG HỢP 1: Nếu Dashboard của ông dùng BorderPane làm gốc
+                if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+                    javafx.scene.layout.BorderPane dashboard = (javafx.scene.layout.BorderPane) currentRoot;
+                    // Ném cái màn hình chi tiết vào phân vùng Center
+                    dashboard.setCenter(detailRoot);
+                }
+                // TH TRƯỜNG HỢP 2: Nếu Dashboard dùng StackPane hoặc layout khác
+                else {
+                    System.out.println("⚠️ Dashboard không phải BorderPane, đang dùng cách ghi đè cục bộ...");
+                    // Chỗ này tùy thuộc vào việc ông thiết kế Dashboard FXML như thế nào.
+                    // Nếu code rơi vào dòng này, ông cứ chụp cái file DashboardView.fxml lên đây t chỉ cách nhét chính xác.
+                }
 
             } catch (Exception ex) {
                 System.out.println("❌ Lỗi chuyển màn hình: " + ex.getMessage());
