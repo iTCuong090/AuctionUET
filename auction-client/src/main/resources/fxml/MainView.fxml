@@ -1,22 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">
-    <top>
+<BorderPane prefHeight="600.0" prefWidth="900.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">    <top>
         <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="900.0" spacing="20.0" style="-fx-background-color: #1a252f;" BorderPane.alignment="CENTER">
             <children>
-                <Label text="🔥 VNUBid" textFill="#f1c40f">
+                <StackPane>
+                    <Circle fill="WHITE" radius="28.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="2.0" />
+
+                    <ImageView fitHeight="55.0" fitWidth="55.0" preserveRatio="true">
+                        <image>
+                            <Image url="@../images/UET.png" />
+                        </image>
+                    </ImageView>
+                </StackPane>
+                <Label text="AuctionUET">
                     <font>
                         <Font name="System Bold" size="28.0" />
                     </font>
+                    <textFill>
+                        <LinearGradient endX="1.0" endY="1.0">
+                            <stops>
+                                <Stop>
+                                    <color>
+                                        <Color red="0.0658000037074089" green="0.5460582375526428" blue="0.9399999976158142" />
+                                    </color>
+                                </Stop>
+                                <Stop offset="1.0">
+                                    <color>
+                                        <Color red="1.0" green="1.0" blue="1.0" />
+                                    </color>
+                                </Stop>
+                            </stops>
+                        </LinearGradient>
+                    </textFill>
                 </Label>
                 <HBox alignment="CENTER_RIGHT" prefHeight="70.0" prefWidth="200.0" spacing="15.0" HBox.hgrow="ALWAYS">
                     <children>
@@ -49,8 +73,7 @@
     </top>
 
     <center>
-        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25.0" style="-fx-background-image: url('/images/anhnen.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover; -fx-background-position: center center; -fx-background-color: rgba(236, 240, 241, 0.8);" BorderPane.alignment="CENTER">
-            <children>
+        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25.0" styleClass="hero-section" BorderPane.alignment="CENTER">            <children>
                 <Label fx:id="titleLabel" text="Săn Đồ Ngon - Giá Cực Hời" textFill="#2c3e50">
                     <font>
                         <Font name="System Bold" size="48.0" />
@@ -83,13 +106,13 @@
     <bottom>
         <HBox alignment="BOTTOM_RIGHT" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <children>
-            <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-            <Label alignment="CENTER" contentDisplay="CENTER" text="AuctionUET" translateX="20.0">
-               <font>
-                  <Font name="System Bold" size="15.0" />
-               </font>
-            </Label>
-            <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                <Label alignment="CENTER" contentDisplay="CENTER" text="AuctionUET" translateX="20.0">
+                    <font>
+                        <Font name="System Bold" size="15.0" />
+                    </font>
+                </Label>
+                <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
                 <Label fx:id="versionLabel" text="v1.0" textFill="#7f8c8d">
                     <font>
                         <Font size="10.0" />
@@ -101,4 +124,11 @@
             </padding>
         </HBox>
     </bottom>
+   <effect>
+      <InnerShadow>
+         <color>
+            <Color green="0.6396552324295044" blue="1.0" />
+         </color>
+      </InnerShadow>
+   </effect>
 </BorderPane>

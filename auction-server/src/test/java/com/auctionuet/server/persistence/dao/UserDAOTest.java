@@ -2,6 +2,7 @@ package com.auctionuet.server.persistence.dao;
 
 import com.auctionuet.server.domain.enums.UserRole;
 import com.auctionuet.server.persistence.schema.UserSchema;
+import com.auctionuet.server.persistence.dao.UserDAO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

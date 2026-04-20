@@ -1,4 +1,4 @@
-package com.auctionuet.server;
+package com.auctionuet.server.IntegrationTest;
 
 import com.auctionuet.server.network.protocol.Response;
 import org.junit.jupiter.api.*;

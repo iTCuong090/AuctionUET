@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<ScrollPane fitToWidth="true" prefHeight="600.0" prefWidth="700.0" style="-fx-background-color: #1a1a2e; -fx-background: #1a1a2e; -fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateItemController">
+    <content>
+        <VBox alignment="TOP_CENTER" spacing="15.0" style="-fx-background-color: #1a1a2e;">
+            <padding>
+                <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
+            </padding>
+            <children>
+                <Label text="📦 Đăng sản phẩm mới" textFill="#0cebe8">
+                    <font>
+                        <Font name="System Bold" size="26.0" />
+                    </font>
+                </Label>
+
+                <VBox spacing="5.0">
+                    <Label text="Loại sản phẩm (*)" textFill="#a0a0b0" />
+                    <ComboBox fx:id="typeComboBox" maxWidth="1.999999999" promptText="-- Chọn loại sản phẩm --" styleClass="combo-box" />
+                </VBox>
+
+                <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
+
+                <VBox spacing="5.0">
+                    <Label text="Tên sản phẩm (*)" textFill="#a0a0b0" />
+                    <TextField fx:id="nameField" promptText="Ví dụ: iPhone 15 Pro Max" />
+                </VBox>
+
+                <VBox spacing="5.0">
+                    <Label text="Mô tả chi tiết" textFill="#a0a0b0" />
+                    <TextArea fx:id="descArea" prefHeight="80.0" promptText="Tình trạng xước xát, phụ kiện đi kèm..." styleClass="text-field" wrapText="true" />
+                </VBox>
+
+                <VBox spacing="5.0">
+                    <Label text="Giá khởi điểm (VNĐ) (*)" textFill="#a0a0b0" />
+                    <TextField fx:id="priceField" promptText="Ví dụ: 15000000" />
+                </VBox>
+
+                <VBox spacing="5.0">
+                    <Label text="Tình trạng (*)" textFill="#a0a0b0" />
+                    <ComboBox fx:id="conditionComboBox" maxWidth="1.999999999" promptText="-- Chọn tình trạng --" styleClass="combo-box" />
+                </VBox>
+
+                <VBox spacing="5.0">
+                    <Label text="Link Ảnh (URL)" textFill="#a0a0b0" />
+                    <TextField fx:id="imageUrlField" promptText="https://imgur.com/anh-san-pham.jpg" />
+                </VBox>
+
+                <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
+
+                <Label text="⚡ Thông số kỹ thuật" textFill="#4ecdc4">
+                    <font><Font name="System Bold" size="14.0" /></font>
+                </Label>
+
+                <VBox fx:id="electronicsBox" managed="false" spacing="10.0" visible="false">
+                    <TextField fx:id="brandField" promptText="Thương hiệu (VD: Apple, Samsung)" />
+                    <TextField fx:id="warrantyField" promptText="Số tháng bảo hành (VD: 12)" />
+                </VBox>
+
+                <VBox fx:id="artBox" managed="false" spacing="10.0" visible="false">
+                    <TextField fx:id="artistField" promptText="Tên Nghệ sĩ / Họa sĩ" />
+                    <TextField fx:id="artYearField" promptText="Năm sáng tác (VD: 2020)" />
+                    <TextField fx:id="mediumField" promptText="Chất liệu (VD: Sơn dầu, Màu nước)" />
+                </VBox>
+
+                <VBox fx:id="vehicleBox" managed="false" spacing="10.0" visible="false">
+                    <TextField fx:id="makeField" promptText="Hãng xe (VD: Toyota, Honda)" />
+                    <TextField fx:id="modelField" promptText="Dòng xe (VD: Camry, SH 150i)" />
+                    <TextField fx:id="mileageField" promptText="Số Km đã đi" />
+                    <TextField fx:id="vehicleYearField" promptText="Năm sản xuất" />
+                </VBox>
+
+                <Label fx:id="statusLabel" text="Vui lòng điền đầy đủ thông tin" textFill="#a0a0b0" />
+                <Button fx:id="submitBtn" mnemonicParsing="false" onAction="#handleSubmit" prefHeight="45.0" prefWidth="200.0" text="Đăng Sản Phẩm" />
+            </children>
+         <effect>
+            <InnerShadow>
+               <color>
+                  <Color green="0.7408047914505005" blue="1.0" />
+               </color>
+            </InnerShadow>
+         </effect>
+        </VBox>
+    </content>
+</ScrollPane>

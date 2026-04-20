@@ -1,4 +1,4 @@
-package com.auctionuet.server;
+package com.auctionuet.server.UnitTest;
 
 import com.auctionuet.server.domain.enums.UserRole;
 import com.auctionuet.server.domain.model.*;
