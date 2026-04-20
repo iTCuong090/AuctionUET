@@ -924,7 +924,7 @@ sequenceDiagram
     LC->>LC: Hiện "Đang kết nối Server..."
     LC->>LC: Tạo background Thread
 
-    rect rgb(40, 40, 60)
+    rect rgba(0, 150, 255, 0.15)
         Note over LC,SC: Background Thread (tránh block UI)
         LC->>AC: login(username, password)
         AC->>AC: Tạo Request(LOGIN, {username, password})
@@ -933,7 +933,7 @@ sequenceDiagram
         SC->>CH: Gửi JSON qua TCP Socket
     end
 
-    rect rgb(40, 60, 40)
+    rect rgba(0, 200, 100, 0.15)
         Note over CH,SM: Server xử lý
         CH->>CH: Deserialize JSON → Request
         CH->>RR: route(request)
@@ -969,7 +969,7 @@ sequenceDiagram
     SC-->>AC: Response object
     AC-->>LC: Response
 
-    rect rgb(60, 40, 40)
+    rect rgba(255, 100, 100, 0.15)
         Note over LC,User: Platform.runLater (UI Thread)
         alt Login thành công
             LC->>LC: Parse token + UserDTO từ response.data
@@ -1004,7 +1004,7 @@ sequenceDiagram
     Seller->>CIC: Nhập tên, mô tả, giá, loại, ảnh → Bấm Tạo
     CIC->>CIC: Validate dữ liệu trên Client
 
-    rect rgb(40, 40, 60)
+    rect rgba(0, 150, 255, 0.15)
         Note over CIC,SC: Background Thread
         CIC->>IC: createItem(token, itemData)
         IC->>IC: Tạo Request(CREATE_ITEM, data, token)
@@ -1012,7 +1012,7 @@ sequenceDiagram
         SC->>CH: Gửi JSON qua TCP Socket
     end
 
-    rect rgb(40, 60, 40)
+    rect rgba(0, 200, 100, 0.15)
         Note over CH,DAO: Server xử lý
         CH->>RR: route(request)
         RR->>RR: switch(CREATE_ITEM)
@@ -1050,7 +1050,7 @@ sequenceDiagram
     SC-->>IC: Response
     IC-->>CIC: Response
 
-    rect rgb(60, 40, 40)
+    rect rgba(255, 100, 100, 0.15)
         Note over CIC,Seller: Platform.runLater
         alt Thành công
             CIC->>CIC: Hiện thông báo "Tạo sản phẩm thành công!"
@@ -1151,7 +1151,7 @@ sequenceDiagram
     AS->>DAO: update(schema) → status = RUNNING
     AS->>AM: loadAuction(schema)
 
-    rect rgb(50, 50, 20)
+    rect rgba(255, 200, 0, 0.15)
         Note over AM,LA: Nạp vào RAM + Schedule auto-end
         AM->>AM: AuctionMapper.toDomain(schema) → LiveAuction
         AM->>AM: liveAuctions.put(id, auction)
