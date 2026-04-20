@@ -56,9 +56,10 @@ public class AuctionController {
 
             // Convert to DTO for response
             ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
-            ItemDTO itemDTO = (itemSchema != null)
-                    ? ItemMapper.toDTO(itemSchema, user.getUsername())
-                    : null;
+            ItemDTO itemDTO = null;
+            if (itemSchema != null) {
+                itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
+            }
             AuctionDTO auctionDTO = AuctionMapper.toDTO(auctionSchema, itemDTO, user.getUsername(), null);
             return Response.ok(auctionDTO);
         } catch (AuthenticationException e) {
