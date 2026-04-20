@@ -5,13 +5,13 @@
   <img src="https://img.shields.io/badge/Architecture-Client--Server-green?style=for-the-badge" />
 </p>
 
-# 🏛️ AuctionUET — Hệ thống đấu giá trực tuyến
+# AuctionUET — Hệ thống đấu giá trực tuyến
 
 > Hệ thống đấu giá trực tuyến (Online Auction System) dựa trên kiến trúc **Client-Server** bằng Java. Ứng dụng mô hình **MVC** (JavaFX), **Design Patterns** (Singleton, Observer, Factory Method), xử lý **đa luồng** (Concurrent Bidding) và cập nhật **thời gian thực** (Realtime Update).
 
 ---
 
-## 📑 Mục lục
+## Mục lục
 
 - [Thành viên nhóm](#-thành-viên-nhóm)
 - [Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
@@ -35,7 +35,7 @@
 
 ---
 
-## ⚙️ Yêu cầu hệ thống
+## Yêu cầu hệ thống
 
 | Thành phần | Phiên bản tối thiểu |
 |------------|---------------------|
@@ -46,7 +46,7 @@
 
 ---
 
-## 🚀 Cách cài đặt & chạy
+## Cách cài đặt & chạy
 
 ```bash
 # 1. Clone repository
@@ -70,7 +70,7 @@ mvn javafx:run
 
 ---
 
-## 📂 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```
 AuctionUET/
@@ -117,9 +117,9 @@ AuctionUET/
 
 ---
 
-## 📊 Bảng phân công nhiệm vụ chi tiết 4 tuần
+## Bảng phân công nhiệm vụ chi tiết 4 tuần
 
-### 📅 Tuần 1 (23/03 – 29/03/2026): Khởi tạo nền tảng
+### Tuần 1 (23/03 – 29/03/2026): Khởi tạo nền tảng
 
 > **Mục tiêu:** Tạo nền móng dự án — Maven multi-module, CI/CD, JavaFX Hello World, Git workflow.
 
@@ -134,46 +134,46 @@ AuctionUET/
 
 ---
 
-### 📅 Tuần 2 (30/03 – 05/04/2026): Xây nền tảng 4 tầng song song — Feature: Auth (Phần 1)
+### Tuần 2 (30/03 – 05/04/2026): Xây nền tảng 4 tầng song song — Feature: Auth (Phần 1)
 
 > **Mục tiêu:** Mỗi người hoàn thành một khối code **độc lập, tự test được** trên branch riêng. Chưa kết nối với nhau.
 
 | Thành viên | Tầng phụ trách | Branch | Nội dung chi tiết | Trạng thái |
 |:----------:|----------------|--------|--------------------|:----------:|
-| **Cường** | 🗄️ Persistence Layer | `feature/tuan-2-cuong-persistence` | `BaseSchema` (abstract, id/timestamps), `UserSchema` (extends BaseSchema), `GsonFactory` (LocalDateTime TypeAdapter, PrettyPrinting), `JsonFileHelper` (readList/writeList generic), `GenericDAO<T>` (interface CRUD), `UserDAO` (implementation + `findByUsername`) | ✅ |
-| **Khánh** | 🌐 Network Protocol + Socket | `feature/tuan-2-khanh-network` | `ActionType` enum (LOGIN, REGISTER, LOGOUT, PING), `Request` / `Response` class, `MessageSerializer` (JSON serialize/deserialize), `AuctionServer` (ServerSocket port 8888), `ClientHandler` (implements Runnable, vòng lặp đọc JSON) | ✅ |
-| **Công** | 🎨 Client GUI | `feature/tuan-2-cong-client-gui` | `LoginView.fxml` + `LoginController` (validate trên client, print console), `RegisterView.fxml` + `RegisterController` (validate email, password ≥ 8 ký tự), `SceneManager` (Singleton, chuyển scene), `styles.css` (dark theme hiện đại) | ✅ |
-| **Anh** | 🏗️ Domain + Mapper + Utils | `feature/tuan-2-anh-domain` | `UserRole` enum, `User` (abstract, immutable, `hasPermission()`), `Bidder`/`Seller`/`Admin` (subclass), `UserDTO`, `UserMapper` (toDomain/toDTO/toNewSchema), `IdGenerator`, `PasswordUtils` (SHA-256 + salt), `ValidationUtils`, custom Exceptions | ✅ |
+| **Cường** | Persistence Layer | `feature/tuan-2-cuong-persistence` | `BaseSchema` (abstract, id/timestamps), `UserSchema` (extends BaseSchema), `GsonFactory` (LocalDateTime TypeAdapter, PrettyPrinting), `JsonFileHelper` (readList/writeList generic), `GenericDAO<T>` (interface CRUD), `UserDAO` (implementation + `findByUsername`) | ✅ |
+| **Khánh** | Network Protocol + Socket | `feature/tuan-2-khanh-network` | `ActionType` enum (LOGIN, REGISTER, LOGOUT, PING), `Request` / `Response` class, `MessageSerializer` (JSON serialize/deserialize), `AuctionServer` (ServerSocket port 8888), `ClientHandler` (implements Runnable, vòng lặp đọc JSON) | ✅ |
+| **Công** | Client GUI | `feature/tuan-2-cong-client-gui` | `LoginView.fxml` + `LoginController` (validate trên client, print console), `RegisterView.fxml` + `RegisterController` (validate email, password ≥ 8 ký tự), `SceneManager` (Singleton, chuyển scene), `styles.css` (dark theme hiện đại) | ✅ |
+| **Anh** | Domain + Mapper + Utils | `feature/tuan-2-anh-domain` | `UserRole` enum, `User` (abstract, immutable, `hasPermission()`), `Bidder`/`Seller`/`Admin` (subclass), `UserDTO`, `UserMapper` (toDomain/toDTO/toNewSchema), `IdGenerator`, `PasswordUtils` (SHA-256 + salt), `ValidationUtils`, custom Exceptions | ✅ |
 
 ---
 
-### 📅 Tuần 3 (06/04 – 12/04/2026): Kết nối hệ thống — Feature: Auth (Phần 2, End-to-End)
+### Tuần 3 (06/04 – 12/04/2026): Kết nối hệ thống — Feature: Auth (Phần 2, End-to-End)
 
 > **Mục tiêu:** Chạy được **MVP hoàn chỉnh**: Mở Client → Login/Register → Server xác thực → Client chuyển sang Dashboard.
 
 | Thành viên | Tầng phụ trách | Branch | Nội dung chi tiết | Trạng thái |
 |:----------:|----------------|--------|--------------------|:----------:|
-| **Cường** | 🔐 AuthService + SessionManager | `feature/tuan-3-cuong-auth-service` | `AuthService` (`login()`: query DAO → verify password → tạo session, `register()`: validate → hash → save), `SessionManager` (Singleton, ConcurrentHashMap token↔User, `createSession`, `validateToken`, `removeSession`, `invalidateByUserId`), `LoginResult` (POJO: token + user) | ✅ |
-| **Khánh** | 🔀 AuthController + Router | `feature/tuan-3-khanh-controller` | `AuthController` (`handleLogin`, `handleRegister`, `handleLogout` — bắt exception, trả Response), `RequestRouter` (switch-case route theo ActionType), cập nhật `ClientHandler` gọi Router | ✅ |
-| **Công** | 📡 Client Network + GUI kết nối | `feature/tuan-3-cong-client-network` | `ServerConnection` (Singleton, TCP socket, `sendRequest` blocking), `AuthClient` (adapter Login/Register/Logout), cập nhật `LoginController`/`RegisterController` (background thread + `Platform.runLater`), `DashboardView.fxml` + `DashboardController` (hiện "Xin chào, {username}"), `ClientSession` | ✅ |
-| **Anh** | 🧪 Integration Test + Error Handling | `feature/tuan-3-anh-integration` | `AuthIntegrationTest` (E2E qua socket: Register → Login → token → Logout), test scenarios (duplicate username, wrong password, non-existent user, invalid JSON, multiple clients, PING), `TestHelper` utility | ✅ |
+| **Cường** | AuthService + SessionManager | `feature/tuan-3-cuong-auth-service` | `AuthService` (`login()`: query DAO → verify password → tạo session, `register()`: validate → hash → save), `SessionManager` (Singleton, ConcurrentHashMap token↔User, `createSession`, `validateToken`, `removeSession`, `invalidateByUserId`), `LoginResult` (POJO: token + user) | ✅ |
+| **Khánh** | AuthController + Router | `feature/tuan-3-khanh-controller` | `AuthController` (`handleLogin`, `handleRegister`, `handleLogout` — bắt exception, trả Response), `RequestRouter` (switch-case route theo ActionType), cập nhật `ClientHandler` gọi Router | ✅ |
+| **Công** | Client Network + GUI kết nối | `feature/tuan-3-cong-client-network` | `ServerConnection` (Singleton, TCP socket, `sendRequest` blocking), `AuthClient` (adapter Login/Register/Logout), cập nhật `LoginController`/`RegisterController` (background thread + `Platform.runLater`), `DashboardView.fxml` + `DashboardController` (hiện "Xin chào, {username}"), `ClientSession` | ✅ |
+| **Anh** | Integration Test + Error Handling | `feature/tuan-3-anh-integration` | `AuthIntegrationTest` (E2E qua socket: Register → Login → token → Logout), test scenarios (duplicate username, wrong password, non-existent user, invalid JSON, multiple clients, PING), `TestHelper` utility | ✅ |
 
 ---
 
-### 📅 Tuần 4 (14/04 – 20/04/2026): Feature: Auction (Sản phẩm, Phiên đấu giá, Phân quyền)
+### Tuần 4 (14/04 – 20/04/2026): Feature: Auction (Sản phẩm, Phiên đấu giá, Phân quyền)
 
 > **Mục tiêu:** Hoàn thiện luồng Auction xuyên suốt: Đăng sản phẩm → Tạo phiên đấu giá → Bắt đầu phiên → Xem danh sách.
 
 | Thành viên | Tầng phụ trách | Branch | Nội dung chi tiết | Trạng thái |
 |:----------:|----------------|--------|--------------------|:----------:|
-| **Cường** | 🗄️ Persistence mở rộng + AuctionService | `feature/tuan-4-cuong-auction-persistence` | `ItemSchema` (abstract) + `ElectronicsSchema` / `ArtSchema` / `VehicleSchema` (subclass), `AuctionSchema`, `BidSchema`, `ItemDAO` (`findBySellerId`), `AuctionDAO` (`findByStatus`, `findBySellerId`), `BidDAO`, `RuntimeTypeAdapterFactory` cho Gson, `AuctionService` (createAuction, startAuction, endAuction, getAuctions), `ItemService` (createItem, getItemsBySellerId), `DataManager` (Singleton, quản lý tất cả DAO), `AuctionManager` (Singleton, quản lý LiveAuction trong RAM + ScheduledExecutorService auto-end) | ✅ |
-| **Khánh** | 🌐 Network mở rộng + Phân quyền | `feature/tuan-4-khanh-auction-network` | Mở rộng `ActionType` (CREATE_ITEM, GET_MY_ITEMS, CREATE_AUCTION, START_AUCTION, GET_AUCTIONS, GET_AUCTION_DETAIL), `AuctionController` (handleCreateAuction, handleStartAuction, handleGetAuctions, handleGetAuctionDetail), `ItemController` (handleCreateItem, handleGetMyItems), cập nhật `RequestRouter` (route tất cả action mới), hệ thống phân quyền (validate token + `hasPermission` trước khi xử lý) | ✅ |
-| **Công** | 🎨 Client GUI Auction + Network | `feature/tuan-4-cong-auction-gui` | `CreateItemView.fxml` + `CreateItemController` (form đăng sản phẩm), `CreateAuctionView.fxml` + `CreateAuctionController` (chọn item, set thời gian), `AuctionListView.fxml` + `AuctionListController` (danh sách phiên đấu giá), `AuctionDetailView.fxml` + `AuctionDetailController`, `ItemClient` + `AuctionClient` (adapter giao tiếp server), Sidebar Navigation | ✅ |
-| **Anh** | 🏗️ Domain mở rộng + Integration Test | `feature/tuan-4-anh-auction-domain` | `ItemType` enum, `AuctionStatus` enum (OPEN, RUNNING, FINISHED, PAID, CANCELED), `Item` model (immutable, phẳng), `LiveAuction` (bidHistory, ReentrantLock, Observer pattern, `placeBid`), `BidRecord` (immutable POJO), `AuctionObserver` (interface: `onBidPlaced`, `onAuctionEnded`), `ItemMapper` / `AuctionMapper` / `BidMapper` (toDomain/toDTO/toNewSchema), `ItemDTO` / `AuctionDTO` / `BidDTO`, Integration test cho Auction flow | ✅ |
+| **Cường** | Persistence mở rộng + AuctionService | `feature/tuan-4-cuong-auction-persistence` | `ItemSchema` (abstract) + `ElectronicsSchema` / `ArtSchema` / `VehicleSchema` (subclass), `AuctionSchema`, `BidSchema`, `ItemDAO` (`findBySellerId`), `AuctionDAO` (`findByStatus`, `findBySellerId`), `BidDAO`, `RuntimeTypeAdapterFactory` cho Gson, `AuctionService` (createAuction, startAuction, endAuction, getAuctions), `ItemService` (createItem, getItemsBySellerId), `DataManager` (Singleton, quản lý tất cả DAO), `AuctionManager` (Singleton, quản lý LiveAuction trong RAM + ScheduledExecutorService auto-end) | ✅ |
+| **Khánh** | Network mở rộng + Phân quyền | `feature/tuan-4-khanh-auction-network` | Mở rộng `ActionType` (CREATE_ITEM, GET_MY_ITEMS, CREATE_AUCTION, START_AUCTION, GET_AUCTIONS, GET_AUCTION_DETAIL), `AuctionController` (handleCreateAuction, handleStartAuction, handleGetAuctions, handleGetAuctionDetail), `ItemController` (handleCreateItem, handleGetMyItems), cập nhật `RequestRouter` (route tất cả action mới), hệ thống phân quyền (validate token + `hasPermission` trước khi xử lý) | ✅ |
+| **Công** | Client GUI Auction + Network | `feature/tuan-4-cong-auction-gui` | `CreateItemView.fxml` + `CreateItemController` (form đăng sản phẩm), `CreateAuctionView.fxml` + `CreateAuctionController` (chọn item, set thời gian), `AuctionListView.fxml` + `AuctionListController` (danh sách phiên đấu giá), `AuctionDetailView.fxml` + `AuctionDetailController`, `ItemClient` + `AuctionClient` (adapter giao tiếp server), Sidebar Navigation | ✅ |
+| **Anh** | Domain mở rộng + Integration Test | `feature/tuan-4-anh-auction-domain` | `ItemType` enum, `AuctionStatus` enum (OPEN, RUNNING, FINISHED, PAID, CANCELED), `Item` model (immutable, phẳng), `LiveAuction` (bidHistory, ReentrantLock, Observer pattern, `placeBid`), `BidRecord` (immutable POJO), `AuctionObserver` (interface: `onBidPlaced`, `onAuctionEnded`), `ItemMapper` / `AuctionMapper` / `BidMapper` (toDomain/toDTO/toNewSchema), `ItemDTO` / `AuctionDTO` / `BidDTO`, Integration test cho Auction flow | ✅ |
 
 ---
 
-### 📊 Tổng hợp đóng góp theo tuần
+### Tổng hợp đóng góp theo tuần
 
 | Thành viên | Tuần 1 | Tuần 2 | Tuần 3 | Tuần 4 | Vai trò xuyên suốt |
 |:----------:|--------|--------|--------|--------|---------------------|
@@ -184,9 +184,9 @@ AuctionUET/
 
 ---
 
-## 📐 Sơ đồ thiết kế lớp UML
+## Sơ đồ thiết kế lớp UML
 
-### 1️⃣ Sơ đồ lớp — Persistence Layer (Schema & DAO)
+### Sơ đồ lớp — Persistence Layer (Schema & DAO)
 
 ```mermaid
 classDiagram
@@ -483,7 +483,7 @@ classDiagram
 
 ---
 
-### 3️⃣ Sơ đồ lớp — Network Layer (Protocol, Controller, Server)
+### Sơ đồ lớp — Network Layer (Protocol, Controller, Server)
 
 ```mermaid
 classDiagram
@@ -602,7 +602,7 @@ classDiagram
 
 ---
 
-### 4️⃣ Sơ đồ lớp — Service & Manager Layer
+### Sơ đồ lớp — Service & Manager Layer
 
 ```mermaid
 classDiagram
@@ -699,7 +699,7 @@ classDiagram
 
 ---
 
-### 5️⃣ Sơ đồ lớp — Client Side
+### Sơ đồ lớp — Client Side
 
 ```mermaid
 classDiagram
@@ -812,7 +812,7 @@ classDiagram
 
 ---
 
-### 6️⃣ Sơ đồ lớp — Mapper & DTO
+### Sơ đồ lớp — Mapper & DTO
 
 ```mermaid
 classDiagram
@@ -899,9 +899,9 @@ classDiagram
 
 ---
 
-## 🔄 Sơ đồ luồng dữ liệu (Data Flow Diagrams)
+## Sơ đồ luồng dữ liệu (Data Flow Diagrams)
 
-### 🔐 Luồng 1: Đăng nhập (Login Flow)
+### Luồng 1: Đăng nhập (Login Flow)
 
 ```mermaid
 sequenceDiagram
@@ -984,7 +984,7 @@ sequenceDiagram
 
 ---
 
-### 📦 Luồng 2: Tạo sản phẩm (Create Item Flow)
+### Luồng 2: Tạo sản phẩm (Create Item Flow)
 
 ```mermaid
 sequenceDiagram
@@ -1063,7 +1063,7 @@ sequenceDiagram
 
 ---
 
-### 🏛️ Luồng 3: Tạo phiên đấu giá (Create Auction Flow)
+### Luồng 3: Tạo phiên đấu giá (Create Auction Flow)
 
 ```mermaid
 sequenceDiagram
@@ -1118,7 +1118,7 @@ sequenceDiagram
 
 ---
 
-### 🚀 Luồng 4: Bắt đầu phiên đấu giá (Start Auction Flow)
+### Luồng 4: Bắt đầu phiên đấu giá (Start Auction Flow)
 
 ```mermaid
 sequenceDiagram
@@ -1170,7 +1170,7 @@ sequenceDiagram
 
 ---
 
-## 🛠️ Công nghệ & Design Patterns sử dụng
+## Công nghệ & Design Patterns sử dụng
 
 ### Công nghệ
 
@@ -1198,6 +1198,6 @@ sequenceDiagram
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
