@@ -25,7 +25,7 @@ public class ItemService {
      * Tạo item mới. Chỉ Seller mới có quyền.
      */
     public ItemSchema createItem(User seller, ItemDTO itemDTO) throws AuctionException, IllegalArgumentException {
-        if (!seller.hasPermission("CREATE_ITEM")) {
+        if (!seller.hasPermission(com.auctionuet.server.domain.enums.Permission.CREATE_ITEM)) {
             throw new AuctionException("Không có quyền CREATE_ITEM");
         }
 

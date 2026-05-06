@@ -1,5 +1,6 @@
 package com.auctionuet.server.domain.model;
 import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.server.domain.enums.Permission;
 
 public abstract class User {
     private final String id;
@@ -16,6 +17,6 @@ public abstract class User {
     public String getUsername() { return username; }
     public UserRole getRole() { return role; }
 
-    public abstract boolean hasPermission(String action);
+    public abstract boolean hasPermission(Permission action);
     public abstract String getDisplayInfo();
 }

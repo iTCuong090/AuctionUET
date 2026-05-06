@@ -29,7 +29,7 @@ public class AuctionService {
     }
 
     public AuctionSchema createAuction(User seller, String itemId, LocalDateTime startTime, LocalDateTime endTime, String title, String description) throws AuctionException {
-        if (!seller.hasPermission("CREATE_AUCTION")) {
+        if (!seller.hasPermission(com.auctionuet.server.domain.enums.Permission.CREATE_AUCTION)) {
             throw new AuctionException("Không có quyền CREATE_AUCTION");
         }
         ItemSchema item = itemService.getItemById(itemId);
