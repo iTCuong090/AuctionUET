@@ -24,12 +24,10 @@ public class AuctionDetailController {
     public void setAuctionData(String auctionId) {
         this.currentAuctionId = auctionId;
         String token = ClientSession.getInstance().getToken();
-
-        // 1. Tạm thời ẩn nút Start đi cho chắc
         btnStartAuction.setVisible(false);
         btnStartAuction.setManaged(false);
 
-        // 2. Gọi mạng lấy thông tin chi tiết
+        // Gọi mạng lấy thông tin chi tiết
         new Thread(() -> {
             try {
                 AuctionClient client = new AuctionClient();
