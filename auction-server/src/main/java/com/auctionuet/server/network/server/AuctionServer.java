@@ -17,13 +17,15 @@ import java.net.Socket;
 
 public class AuctionServer {
     int port;
-    private ServerSocket serverSocket ;
-    private boolean isRunning=false;
+    private ServerSocket serverSocket;
+    private boolean isRunning = false;
     private RequestRouter router;
-    public AuctionServer(int port){
-        this.port=port;
+
+    public AuctionServer(int port) {
+        this.port = port;
     }
-    public void start(){
+
+    public void start() {
         try {
             // Tạo DAO
             UserDAO userDAO = DataManager.getInstance().getUserDAO();
@@ -43,13 +45,13 @@ public class AuctionServer {
             // Tạo Router
             this.router = new RequestRouter(authController, itemController, auctionController);
 
-            isRunning=true;
-            serverSocket=new ServerSocket(port);
+            isRunning = true;
+            serverSocket = new ServerSocket(port);
             System.out.println("[SERVER] Listening on port " + port);
             while (isRunning) {
-                Socket clientSocket = serverSocket.accept();  // blocking
+                Socket clientSocket = serverSocket.accept(); // blocking
                 System.out.println("[SERVER] New client connected: " + clientSocket.getInetAddress());
-                ClientHandler handler = new ClientHandler(clientSocket,this.router);
+                ClientHandler handler = new ClientHandler(clientSocket, this.router);
                 new Thread(handler).start();
             }
         } catch (IOException e) {
@@ -59,6 +61,7 @@ public class AuctionServer {
             }
         }
     }
+
     public void stop() {
         this.isRunning = false;
         try {

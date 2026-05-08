@@ -13,7 +13,8 @@ public class RequestRouter {
     private ItemController itemController;
     private AuctionController auctionController;
 
-    public RequestRouter(AuthController authController, ItemController itemController, AuctionController auctionController) {
+    public RequestRouter(AuthController authController, ItemController itemController,
+            AuctionController auctionController) {
         this.authController = authController;
         this.itemController = itemController;
         this.auctionController = auctionController;

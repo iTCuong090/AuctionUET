@@ -19,6 +19,17 @@ public class LoginController {
     @FXML private Label errorLabel;
     @FXML private javafx.scene.control.Button loginButton;
 
+    // Reference tới MainController cha để chuyển panel
+    private MainController mainController;
+
+    /**
+     * Được gọi bởi MainController sau khi load FXML,
+     * để LoginController có thể yêu cầu chuyển panel.
+     */
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+    }
+
     @FXML
     public void handleLogin() {
         String username = usernameField.getText();
@@ -68,6 +79,7 @@ public class LoginController {
                                 System.out.println("✅ Server Thật - Đăng nhập thành công! Role: " + loggedInUser.getRole());
                             }
 
+                            // CHUYỂN TOÀN BỘ SCENE SANG DASHBOARD
                             SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
 
                         } catch (Exception ex) {
@@ -93,6 +105,16 @@ public class LoginController {
                 });
             }
         }).start();
+    }
+
+    /**
+     * Chuyển panel phải sang RegisterView (không đổi Scene).
+     */
+    @FXML
+    public void handleSwitchToRegister() {
+        if (mainController != null) {
+            mainController.switchToRegister();
+        }
     }
 
     @FXML

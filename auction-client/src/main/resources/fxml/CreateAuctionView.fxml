@@ -7,46 +7,30 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="650.0" prefWidth="700.0" spacing="15.0" style="-fx-background-color: #1a1a2e;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateAuctionController">
+<VBox prefHeight="650.0" prefWidth="700.0" spacing="15.0" styleClass="dark-bg" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateAuctionController">
     <padding>
         <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
     </padding>
     <children>
-        <Label text="⚡ Tạo phiên đấu giá">
+        <Label styleClass="text-heading" text="⚡ Tạo phiên đấu giá">
             <font><Font name="System Bold" size="24.0" /></font>
-         <textFill>
-            <LinearGradient endX="1.0" endY="1.0">
-               <stops>
-                  <Stop>
-                     <color>
-                        <Color red="0.01940000057220459" green="0.7711390256881714" blue="0.9700000286102295" />
-                     </color>
-                  </Stop>
-                  <Stop offset="1.0">
-                     <color>
-                        <Color red="1.0" green="1.0" blue="1.0" />
-                     </color>
-                  </Stop>
-               </stops>
-            </LinearGradient>
-         </textFill>
         </Label>
 
         <VBox spacing="5.0">
             <children>
-                <Label text="Chọn sản phẩm (*)" textFill="#a0a0b0" />
+                <Label styleClass="text-secondary" text="Chọn sản phẩm (*)" />
                 <ComboBox fx:id="itemComboBox" maxWidth="1.999999999" promptText="-- Bấm để chọn sản phẩm của bạn --" styleClass="combo-box" />
             </children>
         </VBox>
 
-        <VBox fx:id="itemPreviewBox" spacing="8.0" style="-fx-border-color: #0f3460; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #16213e; -fx-background-radius: 8;">
+        <VBox fx:id="itemPreviewBox" spacing="8.0" styleClass="card-bg" style="-fx-border-color: #0f3460; -fx-border-radius: 8; -fx-padding: 15; -fx-background-radius: 8;">
             <children>
-                <Label text="┌─ Thông tin SP đã chọn ─────────" textFill="#4ecdc4" />
-                <Label fx:id="previewName" text="Tên: (Chưa chọn)" textFill="WHITE">
+                <Label styleClass="text-accent" text="┌─ Thông tin SP đã chọn ─────────" />
+                <Label fx:id="previewName" styleClass="text-primary" text="Tên: (Chưa chọn)">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Label>
-                <Label fx:id="previewPrice" text="Giá khởi điểm: 0 VNĐ" textFill="#e0e0e0" />
-                <Label fx:id="previewType" text="Loại: N/A" textFill="#e0e0e0" />
+                <Label fx:id="previewPrice" styleClass="text-detail" text="Giá khởi điểm: 0 VNĐ" />
+                <Label fx:id="previewType" styleClass="text-detail" text="Loại: N/A" />
             </children>
         </VBox>
 
@@ -54,14 +38,14 @@
 
         <VBox spacing="5.0">
             <children>
-                <Label text="Tiêu đề phiên đấu giá (*)" textFill="#a0a0b0" />
+                <Label styleClass="text-secondary" text="Tiêu đề phiên đấu giá (*)" />
                 <TextField fx:id="titleField" promptText="Ví dụ: Đấu giá siêu phẩm iPhone 15" />
             </children>
         </VBox>
 
         <VBox spacing="5.0">
             <children>
-                <Label text="Mô tả quy định phiên" textFill="#a0a0b0" />
+                <Label styleClass="text-secondary" text="Mô tả quy định phiên" />
                 <TextArea fx:id="descArea" prefHeight="60.0" promptText="Ghi chú thêm về phiên đấu giá..." styleClass="text-field" wrapText="true" />
             </children>
         </VBox>
@@ -69,7 +53,7 @@
         <HBox spacing="20.0">
             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                 <children>
-                    <Label text="Thời gian bắt đầu (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Thời gian bắt đầu (*)" />
                     <HBox spacing="5.0">
                         <DatePicker fx:id="startDatePicker" prefWidth="130.0" promptText="Ngày" style="-fx-control-inner-background: #16213e; -fx-background-color: #16213e;" />
                         <ComboBox fx:id="startHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
@@ -79,7 +63,7 @@
             </VBox>
             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                 <children>
-                    <Label text="Thời gian kết thúc (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Thời gian kết thúc (*)" />
                     <HBox spacing="5.0">
                         <DatePicker fx:id="endDatePicker" prefWidth="130.0" promptText="Ngày" style="-fx-control-inner-background: #16213e; -fx-background-color: #16213e;" />
                         <ComboBox fx:id="endHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
@@ -101,11 +85,4 @@
             <VBox.margin><Insets top="10.0" /></VBox.margin>
         </VBox>
     </children>
-   <effect>
-      <InnerShadow>
-         <color>
-            <Color red="0.08888889104127884" green="0.787407398223877" blue="1.0" />
-         </color>
-      </InnerShadow>
-   </effect>
 </VBox>

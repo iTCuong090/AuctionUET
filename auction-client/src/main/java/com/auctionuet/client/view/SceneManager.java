@@ -28,8 +28,9 @@ public class SceneManager {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Scene scene = new Scene(root);
 
-            // Nhúng CSS
+            // Nhúng CSS base (layout) + theme (màu sắc)
             scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            ThemeManager.getInstance().applyTheme(scene);
 
 
             // 1. Ghi nhớ lại trạng thái hiện tại của cửa sổ (đang full màn hay kích thước bao nhiêu)

@@ -19,7 +19,7 @@ public class AuctionClient {
      * Gửi yêu cầu tạo một phiên đấu giá mới
      */
     public AuctionDTO createAuction(String token, String itemId, String startTime,
-                                    String endTime, String title, String description) throws Exception {
+            String endTime, String title, String description) throws Exception {
         // 1. Đóng gói dữ liệu vào Map
         Map<String, Object> data = new HashMap<>();
         data.put("itemId", itemId);
@@ -72,7 +72,8 @@ public class AuctionClient {
 
         if ("OK".equals(response.getStatus())) {
             // Dùng TypeToken để bóc tách danh sách List<AuctionDTO>
-            Type listType = new TypeToken<List<AuctionDTO>>(){}.getType();
+            Type listType = new TypeToken<List<AuctionDTO>>() {
+            }.getType();
             return gson.fromJson(gson.toJson(response.getData()), listType);
         } else {
             throw new Exception(response.getMessage());

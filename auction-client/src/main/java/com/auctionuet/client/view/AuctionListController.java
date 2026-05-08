@@ -66,11 +66,13 @@ public class AuctionListController {
         card.setPrefWidth(250);
 
         Label title = new Label(item.getTitle());
-        title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white;");
+        title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
+        title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
         Label price = new Label(String.format("💰 %,.0f VNĐ", item.getCurrentHighestBid()));
-        price.setStyle("-fx-font-size: 15px; -fx-text-fill: #4ecdc4; -fx-font-weight: bold;");
+        price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        price.getStyleClass().add("text-accent");
 
         String statusStr = item.getStatus() != null ? item.getStatus().name() : "UNKNOWN";
         Label statusBadge = new Label(statusStr);
@@ -94,9 +96,11 @@ public class AuctionListController {
         Label timeLabel = new Label("⏰ Kết thúc: " + endTime);
         Label sellerLabel = new Label("👤 Seller: " + seller);
 
-        String subStyle = "-fx-text-fill: #a0a0b0; -fx-font-size: 13px;";
+        String subStyle = "-fx-font-size: 13px;";
         timeLabel.setStyle(subStyle);
+        timeLabel.getStyleClass().add("text-secondary");
         sellerLabel.setStyle(subStyle);
+        sellerLabel.getStyleClass().add("text-secondary");
 
         infoBox.getChildren().addAll(timeLabel, sellerLabel);
 
