@@ -31,43 +31,27 @@ public class ItemController {
 
     // ──────────────────── CREATE ITEM ────────────────────
 
-    public Response handleCreateItem(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            Map<String, Object> data = validateRequestData(request);
-            ItemDTO itemDTO = ItemMapper.fromRequestData(data);
-            ItemSchema created = itemService.createItem(user, itemDTO);
-            ItemDTO responseDTO = ItemMapper.toDTO(created, user.getUsername());
-            return Response.ok(responseDTO);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (AuctionException e) {
-            return Response.error(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return Response.error("Dữ liệu không hợp lệ: " + e.getMessage());
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
-        }
+    public Response handleCreateItem(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = validateRequestData(request);
+        ItemDTO itemDTO = ItemMapper.fromRequestData(data);
+        ItemSchema created = itemService.createItem(user, itemDTO);
+        ItemDTO responseDTO = ItemMapper.toDTO(created, user.getUsername());
+        return Response.ok(responseDTO);
     }
 
     // ──────────────────── GET MY ITEMS ────────────────────
 
-    public Response handleGetMyItems(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            List<ItemSchema> items = itemService.getItemsBySellerId(user.getId());
+    public Response handleGetMyItems(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        List<ItemSchema> items = itemService.getItemsBySellerId(user.getId());
 
-            List<ItemDTO> dtoList = new ArrayList<>();
-            for (ItemSchema schema : items) {
-                dtoList.add(ItemMapper.toDTO(schema, user.getUsername()));
-            }
-
-            return Response.ok(dtoList);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
+        List<ItemDTO> dtoList = new ArrayList<>();
+        for (ItemSchema schema : items) {
+            dtoList.add(ItemMapper.toDTO(schema, user.getUsername()));
         }
+
+        return Response.ok(dtoList);
     }
 
     // ──────────────────── HELPERS ────────────────────

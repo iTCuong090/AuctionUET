@@ -39,107 +39,77 @@ public class AuctionController {
 
     // ──────────────────── AUCTION ────────────────────
 
-    public Response handleCreateAuction(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            Map<String, Object> data = validateRequestData(request);
+    public Response handleCreateAuction(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = validateRequestData(request);
 
-            String itemId = (String) data.get("itemId");
-            String title = (String) data.get("title");
-            String description = (String) data.get("description");
-            LocalDateTime startTime = parseDateTime(data.get("startTime"));
-            LocalDateTime endTime = parseDateTime(data.get("endTime"));
+        String itemId = (String) data.get("itemId");
+        String title = (String) data.get("title");
+        String description = (String) data.get("description");
+        LocalDateTime startTime = parseDateTime(data.get("startTime"));
+        LocalDateTime endTime = parseDateTime(data.get("endTime"));
 
-            AuctionSchema auctionSchema = auctionService.createAuction(
-                    user, itemId, startTime, endTime, title, description
-            );
+        AuctionSchema auctionSchema = auctionService.createAuction(
+                user, itemId, startTime, endTime, title, description
+        );
 
-            // Convert to DTO for response
-            ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
-            ItemDTO itemDTO = null;
-            if (itemSchema != null) {
-                itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
-            }
-            AuctionDTO auctionDTO = AuctionMapper.toDTO(auctionSchema, itemDTO, user.getUsername(), null);
-            return Response.ok(auctionDTO);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (AuctionException e) {
-            return Response.error(e.getMessage());
-        } catch (IllegalArgumentException | DateTimeParseException e) {
-            return Response.error("Dữ liệu không hợp lệ: " + e.getMessage());
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
+        // Convert to DTO for response
+        ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
+        ItemDTO itemDTO = null;
+        if (itemSchema != null) {
+            itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
         }
+        AuctionDTO auctionDTO = AuctionMapper.toDTO(auctionSchema, itemDTO, user.getUsername(), null);
+        return Response.ok(auctionDTO);
     }
 
-    public Response handleStartAuction(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            Map<String, Object> data = validateRequestData(request);
+    public Response handleStartAuction(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = validateRequestData(request);
 
-            String auctionId = (String) data.get("auctionId");
-            auctionService.startAuction(user, auctionId);
-            return Response.ok("Đã bắt đầu phiên đấu giá");
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (AuctionException e) {
-            return Response.error(e.getMessage());
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
-        }
+        String auctionId = (String) data.get("auctionId");
+        auctionService.startAuction(user, auctionId);
+        return Response.ok("Đã bắt đầu phiên đấu giá");
     }
 
-    public Response handleGetAuctions(Request request) {
-        try {
-            sessionManager.validateToken(request.getToken());
-            List<AuctionSchema> auctions = auctionService.getAuctions();
-            List<AuctionDTO> auctionDTOList = new ArrayList<>();
-            for (AuctionSchema auction : auctions) {
-                ItemSchema itemSchema = itemService.getItemById(auction.getItemId());
-                if (itemSchema == null) {
-                    System.err.println("Cảnh báo: Bỏ qua đấu giá " + auction.getId() + " do không tìm thấy vật phẩm!");
-                    continue;
-                }
-                String sellerUsername = itemSchema.getSellerId();
-                ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, sellerUsername);
-                AuctionDTO auctionDTO = AuctionMapper.toDTO(auction, itemDTO, sellerUsername, null);
-                auctionDTOList.add(auctionDTO);
-            }
-            return Response.ok(auctionDTOList);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
-        }
-    }
-
-    public Response handleGetAuctionDetail(Request request) {
-        try {
-            User user = sessionManager.validateToken(request.getToken());
-            Map<String, Object> data = validateRequestData(request);
-
-            String auctionId = (String) data.get("auctionId");
-            if (auctionId == null || auctionId.isEmpty()) {
-                return Response.error("Thiếu auctionId");
-            }
-
-            AuctionSchema schema = auctionService.getAuctionById(auctionId);
-            if (schema == null) {
-                return Response.error("Không tìm thấy phiên đấu giá");
-            }
-            ItemSchema itemSchema = itemService.getItemById(schema.getItemId());
+    public Response handleGetAuctions(Request request) throws Exception {
+        sessionManager.validateToken(request.getToken());
+        List<AuctionSchema> auctions = auctionService.getAuctions();
+        List<AuctionDTO> auctionDTOList = new ArrayList<>();
+        for (AuctionSchema auction : auctions) {
+            ItemSchema itemSchema = itemService.getItemById(auction.getItemId());
             if (itemSchema == null) {
-                return Response.error("Lỗi: Không tìm thấy vật phẩm của phiên đấu giá này!");
+                System.err.println("Cảnh báo: Bỏ qua đấu giá " + auction.getId() + " do không tìm thấy vật phẩm!");
+                continue;
             }
-            ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
-            AuctionDTO auctionDTO = AuctionMapper.toDTO(schema, itemDTO, user.getUsername(), null);
-            return Response.ok(auctionDTO);
-        } catch (AuthenticationException e) {
-            return Response.error("Token không hợp lệ");
-        } catch (Exception e) {
-            return Response.error("Lỗi server: " + e.getMessage());
+            String sellerUsername = itemSchema.getSellerId();
+            ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, sellerUsername);
+            AuctionDTO auctionDTO = AuctionMapper.toDTO(auction, itemDTO, sellerUsername, null);
+            auctionDTOList.add(auctionDTO);
         }
+        return Response.ok(auctionDTOList);
+    }
+
+    public Response handleGetAuctionDetail(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = validateRequestData(request);
+
+        String auctionId = (String) data.get("auctionId");
+        if (auctionId == null || auctionId.isEmpty()) {
+            return Response.error("Thiếu auctionId");
+        }
+
+        AuctionSchema schema = auctionService.getAuctionById(auctionId);
+        if (schema == null) {
+            return Response.error("Không tìm thấy phiên đấu giá");
+        }
+        ItemSchema itemSchema = itemService.getItemById(schema.getItemId());
+        if (itemSchema == null) {
+            return Response.error("Lỗi: Không tìm thấy vật phẩm của phiên đấu giá này!");
+        }
+        ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
+        AuctionDTO auctionDTO = AuctionMapper.toDTO(schema, itemDTO, user.getUsername(), null);
+        return Response.ok(auctionDTO);
     }
 
     // ──────────────────── HELPERS ────────────────────

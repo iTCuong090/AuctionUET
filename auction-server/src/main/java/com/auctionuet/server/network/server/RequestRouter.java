@@ -1,7 +1,6 @@
 package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.service.SessionManager;
-import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AuthController;
 import com.auctionuet.server.network.controller.ItemController;
@@ -13,7 +12,8 @@ public class RequestRouter {
     private ItemController itemController;
     private AuctionController auctionController;
 
-    public RequestRouter(AuthController authController, ItemController itemController, AuctionController auctionController) {
+    public RequestRouter(AuthController authController, ItemController itemController,
+            AuctionController auctionController) {
         this.authController = authController;
         this.itemController = itemController;
         this.auctionController = auctionController;
@@ -24,6 +24,14 @@ public class RequestRouter {
             return Response.error("Invalid request: missing action");
         }
 
+        try {
+            return internalRoute(request);
+        } catch (Exception e) {
+            return com.auctionuet.server.network.server.GlobalExceptionHandler.handle(e);
+        }
+    }
+
+    private Response internalRoute(Request request) throws Exception {
         switch (request.getAction()) {
             case LOGIN:
                 return authController.handleLogin(request);
@@ -52,11 +60,7 @@ public class RequestRouter {
             case PING:
                 // If token is provided, validate it (used by client to check session)
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
-                    try {
-                        SessionManager.getInstance().validateToken(request.getToken());
-                    } catch (AuthenticationException e) {
-                        return Response.error("Token không hợp lệ hoặc đã hết hạn");
-                    }
+                    SessionManager.getInstance().validateToken(request.getToken());
                 }
                 return Response.ok("PONG");
 
