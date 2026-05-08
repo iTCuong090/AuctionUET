@@ -8,10 +8,12 @@ import com.auctionuet.server.exception.UserNotFoundException;
 import com.auctionuet.server.mapper.UserMapper;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
+import com.auctionuet.server.util.AppLogger;
 import com.auctionuet.server.util.PasswordUtils;
 import com.auctionuet.server.util.ValidationUtils;
 
 public class AuthService {
+
     private final UserDAO userDAO;
     private final SessionManager sessionManager;
 
@@ -19,54 +21,66 @@ public class AuthService {
         this.userDAO = userDAO;
         this.sessionManager = SessionManager.getInstance();
     }
-    //Tại sao constructor lại phải nhận 1 đối tượng loại UserDAO? Vì các đối tượng userDao có thể custom
-    //đường dẫn file database phục vụ test. Hơn nữa, sau này nếu ta có thay đổi phía DAO thì truyền vào
-    //một đối tượng kiểu xxxDAO kế thừa userdao thì cũng ko cần phải thay đổi code ở authservice.
+    // Tại sao constructor lại phải nhận 1 đối tượng loại UserDAO? Vì các đối tượng userDao có thể custom
+    // đường dẫn file database phục vụ test. Hơn nữa, sau này nếu ta có thay đổi phía DAO thì truyền vào
+    // một đối tượng kiểu xxxDAO kế thừa userdao thì cũng ko cần phải thay đổi code ở authservice.
 
     public LoginResult login(String username, String password) {
-        //Thực hiện truy vấn database cái username.
+        AppLogger.logServiceCall("AuthService", "login", "username=" + username);
+
+        // Thực hiện truy vấn database cái username.
         UserSchema schema = userDAO.findByUsername(username);
 
-        //Không tìm thấy username thì nhả usernotfound.
+        // Không tìm thấy username thì nhả usernotfound.
         if (schema == null) {
+            AppLogger.logServiceResult("AuthService", "login", "FAIL — user not found: " + username);
             throw new UserNotFoundException(username);
         }
 
-        //Nếu tìm thấy user thì kiểm tra password.
+        // Nếu tìm thấy user thì kiểm tra password.
+        AppLogger.logServiceCall("AuthService", "login", "Verifying password for user=" + username);
         boolean isValid = PasswordUtils.verify(password, schema.getPasswordSalt(), schema.getHashedPassword());
         if (!isValid) {
+            AppLogger.logServiceResult("AuthService", "login", "FAIL — wrong password: " + username);
             throw new AuthenticationException("Sai mật khẩu");
         }
 
-        //nếu password lẫn username pass thì tạo đối tượng user mới trong domain và tạo sesion mới.
+        // Nếu password lẫn username pass thì tạo đối tượng user mới trong domain và tạo session mới.
         User user = UserMapper.toDomain(schema);
         String token = sessionManager.createSession(user);
+
+        AppLogger.logServiceResult("AuthService", "login",
+            "OK | user=" + username + " role=" + user.getRole());
         return new LoginResult(token, user);
     }
 
     public void register(String username, String password, String email, UserRole role) {
-        //Kiểm tra validation input phía server
+        AppLogger.logServiceCall("AuthService", "register",
+            "username=" + username + " email=" + email + " role=" + role);
+
+        // Kiểm tra validation input phía server
         ValidationUtils.validateUsername(username);
         ValidationUtils.validatePassword(password);
         if (email != null) {
             ValidationUtils.validateEmail(email);
         }
 
-
-        //Kiểm tra xem username đã tồn tại chưa.
+        // Kiểm tra xem username đã tồn tại chưa.
         UserSchema existingSchema = userDAO.findByUsername(username);
         if (existingSchema != null) {
+            AppLogger.logServiceResult("AuthService", "register", "FAIL — duplicate username: " + username);
             throw new DuplicateUserException(username);
         }
 
-
-        //Tạo user mới
+        // Tạo user mới
         String salt = PasswordUtils.generateSalt();
         String hashedPassword = PasswordUtils.hash(password, salt);
 
         // Sử dụng UserMapper.toNewSchema vì userschema yêu cầu constructor phức tạp, cần thêm cả thời gian tạo, vv.
         UserSchema newSchema = UserMapper.toNewSchema(username, hashedPassword, salt, email, role);
-
         userDAO.save(newSchema);
+
+        AppLogger.logServiceResult("AuthService", "register",
+            "OK | user=" + username + " id=" + newSchema.getId());
     }
 }

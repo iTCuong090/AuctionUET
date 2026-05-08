@@ -11,64 +11,58 @@ import com.auctionuet.server.network.dto.UserDTO;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 import com.auctionuet.server.domain.service.LoginResult;
+import com.auctionuet.server.util.AppLogger;
 
 import java.util.Map;
 
 public class AuthController {
-    AuthService authService;
-    public AuthController(AuthService authService){
-        this.authService=authService;
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
-    public Response handleLogin(Request request){
-        try{ String username = (String) request.getData().get("username");
-        String password = (String) request.getData().get("password");
-        LoginResult result = authService.login(username, password);
+
+    public Response handleLogin(Request request) throws Exception {
+        String username = (String) request.getData().get("username");
+        AppLogger.logControllerEnter("AuthController", "handleLogin",
+            "username=" + username);
+
+        LoginResult result = authService.login(username, (String) request.getData().get("password"));
+
         UserDTO dto = UserMapper.toDTO(result.getUser());
         Map<String, Object> responseData = Map.of("token", result.getToken(), "user", dto);
-        return Response.ok(responseData);}
-        catch(UserNotFoundException e){
-            return Response.error("User không tồn tại");
-        }
-        catch (AuthenticationException e){
-            return Response.error("Sai mật khẩu");
-        }
-        catch (Exception e){
-            return Response.error("Lỗi Server:"+e.getMessage());
-        }
-    }
-    public Response handleRegister(Request request) {
-        try {
-            Map<String, Object> data = request.getData();
-            String username = request.getDataString("username");
-            String password = request.getDataString("password");
-            String email = request.getDataString("email");
-            String roleStr = request.getDataString("role");
-            UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
-            authService.register(username, password, email, role);
-            return Response.ok("Đăng ký thành công");
-        }
-        catch (DuplicateUserException e){
-            return Response.error("Username đã tồn tại");
-        }
-        catch (IllegalArgumentException e){
-            return Response.error("Dữ liệu không hợp lệ:"+e.getMessage());
-        }
-        catch (Exception e){
-            return Response.error("Lỗi server:"+e.getMessage());
-        }
-    }
-    public Response handleLogout(Request request){
-        try{
-            String token = request.getToken();
-            SessionManager.getInstance().validateToken(token);
-            SessionManager.getInstance().removeSession(token);
-            return Response.ok("Đã đăng xuất");
-        }
-        catch (AuthenticationException e){
-            return Response.error("Token không hợp lệ");
-        }
 
+        AppLogger.logControllerResult("AuthController", "handleLogin",
+            "Login OK | user=" + username + " role=" + result.getUser().getRole());
+        return Response.ok(responseData);
     }
 
+    public Response handleRegister(Request request) throws Exception {
+        String username = request.getDataString("username");
+        String email    = request.getDataString("email");
+        String roleStr  = request.getDataString("role");
+        UserRole role   = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
+
+        AppLogger.logControllerEnter("AuthController", "handleRegister",
+            "username=" + username + " email=" + email + " role=" + role);
+
+        authService.register(username, request.getDataString("password"), email, role);
+
+        AppLogger.logControllerResult("AuthController", "handleRegister",
+            "Register OK | user=" + username);
+        return Response.ok("Đăng ký thành công");
+    }
+
+    public Response handleLogout(Request request) throws Exception {
+        String token = request.getToken();
+        AppLogger.logControllerEnter("AuthController", "handleLogout",
+            "token=" + AppLogger.maskToken(token));
+
+        SessionManager.getInstance().validateToken(token);
+        SessionManager.getInstance().removeSession(token);
+
+        AppLogger.logControllerResult("AuthController", "handleLogout", "Logout OK");
+        return Response.ok("Đã đăng xuất");
+    }
 }
-

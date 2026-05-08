@@ -1,6 +1,7 @@
 package com.auctionuet.server.domain.model;
 
 import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.server.domain.enums.Permission;
 
 public class Admin extends User {
     public Admin(String id,String name) {
@@ -8,11 +9,11 @@ public class Admin extends User {
     }
 
     @Override
-    public boolean hasPermission(String action) {
+    public boolean hasPermission(Permission action) {
         return switch (action) {
-            case "MANAGE_USERS", "GET_ALL_USERS", "DELETE_USER", "UPDATE_ROLE",
-                 "VIEW_AUCTION", "VIEW_BID_HISTORY",
-                 "GET_PROFILE", "UPDATE_PROFILE"
+            case MANAGE_USERS, GET_ALL_USERS, DELETE_USER, UPDATE_ROLE,
+                 VIEW_AUCTION, VIEW_BID_HISTORY,
+                 GET_PROFILE, UPDATE_PROFILE
                     -> true;
             default -> false;
         };
@@ -23,4 +24,3 @@ public class Admin extends User {
         return "Admin: " + getUsername();
     }
 }
-

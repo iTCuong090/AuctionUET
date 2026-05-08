@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PROPERTIES
+    ═══════════════════════════════════════════════════════════ -->
+    <property name="LOG_DIR"     value="logs" />
+    <property name="LOG_FILE"    value="${LOG_DIR}/server.log" />
+    <property name="LOG_ARCHIVE" value="${LOG_DIR}/archived/server.%d{yyyy-MM-dd}.log" />
+
+    <!--
+        LOG_LEVEL có thể override khi chạy:
+          -Dlog.level=INFO    → Production (ít log hơn)
+          -Dlog.level=DEBUG   → Development (log tất cả, mặc định)
+    -->
+    <property name="LOG_LEVEL" value="${log.level:-DEBUG}" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CONSOLE APPENDER — colored, human-readable
+    ═══════════════════════════════════════════════════════════ -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--
+                %d{HH:mm:ss.SSS}          — timestamp (giờ:phút:giây.ms)
+                [%-15thread]               — tên thread (client-x.x.x.x)
+                %-5level                   — log level (DEBUG/INFO/WARN/ERROR)
+                %-12logger{0}              — tên logger (SERVER/NETWORK/ROUTING/...)
+                %msg                       — nội dung log
+            -->
+            <pattern>%d{HH:mm:ss.SSS} [%-15thread] %-5level %-12logger{0} │ %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         FILE APPENDER — rolling daily, keeps 14 days, 500MB cap
+    ═══════════════════════════════════════════════════════════ -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Archive: logs/archived/server.2026-05-08.log -->
+            <fileNamePattern>${LOG_ARCHIVE}</fileNamePattern>
+            <!-- Giữ 14 ngày gần nhất -->
+            <maxHistory>14</maxHistory>
+            <!-- Tổng kích thước tối đa tất cả file log -->
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <!-- Không có ANSI color trong file -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%-15thread] %-5level %-12logger{0} │ %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LOGGER CONFIGURATION
+    ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Suppress Logback internal startup noise -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <!-- ── Application loggers (theo layer) ── -->
+    <!-- Level được điều khiển bởi LOG_LEVEL property (mặc định DEBUG) -->
+
+    <logger name="SERVER"     level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="NETWORK"    level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="ROUTING"    level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="CONTROLLER" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="SERVICE"    level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="SESSION"    level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="EXCEPTION"  level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- ── Thư viện bên thứ ba — giữ yên lặng ── -->
+    <logger name="com.google.gson" level="WARN" />
+    <logger name="io.netty"        level="WARN" />
+
+    <!-- ── Root fallback ── -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
