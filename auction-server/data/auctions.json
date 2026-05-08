@@ -128,5 +128,83 @@
     "id": "804f8830-b394-4636-98ae-733eaa1b378d",
     "createdAt": "2026-04-18T21:45:11.6322712",
     "updatedAt": "2026-04-18T21:45:11.6443391"
+  },
+  {
+    "itemId": "2f7bdd59-cebc-416a-935b-810b70fc2086",
+    "sellerId": "04d21e8d-dd23-454f-939d-a8b8ed544132",
+    "title": "Auction Test",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:27:37.2101185",
+    "endTime": "2026-05-09T15:22:37.2101185",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "eca79656-c5b5-4f32-a445-9f1a49c19abb",
+    "createdAt": "2026-05-08T15:22:37.2285372",
+    "updatedAt": "2026-05-08T15:22:37.284355"
+  },
+  {
+    "itemId": "e52cb867-9e48-47b1-8afc-cd846ef965c6",
+    "sellerId": "4ed14196-4d62-4b6a-804b-806f51aec5cf",
+    "title": "Auction",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:27:37.5459154",
+    "endTime": "2026-05-09T15:22:37.5459154",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "07b00cfe-1720-4415-929d-5aa76b5bc1c2",
+    "createdAt": "2026-05-08T15:22:37.5519428",
+    "updatedAt": "2026-05-08T15:22:37.5719533"
+  },
+  {
+    "itemId": "68ff8f80-e3f3-42f6-91e4-c65978edcf5a",
+    "sellerId": "874f1ede-efcf-40bd-acfc-e991c1b95530",
+    "title": "Auction Test",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:27:54.2760485",
+    "endTime": "2026-05-09T15:22:54.2760485",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "fc3fb8f1-b352-4440-b801-8297ad32f0bf",
+    "createdAt": "2026-05-08T15:22:54.2949597",
+    "updatedAt": "2026-05-08T15:22:54.349604"
+  },
+  {
+    "itemId": "874449a6-045b-4aed-9190-1eae22de0223",
+    "sellerId": "97550284-5e71-4a36-b970-bb4da704c776",
+    "title": "Auction",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:27:54.6151262",
+    "endTime": "2026-05-09T15:22:54.6151262",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "f84b90a6-d558-4b83-b58b-d158224a5081",
+    "createdAt": "2026-05-08T15:22:54.6215734",
+    "updatedAt": "2026-05-08T15:22:54.6395381"
+  },
+  {
+    "itemId": "32cd4729-692c-4eb4-9146-01744824db52",
+    "sellerId": "0e9f0167-bb5a-4d91-8cd6-b8a2170c1a1e",
+    "title": "Auction Test",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:28:29.0877133",
+    "endTime": "2026-05-09T15:23:29.0877133",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "c51c4d72-2082-4a5e-8b97-59a05118924d",
+    "createdAt": "2026-05-08T15:23:29.1216717",
+    "updatedAt": "2026-05-08T15:23:29.1847048"
+  },
+  {
+    "itemId": "164f74ec-fa69-460f-b912-601a1358b9b5",
+    "sellerId": "d37bb8fc-0478-4b58-9f71-86def30d7e5d",
+    "title": "Auction",
+    "description": "Desc",
+    "startTime": "2026-05-08T15:28:29.4717753",
+    "endTime": "2026-05-09T15:23:29.4717753",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "id": "c767e2e2-717e-4f0b-8c10-52a99ce96d4c",
+    "createdAt": "2026-05-08T15:23:29.4788817",
+    "updatedAt": "2026-05-08T15:23:29.505096"
   }
 ]

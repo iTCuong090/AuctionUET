@@ -6,11 +6,13 @@ import com.auctionuet.server.network.controller.AuthController;
 import com.auctionuet.server.network.controller.ItemController;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.server.util.AppLogger;
 
 public class RequestRouter {
-    private AuthController authController;
-    private ItemController itemController;
-    private AuctionController auctionController;
+
+    private final AuthController authController;
+    private final ItemController itemController;
+    private final AuctionController auctionController;
 
     public RequestRouter(AuthController authController, ItemController itemController,
             AuctionController auctionController) {
@@ -21,51 +23,73 @@ public class RequestRouter {
 
     public Response route(Request request) {
         if (request == null || request.getAction() == null) {
+            AppLogger.logUnknownAction("null");
             return Response.error("Invalid request: missing action");
         }
 
         try {
             return internalRoute(request);
         } catch (Exception e) {
-            return com.auctionuet.server.network.server.GlobalExceptionHandler.handle(e);
+            // Exception được log bởi GlobalExceptionHandler
+            return GlobalExceptionHandler.handle(e);
         }
     }
 
     private Response internalRoute(Request request) throws Exception {
+        String action = request.getAction().name();
+
         switch (request.getAction()) {
+
+            // ── Auth ──
             case LOGIN:
+                AppLogger.logRouting(action, "AuthController", "handleLogin");
                 return authController.handleLogin(request);
+
             case REGISTER:
+                AppLogger.logRouting(action, "AuthController", "handleRegister");
                 return authController.handleRegister(request);
+
             case LOGOUT:
+                AppLogger.logRouting(action, "AuthController", "handleLogout");
                 return authController.handleLogout(request);
 
-            // Item Management (tuần 4)
+            // ── Item Management ──
             case CREATE_ITEM:
+                AppLogger.logRouting(action, "ItemController", "handleCreateItem");
                 return itemController.handleCreateItem(request);
+
             case GET_MY_ITEMS:
+                AppLogger.logRouting(action, "ItemController", "handleGetMyItems");
                 return itemController.handleGetMyItems(request);
 
-            // Auction Management (tuần 4)
+            // ── Auction Management ──
             case CREATE_AUCTION:
+                AppLogger.logRouting(action, "AuctionController", "handleCreateAuction");
                 return auctionController.handleCreateAuction(request);
+
             case START_AUCTION:
+                AppLogger.logRouting(action, "AuctionController", "handleStartAuction");
                 return auctionController.handleStartAuction(request);
+
             case GET_AUCTIONS:
+                AppLogger.logRouting(action, "AuctionController", "handleGetAuctions");
                 return auctionController.handleGetAuctions(request);
+
             case GET_AUCTION_DETAIL:
+                AppLogger.logRouting(action, "AuctionController", "handleGetAuctionDetail");
                 return auctionController.handleGetAuctionDetail(request);
 
-            // Utils
+            // ── Utils ──
             case PING:
-                // If token is provided, validate it (used by client to check session)
+                AppLogger.logRouting(action, "RequestRouter", "PING");
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
                     SessionManager.getInstance().validateToken(request.getToken());
                 }
                 return Response.ok("PONG");
 
             default:
-                return Response.error("Unknown action: " + request.getAction());
+                AppLogger.logUnknownAction(action);
+                return Response.error("Unknown action: " + action);
         }
     }
 }

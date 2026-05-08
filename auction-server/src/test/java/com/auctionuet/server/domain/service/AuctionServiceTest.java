@@ -2,6 +2,7 @@ package com.auctionuet.server.domain.service;
 
 import com.auctionuet.server.domain.enums.AuctionStatus;
 import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.server.domain.enums.Permission;
 import com.auctionuet.server.domain.enums.UserRole;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
@@ -57,8 +58,8 @@ public class AuctionServiceTest {
         }
         
         @Override
-        public boolean hasPermission(String action) {
-            if ("CREATE_ITEM".equals(action) || "CREATE_AUCTION".equals(action)) {
+        public boolean hasPermission(Permission action) {
+            if (action == Permission.CREATE_ITEM || action == Permission.CREATE_AUCTION) {
                 return isSeller;
             }
             return false;

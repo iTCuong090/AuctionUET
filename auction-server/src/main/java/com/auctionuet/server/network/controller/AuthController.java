@@ -11,39 +11,58 @@ import com.auctionuet.server.network.dto.UserDTO;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 import com.auctionuet.server.domain.service.LoginResult;
+import com.auctionuet.server.util.AppLogger;
 
 import java.util.Map;
 
 public class AuthController {
-    AuthService authService;
-    public AuthController(AuthService authService){
-        this.authService=authService;
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
+
     public Response handleLogin(Request request) throws Exception {
         String username = (String) request.getData().get("username");
-        String password = (String) request.getData().get("password");
-        LoginResult result = authService.login(username, password);
+        AppLogger.logControllerEnter("AuthController", "handleLogin",
+            "username=" + username);
+
+        LoginResult result = authService.login(username, (String) request.getData().get("password"));
+
         UserDTO dto = UserMapper.toDTO(result.getUser());
         Map<String, Object> responseData = Map.of("token", result.getToken(), "user", dto);
+
+        AppLogger.logControllerResult("AuthController", "handleLogin",
+            "Login OK | user=" + username + " role=" + result.getUser().getRole());
         return Response.ok(responseData);
     }
 
     public Response handleRegister(Request request) throws Exception {
-        Map<String, Object> data = request.getData();
         String username = request.getDataString("username");
-        String password = request.getDataString("password");
-        String email = request.getDataString("email");
-        String roleStr = request.getDataString("role");
-        UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
-        authService.register(username, password, email, role);
+        String email    = request.getDataString("email");
+        String roleStr  = request.getDataString("role");
+        UserRole role   = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
+
+        AppLogger.logControllerEnter("AuthController", "handleRegister",
+            "username=" + username + " email=" + email + " role=" + role);
+
+        authService.register(username, request.getDataString("password"), email, role);
+
+        AppLogger.logControllerResult("AuthController", "handleRegister",
+            "Register OK | user=" + username);
         return Response.ok("Đăng ký thành công");
     }
 
     public Response handleLogout(Request request) throws Exception {
         String token = request.getToken();
+        AppLogger.logControllerEnter("AuthController", "handleLogout",
+            "token=" + AppLogger.maskToken(token));
+
         SessionManager.getInstance().validateToken(token);
         SessionManager.getInstance().removeSession(token);
+
+        AppLogger.logControllerResult("AuthController", "handleLogout", "Logout OK");
         return Response.ok("Đã đăng xuất");
     }
 }
-

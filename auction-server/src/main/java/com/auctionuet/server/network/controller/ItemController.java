@@ -3,13 +3,12 @@ package com.auctionuet.server.network.controller;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.service.SessionManager;
-import com.auctionuet.server.exception.AuctionException;
-import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.mapper.ItemMapper;
 import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 import com.auctionuet.server.persistence.schema.ItemSchema;
+import com.auctionuet.server.util.AppLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +32,16 @@ public class ItemController {
 
     public Response handleCreateItem(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
+        AppLogger.logControllerEnter("ItemController", "handleCreateItem",
+            "user=" + user.getUsername() + " role=" + user.getRole());
+
         Map<String, Object> data = validateRequestData(request);
         ItemDTO itemDTO = ItemMapper.fromRequestData(data);
         ItemSchema created = itemService.createItem(user, itemDTO);
         ItemDTO responseDTO = ItemMapper.toDTO(created, user.getUsername());
+
+        AppLogger.logControllerResult("ItemController", "handleCreateItem",
+            "Created item id=" + created.getId() + " name=" + created.getName());
         return Response.ok(responseDTO);
     }
 
@@ -44,6 +49,9 @@ public class ItemController {
 
     public Response handleGetMyItems(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
+        AppLogger.logControllerEnter("ItemController", "handleGetMyItems",
+            "user=" + user.getUsername());
+
         List<ItemSchema> items = itemService.getItemsBySellerId(user.getId());
 
         List<ItemDTO> dtoList = new ArrayList<>();
@@ -51,6 +59,8 @@ public class ItemController {
             dtoList.add(ItemMapper.toDTO(schema, user.getUsername()));
         }
 
+        AppLogger.logControllerResult("ItemController", "handleGetMyItems",
+            "Returned " + dtoList.size() + " items for user=" + user.getUsername());
         return Response.ok(dtoList);
     }
 

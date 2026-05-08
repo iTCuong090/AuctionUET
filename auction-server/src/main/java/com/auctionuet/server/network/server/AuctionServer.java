@@ -10,64 +10,92 @@ import com.auctionuet.server.network.controller.ItemController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.util.AppLogger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AuctionServer {
     int port;
-    private ServerSocket serverSocket ;
-    private boolean isRunning=false;
+    private ServerSocket serverSocket;
+    private boolean isRunning = false;
     private RequestRouter router;
-    public AuctionServer(int port){
-        this.port=port;
+
+    // Đếm số connection đang active để log
+    private final AtomicInteger activeConnections = new AtomicInteger(0);
+
+    public AuctionServer(int port) {
+        this.port = port;
     }
-    public void start(){
+
+    public void start() {
         try {
-            // Tạo DAO
+            // ── Khởi tạo DAO ──
             UserDAO userDAO = DataManager.getInstance().getUserDAO();
+            AppLogger.logInit("UserDAO", null);
+
             ItemDAO itemDAO = DataManager.getInstance().getItemDAO();
+            AppLogger.logInit("ItemDAO", null);
+
             AuctionDAO auctionDAO = DataManager.getInstance().getAuctionDAO();
+            AppLogger.logInit("AuctionDAO", null);
 
-            // Tạo Service
+            // ── Khởi tạo Service ──
             AuthService authService = new AuthService(userDAO);
+            AppLogger.logInit("AuthService", null);
+
             ItemService itemService = new ItemService(itemDAO);
+            AppLogger.logInit("ItemService", null);
+
             AuctionService auctionService = new AuctionService(itemService, auctionDAO);
+            AppLogger.logInit("AuctionService", null);
 
-            // Tạo Controller
+            // ── Khởi tạo Controller ──
             AuthController authController = new AuthController(authService);
+            AppLogger.logInit("AuthController", null);
+
             ItemController itemController = new ItemController(itemService);
+            AppLogger.logInit("ItemController", null);
+
             AuctionController auctionController = new AuctionController(auctionService, itemService);
+            AppLogger.logInit("AuctionController", null);
 
-            // Tạo Router
+            // ── Khởi tạo Router ──
             this.router = new RequestRouter(authController, itemController, auctionController);
+            AppLogger.logInit("RequestRouter", "Ready");
 
-            isRunning=true;
-            serverSocket=new ServerSocket(port);
-            System.out.println("[SERVER] Listening on port " + port);
+            isRunning = true;
+            serverSocket = new ServerSocket(port);
+            AppLogger.logServerListening(port);
+
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();  // blocking
-                System.out.println("[SERVER] New client connected: " + clientSocket.getInetAddress());
-                ClientHandler handler = new ClientHandler(clientSocket,this.router);
-                new Thread(handler).start();
+                int count = activeConnections.incrementAndGet();
+                String ip = clientSocket.getInetAddress().getHostAddress();
+                AppLogger.logClientConnected(ip, clientSocket.getPort(), count);
+
+                ClientHandler handler = new ClientHandler(clientSocket, this.router, activeConnections);
+                new Thread(handler, "client-" + ip).start();
             }
+
         } catch (IOException e) {
             if (isRunning) {
-                System.out.println("[SERVER] Lỗi khi mở Sever.");
-                e.printStackTrace();
+                AppLogger.logServerError("Lỗi khi mở Server", e);
             }
         }
     }
+
     public void stop() {
         this.isRunning = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
-                System.out.println("[SERVER] Đã đóng Server.");
+                AppLogger.logServerStopped();
             }
         } catch (IOException e) {
-            System.err.println("[SERVER] Lỗi khi đóng Server: " + e.getMessage());
+            AppLogger.logServerError("Lỗi khi đóng Server: " + e.getMessage(), e);
         }
     }
 }
