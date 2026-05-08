@@ -2,59 +2,55 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.effect.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<ScrollPane fitToWidth="true" prefHeight="600.0" prefWidth="700.0" style="-fx-background-color: #1a1a2e; -fx-background: #1a1a2e; -fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateItemController">
+<ScrollPane fitToWidth="true" prefHeight="600.0" prefWidth="700.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateItemController">
     <content>
-        <VBox alignment="TOP_CENTER" spacing="15.0" style="-fx-background-color: #1a1a2e;">
+        <VBox alignment="TOP_CENTER" spacing="15.0" styleClass="dark-bg">
             <padding>
                 <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
             </padding>
             <children>
-                <Label text="📦 Đăng sản phẩm mới" textFill="#0cebe8">
-                    <font>
-                        <Font name="System Bold" size="26.0" />
-                    </font>
+                <Label styleClass="text-heading" text="📦 Đăng sản phẩm mới">
+                    <font><Font name="System Bold" size="26.0" /></font>
                 </Label>
 
                 <VBox spacing="5.0">
-                    <Label text="Loại sản phẩm (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Loại sản phẩm (*)" />
                     <ComboBox fx:id="typeComboBox" maxWidth="1.999999999" promptText="-- Chọn loại sản phẩm --" styleClass="combo-box" />
                 </VBox>
 
                 <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
 
                 <VBox spacing="5.0">
-                    <Label text="Tên sản phẩm (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Tên sản phẩm (*)" />
                     <TextField fx:id="nameField" promptText="Ví dụ: iPhone 15 Pro Max" />
                 </VBox>
 
                 <VBox spacing="5.0">
-                    <Label text="Mô tả chi tiết" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Mô tả chi tiết" />
                     <TextArea fx:id="descArea" prefHeight="80.0" promptText="Tình trạng xước xát, phụ kiện đi kèm..." styleClass="text-field" wrapText="true" />
                 </VBox>
 
                 <VBox spacing="5.0">
-                    <Label text="Giá khởi điểm (VNĐ) (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Giá khởi điểm (VNĐ) (*)" />
                     <TextField fx:id="priceField" promptText="Ví dụ: 15000000" />
                 </VBox>
 
                 <VBox spacing="5.0">
-                    <Label text="Tình trạng (*)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Tình trạng (*)" />
                     <ComboBox fx:id="conditionComboBox" maxWidth="1.999999999" promptText="-- Chọn tình trạng --" styleClass="combo-box" />
                 </VBox>
 
                 <VBox spacing="5.0">
-                    <Label text="Link Ảnh (URL)" textFill="#a0a0b0" />
+                    <Label styleClass="text-secondary" text="Link Ảnh (URL)" />
                     <TextField fx:id="imageUrlField" promptText="https://imgur.com/anh-san-pham.jpg" />
                 </VBox>
 
                 <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
 
-                <Label text="⚡ Thông số kỹ thuật" textFill="#4ecdc4">
+                <Label styleClass="text-accent" text="⚡ Thông số kỹ thuật">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Label>
 
@@ -76,16 +72,9 @@
                     <TextField fx:id="vehicleYearField" promptText="Năm sản xuất" />
                 </VBox>
 
-                <Label fx:id="statusLabel" text="Vui lòng điền đầy đủ thông tin" textFill="#a0a0b0" />
+                <Label fx:id="statusLabel" styleClass="text-secondary" text="Vui lòng điền đầy đủ thông tin" />
                 <Button fx:id="submitBtn" mnemonicParsing="false" onAction="#handleSubmit" prefHeight="45.0" prefWidth="200.0" text="Đăng Sản Phẩm" />
             </children>
-         <effect>
-            <InnerShadow>
-               <color>
-                  <Color green="0.7408047914505005" blue="1.0" />
-               </color>
-            </InnerShadow>
-         </effect>
         </VBox>
     </content>
 </ScrollPane>

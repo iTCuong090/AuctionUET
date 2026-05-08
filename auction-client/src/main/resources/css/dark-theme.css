@@ -1,0 +1,138 @@
+/* =====================================================
+   DARK THEME - AuctionUET
+   ===================================================== */
+
+.root { -fx-background-color: #0d1117; } /* Deep dark background */
+
+/* === DASHBOARD LAYOUT (Floating Cards) === */
+.dashboard-root {
+    -fx-background-color: #0d1117;
+}
+
+.dashboard-sidebar-card {
+    -fx-background-color: #16213e;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0.2, 0, 8);
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+}
+
+.dashboard-main-card {
+    -fx-background-color: #1a1a2e;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 20, 0.2, 0, 8);
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+}
+
+.sidebar-title-text {
+    -fx-text-fill: #ffffff;
+}
+
+.dashboard-sidebar-card .sidebar-item { 
+    -fx-background-color: transparent; 
+    -fx-text-fill: #b3b3b3; 
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 15;
+    -fx-background-radius: 10;
+}
+.dashboard-sidebar-card .sidebar-item:hover { 
+    -fx-background-color: #1f2a4a; 
+    -fx-text-fill: #ffffff; 
+}
+.dashboard-sidebar-card .sidebar-item.active { 
+    -fx-background-color: linear-gradient(to right, #e94560, #c0392b); 
+    -fx-text-fill: #ffffff; 
+}
+
+.text-field, .password-field { -fx-background-color: #16213e; -fx-text-fill: #e0e0e0; -fx-border-color: #0f3460; }
+.text-field:focused, .password-field:focused { -fx-border-color: #e94560; -fx-effect: dropshadow(gaussian, #e94560, 10, 0, 0, 0); }
+
+.combo-box { -fx-background-color: #16213e; -fx-border-color: #0f3460; }
+.combo-box:focused { -fx-border-color: #e94560; -fx-effect: dropshadow(gaussian, #e94560, 10, 0, 0, 0); }
+.combo-box > .list-cell { -fx-text-fill: #e0e0e0; }
+.combo-box .arrow { -fx-background-color: #e0e0e0; }
+.combo-box .arrow-button { -fx-background-color: transparent; }
+.combo-box-popup .list-view { -fx-background-color: #16213e; -fx-border-color: #0f3460; }
+.combo-box-popup .list-view .list-cell { -fx-text-fill: #e0e0e0; }
+.combo-box-popup .list-view .list-cell:hover { -fx-background-color: #e94560; -fx-text-fill: white; }
+.combo-box-popup .list-view .list-cell:selected { -fx-background-color: #ff6b6b; -fx-text-fill: white; }
+
+.button { -fx-background-color: linear-gradient(to right, #e94560, #0f3460); -fx-text-fill: white; }
+.button:hover { -fx-background-color: linear-gradient(to right, #ff6b6b, #1a5276); }
+.sidebar-item.button { }
+.sidebar-item.button.active { }
+
+.error-label { -fx-text-fill: #e94560; }
+.hyperlink { -fx-text-fill: #4ecdc4; }
+
+.auction-card { -fx-background-color: #16213e; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.2, 0, 2); }
+.auction-card:hover { -fx-effect: dropshadow(gaussian, rgba(233,69,96,0.4), 16, 0.3, 0, 4); }
+
+.status-badge-running { -fx-background-color: #2ecc71; -fx-text-fill: white; }
+.status-badge-open { -fx-background-color: #f39c12; -fx-text-fill: white; }
+.status-badge-finished { -fx-background-color: #7f8c8d; -fx-text-fill: white; }
+.status-badge-canceled { -fx-background-color: #e74c3c; -fx-text-fill: white; }
+
+.header-bar { -fx-background-color: #1a252f; }
+.content-area { -fx-background-color: #ecf0f1; }
+.footer-bar { -fx-background-color: #bdc3c7; }
+.footer-label { -fx-text-fill: #7f8c8d; }
+.dark-bg { -fx-background-color: #1a1a2e; }
+.dark-bg-scroll { -fx-background: #1a1a2e; -fx-background-color: #1a1a2e; }
+.card-bg { -fx-background-color: #16213e; }
+.card-border { -fx-border-color: #0f3460; }
+
+/* === TEXT CLASSES === */
+.text-primary { -fx-text-fill: #ffffff; }
+.text-secondary { -fx-text-fill: #a0a0b0; }
+.text-accent { -fx-text-fill: #4ecdc4; }
+.text-heading { -fx-text-fill: #4ecdc4; -fx-font-weight: bold; }
+.text-detail { -fx-text-fill: #e0e0e0; }
+.login-title { -fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold; }
+.register-title { -fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold; }
+
+/* === TOGGLE BUTTON === */
+.theme-toggle-btn {
+    -fx-background-color: #2d3b45;
+    -fx-text-fill: #f0c040;
+    -fx-background-radius: 50;
+    -fx-min-width: 32;
+    -fx-max-width: 32;
+    -fx-min-height: 32;
+    -fx-max-height: 32;
+    -fx-padding: 0;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-border-color: #4a5568;
+    -fx-border-radius: 50;
+    -fx-border-width: 1;
+    -fx-alignment: center;
+}
+.theme-toggle-btn:hover {
+    -fx-background-color: #3d4b55;
+    -fx-border-color: #718096;
+}
+
+/* === MAIN VIEW SPLIT LAYOUT === */
+.main-banner-left {
+    -fx-background-color: linear-gradient(to bottom right, #0f3460, #1a1a2e, #e94560);
+}
+.main-form-right {
+    -fx-background-color: #16213e;
+}
+.main-login-btn {
+    -fx-background-color: linear-gradient(to right, #e94560, #c0392b);
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 12 30;
+    -fx-cursor: hand;
+}
+.main-login-btn:hover {
+    -fx-background-color: linear-gradient(to right, #ff6b6b, #e94560);
+}

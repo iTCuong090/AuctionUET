@@ -1,0 +1,134 @@
+/* =====================================================
+   LIGHT THEME - AuctionUET
+   Inspired by Canvas LMS: White + Blue clean design
+   ===================================================== */
+
+.root { -fx-background-color: #eef2f6; } /* Light grayish blue background for the window */
+
+/* === DASHBOARD LAYOUT (Floating Cards) === */
+.dashboard-root {
+    -fx-background-color: #eef2f6;
+}
+
+.dashboard-sidebar-card {
+    -fx-background-color: linear-gradient(to bottom, #0374B5, #014f86);
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0.1, 0, 5);
+}
+
+.dashboard-main-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0.1, 0, 5);
+}
+
+.sidebar-title-text {
+    -fx-text-fill: #ffffff;
+}
+
+/* Override sidebar items when inside the new sidebar card */
+.dashboard-sidebar-card .sidebar-item { 
+    -fx-background-color: transparent; 
+    -fx-text-fill: rgba(255, 255, 255, 0.7); 
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 15;
+    -fx-background-radius: 10;
+}
+.dashboard-sidebar-card .sidebar-item:hover { 
+    -fx-background-color: rgba(255, 255, 255, 0.15); 
+    -fx-text-fill: #ffffff; 
+}
+.dashboard-sidebar-card .sidebar-item.active { 
+    -fx-background-color: rgba(255, 255, 255, 0.25); 
+    -fx-text-fill: #ffffff; 
+}
+
+.text-field, .password-field { -fx-background-color: #ffffff; -fx-text-fill: #2d3b45; -fx-border-color: #c7cdd1; }
+.text-field:focused, .password-field:focused { -fx-border-color: #0374B5; -fx-effect: dropshadow(gaussian, #0374B5, 8, 0, 0, 0); }
+
+.combo-box { -fx-background-color: #ffffff; -fx-border-color: #c7cdd1; }
+.combo-box:focused { -fx-border-color: #0374B5; -fx-effect: dropshadow(gaussian, #0374B5, 8, 0, 0, 0); }
+.combo-box > .list-cell { -fx-text-fill: #2d3b45; }
+.combo-box .arrow { -fx-background-color: #6b7780; }
+.combo-box .arrow-button { -fx-background-color: transparent; }
+.combo-box-popup .list-view { -fx-background-color: #ffffff; -fx-border-color: #c7cdd1; }
+.combo-box-popup .list-view .list-cell { -fx-text-fill: #2d3b45; }
+.combo-box-popup .list-view .list-cell:hover { -fx-background-color: #0374B5; -fx-text-fill: white; }
+.combo-box-popup .list-view .list-cell:selected { -fx-background-color: #0261a1; -fx-text-fill: white; }
+
+.button { -fx-background-color: linear-gradient(to right, #0374B5, #0261a1); -fx-text-fill: white; }
+.button:hover { -fx-background-color: linear-gradient(to right, #0490d4, #0374B5); }
+.sidebar-item.button { }
+.sidebar-item.button.active { }
+
+.error-label { -fx-text-fill: #dc2626; }
+.hyperlink { -fx-text-fill: #0374B5; }
+
+.auction-card { -fx-background-color: #ffffff; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0.1, 0, 2); }
+.auction-card:hover { -fx-effect: dropshadow(gaussian, rgba(3,116,181,0.25), 12, 0.2, 0, 4); }
+
+.status-badge-running { -fx-background-color: #22c55e; -fx-text-fill: white; }
+.status-badge-open { -fx-background-color: #f59e0b; -fx-text-fill: white; }
+.status-badge-finished { -fx-background-color: #94a3b8; -fx-text-fill: white; }
+.status-badge-canceled { -fx-background-color: #ef4444; -fx-text-fill: white; }
+
+.header-bar { -fx-background-color: #2d3b45; }
+.content-area { -fx-background-color: #f5f5f5; }
+.footer-bar { -fx-background-color: #e5e7eb; }
+.footer-label { -fx-text-fill: #6b7780; }
+.dark-bg { -fx-background-color: #f5f5f5; }
+.dark-bg-scroll { -fx-background: #f5f5f5; -fx-background-color: #f5f5f5; }
+.card-bg { -fx-background-color: #ffffff; }
+.card-border { -fx-border-color: #c7cdd1; }
+
+/* === TEXT CLASSES === */
+.text-primary { -fx-text-fill: #2d3b45; }
+.text-secondary { -fx-text-fill: #6b7780; }
+.text-accent { -fx-text-fill: #0374B5; }
+.text-heading { -fx-text-fill: #0374B5; -fx-font-weight: bold; }
+.text-detail { -fx-text-fill: #4a5568; }
+.login-title { -fx-text-fill: #2d3b45; -fx-font-size: 32px; -fx-font-weight: bold; }
+.register-title { -fx-text-fill: #2d3b45; -fx-font-size: 28px; -fx-font-weight: bold; }
+
+/* === TOGGLE BUTTON === */
+.theme-toggle-btn {
+    -fx-background-color: #e5e7eb;
+    -fx-text-fill: #6366f1;
+    -fx-background-radius: 50;
+    -fx-min-width: 32;
+    -fx-max-width: 32;
+    -fx-min-height: 32;
+    -fx-max-height: 32;
+    -fx-padding: 0;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-border-color: #c7cdd1;
+    -fx-border-radius: 50;
+    -fx-border-width: 1;
+    -fx-alignment: center;
+}
+.theme-toggle-btn:hover {
+    -fx-background-color: #d1d5db;
+    -fx-border-color: #9ca3af;
+}
+
+/* === MAIN VIEW SPLIT LAYOUT === */
+.main-banner-left {
+    -fx-background-color: linear-gradient(to bottom right, #0374B5, #0261a1, #014f86);
+}
+.main-form-right {
+    -fx-background-color: #ffffff;
+}
+.main-login-btn {
+    -fx-background-color: linear-gradient(to right, #0374B5, #0261a1);
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 12 30;
+    -fx-cursor: hand;
+}
+.main-login-btn:hover {
+    -fx-background-color: linear-gradient(to right, #0490d4, #0374B5);
+}
