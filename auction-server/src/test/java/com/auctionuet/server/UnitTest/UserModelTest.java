@@ -1,5 +1,6 @@
 package com.auctionuet.server.UnitTest;
 
+import com.auctionuet.server.domain.enums.Permission;
 import com.auctionuet.server.domain.model.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,49 +11,49 @@ public class UserModelTest {
     void testBidderPermissions() {
         Bidder bidder = new Bidder("1", "duy");
 
-        assertTrue(bidder.hasPermission("PLACE_BID"));
-        assertTrue(bidder.hasPermission("VIEW_AUCTION"));
-        assertTrue(bidder.hasPermission("VIEW_BID_HISTORY"));
-        assertTrue(bidder.hasPermission("GET_PROFILE"));
-        assertTrue(bidder.hasPermission("UPDATE_PROFILE"));
+        assertTrue(bidder.hasPermission(Permission.PLACE_BID));
+        assertTrue(bidder.hasPermission(Permission.VIEW_AUCTION));
+        assertTrue(bidder.hasPermission(Permission.VIEW_BID_HISTORY));
+        assertTrue(bidder.hasPermission(Permission.GET_PROFILE));
+        assertTrue(bidder.hasPermission(Permission.UPDATE_PROFILE));
 
-        assertFalse(bidder.hasPermission("CREATE_AUCTION"));
-        assertFalse(bidder.hasPermission("MANAGE_USERS"));
+        assertFalse(bidder.hasPermission(Permission.CREATE_AUCTION));
+        assertFalse(bidder.hasPermission(Permission.MANAGE_USERS));
     }
 
     @Test
     void testSellerPermissions() {
         Seller seller = new Seller("2", "duy");
 
-        assertTrue(seller.hasPermission("CREATE_AUCTION"));
-        assertTrue(seller.hasPermission("VIEW_AUCTION"));
-        assertTrue(seller.hasPermission("GET_PROFILE"));
-        assertTrue(seller.hasPermission("UPDATE_PROFILE"));
-        assertTrue(seller.hasPermission("VIEW_BID_HISTORY"));
+        assertTrue(seller.hasPermission(Permission.CREATE_AUCTION));
+        assertTrue(seller.hasPermission(Permission.VIEW_AUCTION));
+        assertTrue(seller.hasPermission(Permission.GET_PROFILE));
+        assertTrue(seller.hasPermission(Permission.UPDATE_PROFILE));
+        assertTrue(seller.hasPermission(Permission.VIEW_BID_HISTORY));
 
-        assertFalse(seller.hasPermission("PLACE_BID"));
-        assertFalse(seller.hasPermission("MANAGE_USERS"));
+        assertFalse(seller.hasPermission(Permission.PLACE_BID));
+        assertFalse(seller.hasPermission(Permission.MANAGE_USERS));
     }
 
     @Test
     void testAdminPermissions() {
         Admin admin = new Admin("3", "duy");
 
-        assertTrue(admin.hasPermission("MANAGE_USERS"));
-        assertTrue(admin.hasPermission("VIEW_AUCTION"));
-        assertTrue(admin.hasPermission("GET_PROFILE"));
-        assertTrue(admin.hasPermission("UPDATE_PROFILE"));
-        assertTrue(admin.hasPermission("VIEW_BID_HISTORY"));
+        assertTrue(admin.hasPermission(Permission.MANAGE_USERS));
+        assertTrue(admin.hasPermission(Permission.VIEW_AUCTION));
+        assertTrue(admin.hasPermission(Permission.GET_PROFILE));
+        assertTrue(admin.hasPermission(Permission.UPDATE_PROFILE));
+        assertTrue(admin.hasPermission(Permission.VIEW_BID_HISTORY));
 
-        assertFalse(admin.hasPermission("PLACE_BID"));
-        assertFalse(admin.hasPermission("CREATE_AUCTION"));
+        assertFalse(admin.hasPermission(Permission.PLACE_BID));
+        assertFalse(admin.hasPermission(Permission.CREATE_AUCTION));
     }
 
     @Test
     void testUserImmutable() {
         User user = new Bidder("1", "duy");
 
-        // Không có setter -> test gián tiếp bằng việc không thể thay đổi giá trị
+        // Không có setter → test gián tiếp bằng việc không thể thay đổi giá trị
         assertEquals("1", user.getId());
         assertEquals("duy", user.getUsername());
 

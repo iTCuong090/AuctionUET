@@ -181,3 +181,47 @@ Việc áp dụng các mẫu thiết kế giúp chuẩn hóa cách giải quyế
 | Bid History Visualization: biểu đồ đường giá realtime (line chart) | 0.5 | Tùy chọn |
 | Hoặc các tính năng khác sinh viên tự sáng tạo | 0.5 | Tùy chọn |
 | **Tổng điểm** | **10+1** | |
+
+---
+
+## 4. Lựa chọn sáng tạo và nâng cao của nhóm (Creative Features)
+
+Để tối ưu hóa trải nghiệm người dùng và đảm bảo tính thực tế của hệ thống, nhóm quyết định triển khai các tính năng nâng cao sau:
+
+### 4.1 Hệ thống Tài chính & Ví điện tử (Wallet System)
+Hệ thống sẽ không chỉ là nơi đặt giá ảo mà tích hợp một luồng luân chuyển dòng tiền chuyên nghiệp:
+*   **Thuộc tính ví tiền:** Mỗi người dùng (`User`) sẽ có thêm hai thuộc tính:
+    *   `balance`: Số dư khả dụng (có thể dùng để đặt cọc hoặc rút ra).
+    *   `frozenBalance`: Số dư đang bị đóng băng (dùng để bảo đảm cho các phiên đấu giá đang tham gia).
+*   **Cơ chế Nạp/Rút (Mock Payment):** 
+    *   Sử dụng API **VietQR** để tạo mã QR nạp tiền động (Số tiền + Nội dung chuyển khoản). Người dùng quét mã để thực hiện lệnh nạp "giả lập" nhưng mang lại trải nghiệm như thật.
+    *   Hệ thống Server xử lý việc cộng tiền vào ví sau khi "xác nhận" thanh toán.
+    *   Hỗ trợ lệnh rút tiền (`Withdraw`) từ ví hệ thống về tài khoản cá nhân của Seller và Bidder.
+
+### 4.2 Cơ chế Đặt cọc & Đóng băng tiền (Deposit & Frozen Balance)
+Đây là tính năng quan trọng để đảm bảo tính nghiêm túc của các phiên đấu giá:
+*   **Quy tắc 10%:** Để tham gia đấu giá một sản phẩm, Bidder phải có số dư tối thiểu bằng **10% giá khởi điểm** của sản phẩm đó.
+*   **Cơ chế Frozen Balance:** Khi bắt đầu Bid, hệ thống sẽ tự động chuyển 10% số tiền này từ `balance` sang `frozenBalance`.
+*   **Lý do cần thiết:** 
+    *   Ngăn chặn việc "hét giá ảo" (Shill Bidding) từ các tài khoản không có khả năng thanh toán.
+    *   Đảm bảo người thắng cuộc có trách nhiệm với giao dịch. Nếu người thắng không thanh toán, tiền cọc sẽ bị xử lý theo chính sách hệ thống (ví dụ: bồi thường cho Seller hoặc nộp phạt).
+    *   Tiền sẽ được giải phóng (`Unfreeze`) và hoàn trả vào `balance` ngay khi phiên đấu giá kết thúc mà Bidder không thắng cuộc.
+
+### 4.3 Tự động đấu giá (Auto-Bidding)
+*   Triển khai thuật toán đấu giá tự động giúp người dùng giữ vị thế dẫn đầu mà không cần túc trực 24/7.
+*   Sử dụng `PriorityQueue` để xử lý thứ tự ưu tiên của các bước giá tự động khi có nhiều người cùng cài đặt Auto-bid.
+
+### 4.4 Biểu đồ biến động giá (Realtime Price Chart)
+*   Sử dụng thư viện biểu đồ (JavaFX Charts) để trực quan hóa lịch sử đặt giá.
+*   Cập nhật dữ liệu theo thời gian thực (Real-time) mỗi khi có một Bid hợp lệ được ghi nhận.
+
+### 4.5 Trí tuệ nhân tạo (AI Auction Assistant - Tùy chọn)
+*   Tích hợp **Google Gemini API** để hỗ trợ Seller:
+    *   **AI Appraisal:** Nhận diện và thẩm định giá trị sản phẩm qua mô tả/hình ảnh.
+    *   **Smart Description:** Tự động viết lại mô tả sản phẩm chuyên nghiệp, hấp dẫn để tăng tỷ lệ chốt đơn.
+
+### 4.6 Hệ thống tương tác đa tầng (Public & Private Comments)
+Để tăng tính minh bạch và hỗ trợ giao tiếp giữa các bên, hệ thống tích hợp cơ chế bình luận linh hoạt:
+*   **Public Comment (Q&A):** Cho phép mọi người đặt câu hỏi công khai trên trang chi tiết sản phẩm. Seller trả lời công khai để các Bidder khác cùng tham khảo thông tin.
+*   **Private Comment (Seller-Bidder DM):** Cơ chế nhắn tin riêng tư giữa Bidder và Seller để trao đổi về vận chuyển, địa chỉ hoặc thương lượng chi tiết.
+*   **AI Moderation (Tùy chọn):** Sử dụng AI để tự động lọc bỏ các bình luận rác hoặc ngôn từ không phù hợp.
