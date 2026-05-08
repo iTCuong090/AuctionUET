@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+
+<HBox spacing="40.0" style="-fx-background-color: #1a1a2e; -fx-padding: 40;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.ProfileController">
+    <children>
+        <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="15.0" style="-fx-background-color: #16213e; -fx-background-radius: 15; -fx-padding: 40 20; -fx-border-color: #0f3460; -fx-border-radius: 15; -fx-border-width: 2;">
+            <children>
+                <Circle fill="#4ecdc4" radius="65.0" stroke="#1a1a2e" strokeType="INSIDE" strokeWidth="4.0" />
+                <Label fx:id="usernameLabel" text="\@nguyencaocong" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="22.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets top="10.0" />
+                    </VBox.margin>
+                </Label>
+                <Label fx:id="roleLabel" style="-fx-background-color: #e94560; -fx-background-radius: 10; -fx-padding: 6 18;" text="SELLER" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="14.0" />
+                    </font>
+                </Label>
+                <Label text="Thành viên từ: Tháng 5, 2026" textFill="#a0a0b0">
+                    <VBox.margin>
+                        <Insets top="15.0" />
+                    </VBox.margin>
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Label>
+                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-border-color: #4ecdc4; -fx-border-radius: 25; -fx-text-fill: #4ecdc4; -fx-padding: 10; -fx-font-weight: bold;" text="Chỉnh sửa Profile">
+                    <VBox.margin>
+                        <Insets top="30.0" />
+                    </VBox.margin>
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+            </children>
+        </VBox>
+
+        <VBox spacing="30.0" HBox.hgrow="ALWAYS">
+            <children>
+                <Label text="Thông tin tài khoản" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="26.0" />
+                    </font>
+                </Label>
+
+                <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-background-color: #16213e; -fx-background-radius: 12; -fx-padding: 25; -fx-border-color: #0f3460; -fx-border-radius: 12;">
+                    <children>
+                        <VBox spacing="8.0">
+                            <children>
+                                <Label text="Số dư khả dụng" textFill="#a0a0b0">
+                                    <font><Font size="16.0" /></font>
+                                </Label>
+                                <Label fx:id="balanceLabel" text="5,000,000 VNĐ" textFill="#4ecdc4">
+                                    <font>
+                                        <Font name="System Bold" size="32.0" />
+                                    </font>
+                                </Label>
+                            </children>
+                        </VBox>
+                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Button mnemonicParsing="false" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 16px;" text="Nạp thêm tiền" />
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+
+                <Label text="Thống kê hoạt động" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="22.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets top="10.0" />
+                    </VBox.margin>
+                </Label>
+
+                <GridPane hgap="25.0" vgap="25.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="130.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="130.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                    <children>
+                        <VBox alignment="CENTER" style="-fx-background-color: #16213e; -fx-background-radius: 12;" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <children>
+                                <Label text="12" textFill="WHITE"><font><Font name="System Bold" size="36.0" /></font></Label>
+                                <Label text="Đấu giá đã thắng" textFill="#a0a0b0"><font><Font size="16.0" /></font></Label>
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" style="-fx-background-color: #16213e; -fx-background-radius: 12;" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <children>
+                                <Label text="5" textFill="WHITE"><font><Font name="System Bold" size="36.0" /></font></Label>
+                                <Label text="Sản phẩm đã bán" textFill="#a0a0b0"><font><Font size="16.0" /></font></Label>
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" style="-fx-background-color: #16213e; -fx-background-radius: 12;" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <children>
+                                <Label text="⭐⭐⭐⭐⭐" textFill="#f39c12"><font><Font size="24.0" /></font></Label>
+                                <Label text="Điểm uy tín" textFill="#a0a0b0"><font><Font size="16.0" /></font></Label>
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" style="-fx-background-color: #16213e; -fx-background-radius: 12;" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <children>
+                                <Label text="3" textFill="WHITE"><font><Font name="System Bold" size="36.0" /></font></Label>
+                                <Label text="Đang tham gia" textFill="#a0a0b0"><font><Font size="16.0" /></font></Label>
+                            </children>
+                        </VBox>
+                    </children>
+                </GridPane>
+            </children>
+        </VBox>
+    </children>
+</HBox>

@@ -15,11 +15,12 @@ public class ItemDTO {
     private String condition;
     private Map<String, Object> extraFields;
 
-    public ItemDTO() {}
+    public ItemDTO() {
+    }
 
     public ItemDTO(String id, String name, String description, double startingPrice,
-                   ItemType type, String sellerUsername, String imageUrl,
-                   String condition, Map<String, Object> extraFields) {
+            ItemType type, String sellerUsername, String imageUrl,
+            String condition, Map<String, Object> extraFields) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -32,32 +33,77 @@ public class ItemDTO {
     }
 
     // --- Getters & Setters ---
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getName() {
+        return name;
+    }
 
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public ItemType getType() { return type; }
-    public void setType(ItemType type) { this.type = type; }
+    public String getDescription() {
+        return description;
+    }
 
-    public String getSellerUsername() { return sellerUsername; }
-    public void setSellerUsername(String sellerUsername) { this.sellerUsername = sellerUsername; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public double getStartingPrice() {
+        return startingPrice;
+    }
 
-    public String getCondition() { return condition; }
-    public void setCondition(String condition) { this.condition = condition; }
+    public void setStartingPrice(double startingPrice) {
+        this.startingPrice = startingPrice;
+    }
 
-    public Map<String, Object> getExtraFields() { return extraFields; }
-    public void setExtraFields(Map<String, Object> extraFields) { this.extraFields = extraFields; }
+    public ItemType getType() {
+        return type;
+    }
+
+    public void setType(ItemType type) {
+        this.type = type;
+    }
+
+    public String getSellerUsername() {
+        return sellerUsername;
+    }
+
+    public void setSellerUsername(String sellerUsername) {
+        this.sellerUsername = sellerUsername;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
+    }
+
+    public Map<String, Object> getExtraFields() {
+        return extraFields;
+    }
+
+    public void setExtraFields(Map<String, Object> extraFields) {
+        this.extraFields = extraFields;
+    }
 
     // Giúp hiển thị tên trên ComboBox cực đẹp
     @Override

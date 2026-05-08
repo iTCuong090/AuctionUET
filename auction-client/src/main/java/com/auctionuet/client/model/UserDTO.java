@@ -1,10 +1,9 @@
 package com.auctionuet.client.model;
 
-// Import đúng đường dẫn trên máy của ông
 import com.auctionuet.client.network.protocol.UserRole;
 
 public class UserDTO {
-    // Đã xóa chữ final
+
     private String id;
     private String username;
     private UserRole role;
