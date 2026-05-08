@@ -2,133 +2,62 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.effect.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">    <top>
-        <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="900.0" spacing="20.0" style="-fx-background-color: #1a252f;" BorderPane.alignment="CENTER">
+<HBox prefHeight="650.0" prefWidth="1000.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">
+
+    <!-- ====== PHẦN TRÁI (50%): BANNER GRADIENT + BRANDING ====== -->
+    <VBox alignment="CENTER" spacing="20.0" styleClass="main-banner-left" HBox.hgrow="ALWAYS" prefWidth="500.0">
+        <children>
+            <!-- Logo UET -->
+            <StackPane>
+                <Circle fill="WHITE" radius="55.0" />
+                <ImageView fitHeight="90.0" fitWidth="90.0" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/UET.png" />
+                    </image>
+                </ImageView>
+            </StackPane>
+
+            <!-- Tên App -->
+            <Label text="AuctionUET" textFill="WHITE" alignment="CENTER">
+                <font><Font name="System Bold" size="42.0" /></font>
+            </Label>
+
+            <!-- Slogan -->
+            <Label text="Săn Đồ Ngon - Giá Cực Hời" textFill="rgba(255,255,255,0.85)" alignment="CENTER">
+                <font><Font name="System" size="22.0" /></font>
+            </Label>
+
+            <!-- Mô tả nhỏ -->
+            <Label text="Nền tảng đấu giá trực tuyến uy tín&#10;dành cho sinh viên UET" textFill="rgba(255,255,255,0.6)" wrapText="true" alignment="CENTER" textAlignment="CENTER">
+                <font><Font size="16.0" /></font>
+                <VBox.margin><Insets top="10.0" /></VBox.margin>
+            </Label>
+        </children>
+        <padding>
+            <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+        </padding>
+    </VBox>
+
+    <!-- ====== PHẦN PHẢI (50%): FORM LOGIN / REGISTER ====== -->
+    <VBox styleClass="main-form-right" HBox.hgrow="ALWAYS" prefWidth="500.0" minWidth="400.0">
+        <!-- Nút toggle theme ở góc trên phải -->
+        <HBox alignment="CENTER_RIGHT">
+            <padding><Insets top="12.0" right="15.0" /></padding>
             <children>
-                <StackPane>
-                    <Circle fill="WHITE" radius="28.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="2.0" />
-
-                    <ImageView fitHeight="55.0" fitWidth="55.0" preserveRatio="true">
-                        <image>
-                            <Image url="@../images/UET.png" />
-                        </image>
-                    </ImageView>
-                </StackPane>
-                <Label text="AuctionUET">
-                    <font>
-                        <Font name="System Bold" size="28.0" />
-                    </font>
-                    <textFill>
-                        <LinearGradient endX="1.0" endY="1.0">
-                            <stops>
-                                <Stop>
-                                    <color>
-                                        <Color red="0.0658000037074089" green="0.5460582375526428" blue="0.9399999976158142" />
-                                    </color>
-                                </Stop>
-                                <Stop offset="1.0">
-                                    <color>
-                                        <Color red="1.0" green="1.0" blue="1.0" />
-                                    </color>
-                                </Stop>
-                            </stops>
-                        </LinearGradient>
-                    </textFill>
-                </Label>
-                <HBox alignment="CENTER_RIGHT" prefHeight="70.0" prefWidth="200.0" spacing="15.0" HBox.hgrow="ALWAYS">
-                    <children>
-                        <Button mnemonicParsing="false" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand;" text="Trang chủ">
-                            <font>
-                                <Font size="14.0" />
-                            </font>
-                        </Button>
-                        <Button mnemonicParsing="false" onAction="#handleLogin" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand;" text="Đăng nhập">
-                            <font>
-                                <Font size="14.0" />
-                            </font>
-                        </Button>
-
-                        <Button mnemonicParsing="false" onAction="#handleRegister" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;" text="Đăng ký ngay">
-                            <font>
-                                <Font name="System Bold" size="14.0" />
-                            </font>
-                            <padding>
-                                <Insets bottom="8.0" left="15.0" right="15.0" top="8.0" />
-                            </padding>
-                        </Button>
-                    </children>
-                </HBox>
+                <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="🌙" />
             </children>
-            <padding>
-                <Insets left="30.0" right="30.0" />
-            </padding>
         </HBox>
-    </top>
 
-    <center>
-        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25.0" styleClass="hero-section" BorderPane.alignment="CENTER">            <children>
-                <Label fx:id="titleLabel" text="Săn Đồ Ngon - Giá Cực Hời" textFill="#2c3e50">
-                    <font>
-                        <Font name="System Bold" size="48.0" />
-                    </font>
-                </Label>
-                <Label fx:id="subtitleLabel" text="Nền tảng đấu giá uy tín nhất. Tham gia ngay để không bỏ lỡ những món đồ độc lạ!" textFill="#444a4d">
-                    <font>
-                        <Font size="18.0" />
-                    </font>
-                </Label>
-
-                <Button fx:id="startButton" mnemonicParsing="false" onAction="#onStartClicked" prefHeight="45.0" prefWidth="200.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;" text="🚀 Bắt đầu ngay">
-                    <font>
-                        <Font name="System Bold" size="18.0" />
-                    </font>
-                    <padding>
-                        <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-                    </padding>
-                </Button>
-
-                <Label fx:id="statusLabel" text="">
-                    <font>
-                        <Font name="System Bold" size="14.0" />
-                    </font>
-                </Label>
-            </children>
-        </VBox>
-    </center>
-
-    <bottom>
-        <HBox alignment="BOTTOM_RIGHT" prefHeight="30.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-            <children>
-                <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                <Label alignment="CENTER" contentDisplay="CENTER" text="AuctionUET" translateX="20.0">
-                    <font>
-                        <Font name="System Bold" size="15.0" />
-                    </font>
-                </Label>
-                <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                <Label fx:id="versionLabel" text="v1.0" textFill="#7f8c8d">
-                    <font>
-                        <Font size="10.0" />
-                    </font>
-                </Label>
-            </children>
+        <!-- Panel chứa form Login/Register -->
+        <StackPane fx:id="rightPanel" VBox.vgrow="ALWAYS">
             <padding>
-                <Insets bottom="10.0" right="15.0" />
+                <Insets bottom="30.0" left="50.0" right="50.0" top="10.0" />
             </padding>
-        </HBox>
-    </bottom>
-   <effect>
-      <InnerShadow>
-         <color>
-            <Color green="0.6396552324295044" blue="1.0" />
-         </color>
-      </InnerShadow>
-   </effect>
-</BorderPane>
+        </StackPane>
+    </VBox>
+</HBox>

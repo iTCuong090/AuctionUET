@@ -18,6 +18,7 @@ public class DashboardController {
 
     // Các nút trên Sidebar
     @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout;
+    @FXML private Button btnToggleTheme;
 
     @FXML
     public void initialize() {
@@ -69,6 +70,11 @@ public class DashboardController {
 
         // Ép nó sáng sẵn nút Auction List khi vừa mở lên
         setActiveButton(btnAuctionList);
+
+        // 5. Cập nhật icon nút toggle theme theo trạng thái hiện tại
+        if (btnToggleTheme != null) {
+            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+        }
     }
 
     private void setupPermissions() {
@@ -121,7 +127,14 @@ public class DashboardController {
     private void handleLogout() {
         // Dọn dẹp session bằng hàm mới clearSession() thay vì setSession()
         ClientSession.getInstance().clearSession();
-        // Quay về đăng nhập
-        SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
+        // Quay về trang chủ MainView
+        SceneManager.getInstance().switchScene("/fxml/MainView.fxml");
+    }
+
+    @FXML
+    private void handleToggleTheme() {
+        ThemeManager.getInstance().toggleTheme();
+        ThemeManager.getInstance().applyTheme(btnToggleTheme.getScene());
+        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
     }
 }
