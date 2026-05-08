@@ -43,35 +43,13 @@ public class MainController {
 
     // 4. HIỆU ỨNG NÚT BẮT ĐẦU
 
+    // 4. CHUYỂN TRANG ĐĂNG NHẬP
+
     @FXML
     private void onStartClicked() {
-        // Đổi text statusLabel thành thông báo thành công và set màu chữ thành Xanh (Green)
-        statusLabel.setText("✅ Chào mừng đến với AuctionUET!");
-        statusLabel.setTextFill(Color.GREEN);
+        System.out.println("Đang nhảy sang trang Đăng nhập...");
 
-        // Disable button (ngăn spam click)
-        startButton.setDisable(true);
-
-        // Dùng PauseTransition tạo độ trễ 2 giây
-        PauseTransition pause2s = new PauseTransition(Duration.seconds(2));
-        pause2s.setOnFinished(event -> {
-            // Sau 2s -> Màu Cam
-            statusLabel.setText("⏳ Đang kết nối server...");
-            statusLabel.setTextFill(Color.ORANGE);
-
-            // Tạo thêm PauseTransition 3 giây nữa
-            PauseTransition pause3s = new PauseTransition(Duration.seconds(3));
-            pause3s.setOnFinished(e -> {
-                // Sau 3s tiếp -> Báo lỗi Màu Đỏ
-                statusLabel.setText("❌ Chưa có server (sẽ implement ở tuần 4)");
-                statusLabel.setTextFill(Color.RED);
-
-                // Enable lại nút
-                startButton.setDisable(false);
-            });
-            pause3s.play();
-        });
-
-        pause2s.play();
+        // Mượn luôn con đường cao tốc SceneManager để chuyển trang
+        SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
     }
 }
