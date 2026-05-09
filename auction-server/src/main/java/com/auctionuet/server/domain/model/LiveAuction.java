@@ -214,10 +214,12 @@ public class LiveAuction {
     public boolean hasDeposited(String bidderId) {
         return depositedBidders.contains(bidderId);
     }
-
     public void markDeposited(String bidderId) {
         depositedBidders.add(bidderId);
     }
+
+
+
 
     public void addObserver(AuctionObserver observer) {
         observers.add(observer);
@@ -236,6 +238,10 @@ public class LiveAuction {
         }
     }
 
+
+
+
+    // Getters, Setters
     public String getId() {
         return id;
     }
