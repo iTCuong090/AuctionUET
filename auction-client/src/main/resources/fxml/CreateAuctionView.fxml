@@ -7,7 +7,9 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="650.0" prefWidth="700.0" spacing="15.0" styleClass="dark-bg" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateAuctionController">
+<ScrollPane fitToWidth="true" prefHeight="650.0" prefWidth="700.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateAuctionController">
+    <content>
+        <VBox spacing="15.0" styleClass="dark-bg">
     <padding>
         <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
     </padding>
@@ -102,4 +104,6 @@
             <VBox.margin><Insets top="10.0" /></VBox.margin>
         </VBox>
     </children>
-</VBox>
+        </VBox>
+    </content>
+</ScrollPane>
