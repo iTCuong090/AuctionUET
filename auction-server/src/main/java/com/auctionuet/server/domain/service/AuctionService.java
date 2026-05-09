@@ -12,6 +12,9 @@ import com.auctionuet.server.util.AppLogger;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service chuyên xử lý các hành động liên quan tới Auction Management.
@@ -22,15 +25,19 @@ public class AuctionService {
     private final ItemService itemService;
     private final AuctionDAO auctionDAO;
     private final AuctionManager auctionManager;
+    private final WalletService walletService;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
-    public AuctionService(ItemService itemService, AuctionDAO auctionDAO) {
+    public AuctionService(ItemService itemService, AuctionDAO auctionDAO, WalletService walletService) {
         this.itemService = itemService;
         this.auctionDAO = auctionDAO;
+        this.walletService = walletService;
         this.auctionManager = AuctionManager.getInstance();
     }
 
     public AuctionSchema createAuction(User seller, String itemId, LocalDateTime startTime,
-            LocalDateTime endTime, String title, String description) throws AuctionException {
+            LocalDateTime endTime, String title, String description,
+            int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) throws AuctionException {
 
         AppLogger.logServiceCall("AuctionService", "createAuction",
             "seller=" + seller.getUsername() + " itemId=" + itemId + " title=" + title);
@@ -78,7 +85,9 @@ public class AuctionService {
             endTime,
             AuctionStatus.OPEN,
             0,
-            null
+            null,
+            antiSnipingWindowSeconds,
+            antiSnipingExtensionSeconds
         );
 
         auctionDAO.save(schema);
@@ -128,13 +137,68 @@ public class AuctionService {
 
         AuctionSchema schema = auctionDAO.findById(auctionId);
         if (schema != null) {
-            schema.setStatus(AuctionStatus.FINISHED);
-            auctionDAO.update(schema);
+            if (schema.getWinnerId() != null) {
+                schema.setStatus(AuctionStatus.WAITING_PAYMENT);
+                auctionDAO.update(schema);
+                
+                ItemSchema item = itemService.getItemById(schema.getItemId());
+                double depositAmount = item != null ? item.getStartingPrice() * 0.10 : 0;
+                
+                scheduler.schedule(() -> {
+                    AuctionSchema currentSchema = auctionDAO.findById(auctionId);
+                    if (currentSchema != null && currentSchema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
+                        try {
+                            walletService.forfeitDeposit(currentSchema.getWinnerId(), depositAmount);
+                            currentSchema.setStatus(AuctionStatus.CANCELED);
+                            auctionDAO.update(currentSchema);
+                        } catch (Exception e) {
+                            AppLogger.logServiceResult("AuctionService", "timeoutPayment", "FAIL: " + e.getMessage());
+                        }
+                    }
+                }, 24, TimeUnit.HOURS);
+            } else {
+                schema.setStatus(AuctionStatus.CANCELED);
+                auctionDAO.update(schema);
+            }
         }
         auctionManager.endAuction(auctionId);
 
         AppLogger.logServiceResult("AuctionService", "endAuction",
-            "OK | auctionId=" + auctionId + " status=FINISHED");
+            "OK | auctionId=" + auctionId + " status=" + (schema != null ? schema.getStatus() : "UNKNOWN"));
+    }
+
+    public void payAuction(User winner, String auctionId) throws AuctionException {
+        AuctionSchema schema = auctionDAO.findById(auctionId);
+        if (schema == null) {
+            throw new AuctionException("Auction không tồn tại");
+        }
+        if (schema.getStatus() != AuctionStatus.WAITING_PAYMENT) {
+            throw new AuctionException("Auction không ở trạng thái chờ thanh toán");
+        }
+        if (!winner.getId().equals(schema.getWinnerId())) {
+            throw new AuctionException("Bạn không phải người chiến thắng");
+        }
+        
+        ItemSchema itemSchema = itemService.getItemById(schema.getItemId());
+        if (itemSchema == null) {
+            throw new AuctionException("Item không tồn tại");
+        }
+        
+        double totalPrice = schema.getHighestBid();
+        double depositAmount = itemSchema.getStartingPrice() * 0.10;
+        double remaining = totalPrice - depositAmount;
+        
+        // This relies on withdraw throwing exception if insufficient balance
+        try {
+            walletService.withdraw(winner.getId(), remaining);
+            walletService.forfeitDeposit(winner.getId(), depositAmount); // Chuyển cọc thành thanh toán (hoặc trừ vào admin, nhưng theo spec là biến mất hoặc trừ)
+            walletService.deposit(schema.getSellerId(), totalPrice);
+            
+            schema.setStatus(AuctionStatus.PAID);
+            auctionDAO.update(schema);
+        } catch (IllegalArgumentException e) {
+            throw new AuctionException("Thanh toán thất bại: " + e.getMessage());
+        }
     }
 
     public List<AuctionSchema> getAuctions() {

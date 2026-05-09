@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.BiddingController">
+    <content>
+        <VBox spacing="25.0" styleClass="dark-bg">
+            <padding>
+                <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
+            </padding>
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                    <Button mnemonicParsing="false" styleClass="button" text="⬅ Quay lại" onAction="#handleBack" />
+                    <Region HBox.hgrow="ALWAYS" />
+                </HBox>
+
+                <!-- HEADER -->
+                <VBox spacing="10.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <Label fx:id="titleLabel" styleClass="text-heading" text="📦 Đang tải sản phẩm...">
+                                <font><Font name="System Bold" size="24.0" /></font>
+                            </Label>
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="statusBadge" styleClass="status-badge-running" style="-fx-background-radius: 20; -fx-padding: 5 15;" text="🟢 ĐANG DIỄN RA" />
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <Label fx:id="sellerLabel" styleClass="text-secondary" text="👤 Seller: đang tải..." />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="timeLeftLabel" styleClass="text-accent" text="⏰ Còn: 00:00:00">
+                                <font><Font name="System Bold" size="18.0" /></font>
+                            </Label>
+                        </HBox>
+                    </children>
+                </VBox>
+
+                <!-- THÔNG TIN GIÁ & VÍ -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <Label styleClass="text-secondary" text="GIÁ HIỆN TẠI:" prefWidth="150.0" />
+                            <Label fx:id="priceLabel" styleClass="text-primary" text="0 VNĐ">
+                                <font><Font name="System Bold" size="28.0" /></font>
+                            </Label>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <Label styleClass="text-secondary" text="Người dẫn đầu:" prefWidth="150.0" />
+                            <Label fx:id="leaderLabel" styleClass="text-accent" text="👑 Chưa có người trả giá">
+                                <font><Font name="System Bold" size="16.0" /></font>
+                            </Label>
+                        </HBox>
+                        <VBox style="-fx-border-color: #c7cdd1; -fx-border-width: 1 0 0 0; -fx-padding: 15 0 0 0;">
+                            <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                <Label styleClass="text-secondary" text="Tiền cọc của bạn:" prefWidth="150.0" />
+                                <Label fx:id="depositLabel" styleClass="text-primary" text="0 VNĐ" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                <Label styleClass="text-secondary" text="Số dư ví:" prefWidth="150.0" />
+                                <Label fx:id="balanceLabel" styleClass="text-primary" text="0 VNĐ" />
+                            </HBox>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <!-- FORM ĐẶT GIÁ -->
+                <HBox spacing="25.0">
+                    <!-- Cột Trái: Đặt giá thủ công -->
+                    <VBox spacing="15.0" styleClass="card-bg wallet-card" HBox.hgrow="ALWAYS">
+                        <children>
+                            <Label styleClass="text-primary" text="ĐẶT GIÁ THỦ CÔNG">
+                                <font><Font name="System Bold" size="16.0" /></font>
+                            </Label>
+                            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                <TextField fx:id="bidAmountField" promptText="Nhập số tiền..." styleClass="text-field" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="placeBidBtn" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #e94560;" text="🔨 Đặt giá" onAction="#handlePlaceBid" />
+                            </HBox>
+                            <Label fx:id="bidStatusLabel" styleClass="error-label" text="" />
+                        </children>
+                    </VBox>
+
+                    <!-- Cột Phải: Auto-Bid -->
+                    <VBox spacing="15.0" styleClass="card-bg wallet-card" HBox.hgrow="ALWAYS">
+                        <children>
+                            <Label styleClass="text-primary" text="CÀI ĐẶT AUTO-BID">
+                                <font><Font name="System Bold" size="16.0" /></font>
+                            </Label>
+                            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                <Label styleClass="text-secondary" text="Giá tối đa:" prefWidth="70.0"/>
+                                <TextField fx:id="maxBidField" promptText="VNĐ..." styleClass="text-field" HBox.hgrow="ALWAYS" />
+                            </HBox>
+                            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                <Label styleClass="text-secondary" text="Bước giá:" prefWidth="70.0"/>
+                                <TextField fx:id="incrementField" promptText="VNĐ..." styleClass="text-field" HBox.hgrow="ALWAYS" />
+                            </HBox>
+                            <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                                <Button fx:id="enableAutoBidBtn" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #22c55e;" text="🤖 Bật Auto-Bid" onAction="#handleSetAutoBid" />
+                                <Button fx:id="cancelAutoBidBtn" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #64748b;" text="❌ Hủy" onAction="#handleCancelAutoBid" disable="true" />
+                            </HBox>
+                            <Label fx:id="autoBidStatusLabel" styleClass="error-label" text="" />
+                        </children>
+                    </VBox>
+                </HBox>
+
+                <!-- LỊCH SỬ ĐẶT GIÁ -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card" VBox.vgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="text-primary" text="📜 LỊCH SỬ ĐẶT GIÁ">
+                            <font><Font name="System Bold" size="16.0" /></font>
+                        </Label>
+                        <ListView fx:id="bidHistoryList" prefHeight="200.0" style="-fx-background-color: transparent;" styleClass="list-view" VBox.vgrow="ALWAYS" />
+                    </children>
+                </VBox>
+
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>

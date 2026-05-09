@@ -1,0 +1,98 @@
+package com.auctionuet.client.network;
+
+import com.auctionuet.client.network.protocol.ActionType;
+import com.auctionuet.client.network.protocol.Request;
+import com.auctionuet.client.network.protocol.Response;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class BidClient {
+    
+    public void subscribe(String token, String auctionId) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        
+        Request req = new Request(ActionType.SUBSCRIBE, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if (!"OK".equals(res.getStatus())) {
+            throw new Exception(res.getMessage());
+        }
+    }
+
+    public List<Map<String, Object>> getBidHistory(String token, String auctionId) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        
+        Request req = new Request(ActionType.GET_BID_HISTORY, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if ("OK".equals(res.getStatus())) {
+            Gson gson = new Gson();
+            return gson.fromJson(gson.toJson(res.getData()), new TypeToken<List<Map<String, Object>>>(){}.getType());
+        }
+        throw new Exception(res.getMessage());
+    }
+
+    public void unsubscribe(String token, String auctionId) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        
+        Request req = new Request(ActionType.UNSUBSCRIBE, data);
+        req.setToken(token);
+        
+        // Use a background call or ignore failure to not block UI thread
+        try {
+            ServerConnection.getInstance().sendRequest(req);
+        } catch (Exception e) {
+            // Ignore for unsubscribe
+        }
+    }
+
+    public void placeBid(String token, String auctionId, double amount) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        data.put("amount", amount);
+        
+        Request req = new Request(ActionType.PLACE_BID, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if (!"OK".equals(res.getStatus())) {
+            throw new Exception(res.getMessage());
+        }
+    }
+
+    public void setAutoBid(String token, String auctionId, double maxBid, double increment) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        data.put("maxBid", maxBid);
+        data.put("increment", increment);
+        
+        Request req = new Request(ActionType.SET_AUTO_BID, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if (!"OK".equals(res.getStatus())) {
+            throw new Exception(res.getMessage());
+        }
+    }
+
+    public void cancelAutoBid(String token, String auctionId) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        
+        Request req = new Request(ActionType.CANCEL_AUTO_BID, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if (!"OK".equals(res.getStatus())) {
+            throw new Exception(res.getMessage());
+        }
+    }
+}

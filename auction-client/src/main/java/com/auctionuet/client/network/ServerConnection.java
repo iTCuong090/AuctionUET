@@ -1,5 +1,6 @@
 package com.auctionuet.client.network;
 
+import com.auctionuet.client.network.protocol.PushMessage;
 import com.auctionuet.client.network.protocol.Request;
 import com.auctionuet.client.network.protocol.Response;
 import com.google.gson.Gson;
@@ -7,6 +8,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class ServerConnection {
     private static ServerConnection instance;
@@ -14,6 +19,14 @@ public class ServerConnection {
     private PrintWriter out;
     private BufferedReader in;
     private final Gson gson = new Gson();
+    
+    private PushListener pushListener;
+    private Thread listenerThread;
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+
+    public interface PushListener {
+        void onPushMessage(PushMessage message);
+    }
 
     private ServerConnection() {}
 
@@ -23,6 +36,10 @@ public class ServerConnection {
         }
         return instance;
     }
+    
+    public void setPushListener(PushListener listener) {
+        this.pushListener = listener;
+    }
 
     public void connect(String host, int port) throws Exception {
         if (!isConnected()) {
@@ -30,11 +47,37 @@ public class ServerConnection {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("Đã kết nối tới Server: " + host + ":" + port);
+            
+            listenerThread = new Thread(() -> {
+                try {
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        Map<String, Object> msg = gson.fromJson(line, Map.class);
+                        String type = (String) msg.get("type");
+
+                        if ("PUSH".equals(type)) {
+                            PushMessage push = gson.fromJson(line, PushMessage.class);
+                            if (pushListener != null) {
+                                pushListener.onPushMessage(push);
+                            }
+                        } else {
+                            responseQueue.put(line);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("Kết nối server bị gián đoạn: " + e.getMessage());
+                }
+            }, "server-listener");
+            listenerThread.setDaemon(true);
+            listenerThread.start();
         }
     }
 
     public void disconnect() {
         try {
+            if (listenerThread != null) {
+                listenerThread.interrupt();
+            }
             if (socket != null) socket.close();
             if (out != null) out.close();
             if (in != null) in.close();
@@ -48,20 +91,15 @@ public class ServerConnection {
         return socket != null && socket.isConnected() && !socket.isClosed();
     }
 
-    public Response sendRequest(Request req) throws Exception {
+    public synchronized Response sendRequest(Request req) throws Exception {
         if (!isConnected()) throw new Exception("Chưa kết nối tới server!");
 
-        // 1. Chuyển Object thành chuỗi JSON
         String jsonRequest = gson.toJson(req);
-
-        // 2. Bắn sang Server
         out.println(jsonRequest);
 
-        // 3. Nín thở chờ Server trả lời
-        String jsonResponse = in.readLine();
-        if (jsonResponse == null) throw new Exception("Server đã ngắt kết nối đột ngột!");
+        String jsonResponse = responseQueue.poll(10, TimeUnit.SECONDS);
+        if (jsonResponse == null) throw new Exception("Server không phản hồi (timeout)!");
 
-        // 4. Dịch chuỗi JSON về lại Object Response
         return gson.fromJson(jsonResponse, Response.class);
     }
 }

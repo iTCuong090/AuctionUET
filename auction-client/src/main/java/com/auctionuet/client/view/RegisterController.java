@@ -15,6 +15,17 @@ public class RegisterController {
     @FXML private Label errorLabel;
     @FXML private javafx.scene.control.Button registerButton;
 
+    // Reference tới MainController cha để chuyển panel
+    private MainController mainController;
+
+    /**
+     * Được gọi bởi MainController sau khi load FXML,
+     * để RegisterController có thể yêu cầu chuyển panel.
+     */
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+    }
+
     @FXML
     public void initialize() {
         roleComboBox.getItems().addAll("Bidder", "Seller");
@@ -73,9 +84,17 @@ public class RegisterController {
                 // 4. Báo cáo kết quả lên giao diện
                 javafx.application.Platform.runLater(() -> {
                     if ("OK".equals(res.getStatus())) {
-                        errorLabel.setText("✅ Đăng ký thành công! Hãy quay lại Đăng nhập.");
+                        errorLabel.setText("✅ Đăng ký thành công! Đang chuyển sang Đăng nhập...");
                         errorLabel.setStyle("-fx-text-fill: green;");
-                        // TODO: Code tự động nhảy về trang Đăng nhập hoặc hiện thông báo
+
+                        // Tự động chuyển về Login sau 1.5 giây
+                        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.millis(1500));
+                        pause.setOnFinished(e -> {
+                            if (mainController != null) {
+                                mainController.switchToLogin();
+                            }
+                        });
+                        pause.play();
                     } else {
                         errorLabel.setText("❌ " + res.getMessage());
                         errorLabel.setStyle("-fx-text-fill: red;");
@@ -92,6 +111,16 @@ public class RegisterController {
                 });
             }
         }).start();
+    }
+
+    /**
+     * Chuyển panel phải sang LoginView (không đổi Scene).
+     */
+    @FXML
+    public void handleSwitchToLogin() {
+        if (mainController != null) {
+            mainController.switchToLogin();
+        }
     }
 
     @FXML

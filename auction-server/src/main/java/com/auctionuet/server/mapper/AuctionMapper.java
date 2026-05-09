@@ -10,11 +10,14 @@ import com.auctionuet.server.util.IdGenerator;
 import java.time.LocalDateTime;
 
 public class AuctionMapper {
+
     public static LiveAuction toDomain(AuctionSchema schema) {
         return new LiveAuction(
                 schema.getId(), schema.getItemId(), schema.getSellerId(),
                 schema.getEndTime(), schema.getStatus(),
-                schema.getHighestBid(), schema.getWinnerId()
+                schema.getHighestBid(), schema.getWinnerId(),
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds()
         );
     }
 
@@ -35,7 +38,8 @@ public class AuctionMapper {
         return new AuctionSchema(
                 IdGenerator.generate(), LocalDateTime.now(), LocalDateTime.now(),
                 itemId, sellerId, title, description,
-                startTime, endTime, AuctionStatus.OPEN, 0.0, null
+                startTime, endTime, AuctionStatus.OPEN, 0.0, null,
+                60, 120
         );
     }
 
@@ -52,4 +56,3 @@ public class AuctionMapper {
         return schema;
     }
 }
-

@@ -66,11 +66,13 @@ public class AuctionListController {
         card.setPrefWidth(250);
 
         Label title = new Label(item.getTitle());
-        title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white;");
+        title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
+        title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
         Label price = new Label(String.format("💰 %,.0f VNĐ", item.getCurrentHighestBid()));
-        price.setStyle("-fx-font-size: 15px; -fx-text-fill: #4ecdc4; -fx-font-weight: bold;");
+        price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        price.getStyleClass().add("text-accent");
 
         String statusStr = item.getStatus() != null ? item.getStatus().name() : "UNKNOWN";
         Label statusBadge = new Label(statusStr);
@@ -94,9 +96,11 @@ public class AuctionListController {
         Label timeLabel = new Label("⏰ Kết thúc: " + endTime);
         Label sellerLabel = new Label("👤 Seller: " + seller);
 
-        String subStyle = "-fx-text-fill: #a0a0b0; -fx-font-size: 13px;";
+        String subStyle = "-fx-font-size: 13px;";
         timeLabel.setStyle(subStyle);
+        timeLabel.getStyleClass().add("text-secondary");
         sellerLabel.setStyle(subStyle);
+        sellerLabel.getStyleClass().add("text-secondary");
 
         infoBox.getChildren().addAll(timeLabel, sellerLabel);
 
@@ -106,13 +110,22 @@ public class AuctionListController {
 
         btnDetail.setOnAction(e -> {
             try {
-                // 1. Tải bản vẽ của màn hình Chi tiết
-                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AuctionDetailView.fxml"));
-                javafx.scene.Parent detailRoot = loader.load();
+                // Nếu trạng thái là RUNNING, vào màn hình Đấu Giá Realtime (BiddingView)
+                // Nếu là OPEN hoặc FINISHED, vào màn hình Chi Tiết tĩnh (AuctionDetailView)
+                String fxmlPath = "RUNNING".equals(statusStr) ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
+                
+                // 1. Tải bản vẽ của màn hình
+                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource(fxmlPath));
+                javafx.scene.Parent root = loader.load();
 
                 // 2. Tóm lấy thằng Quản lý và truyền ID
-                AuctionDetailController detailController = loader.getController();
-                detailController.setAuctionData(item.getId());
+                if ("RUNNING".equals(statusStr)) {
+                    BiddingController biddingController = loader.getController();
+                    biddingController.setAuctionId(item.getId());
+                } else {
+                    AuctionDetailController detailController = loader.getController();
+                    detailController.setAuctionData(item.getId());
+                }
 
                 // ==========================================
                 // 3. ĐƯA VÀO GIỮA DASHBOARD (THAY VÌ POPUP)
@@ -120,17 +133,19 @@ public class AuctionListController {
                 // Bóp lấy cái Khung to nhất của màn hình hiện tại (chính là cái Dashboard)
                 javafx.scene.Parent currentRoot = btnDetail.getScene().getRoot();
 
-                // TH TRƯỜNG HỢP 1: Nếu Dashboard của ông dùng BorderPane làm gốc
-                if (currentRoot instanceof javafx.scene.layout.BorderPane) {
-                    javafx.scene.layout.BorderPane dashboard = (javafx.scene.layout.BorderPane) currentRoot;
-                    // Ném cái màn hình chi tiết vào phân vùng Center
-                    dashboard.setCenter(detailRoot);
+                // TH TRƯỜNG HỢP 1: Nếu Dashboard của ông dùng HBox làm gốc (DashboardView.fxml)
+                if (currentRoot instanceof javafx.scene.layout.HBox) {
+                    javafx.scene.layout.VBox mainCard = (javafx.scene.layout.VBox) ((javafx.scene.layout.HBox) currentRoot).getChildren().get(1);
+                    javafx.scene.layout.StackPane contentArea = (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+                    contentArea.getChildren().setAll(root);
                 }
-                // TH TRƯỜNG HỢP 2: Nếu Dashboard dùng StackPane hoặc layout khác
+                // TH TRƯỜNG HỢP 2: Nếu Dashboard dùng BorderPane
+                else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+                    javafx.scene.layout.BorderPane dashboard = (javafx.scene.layout.BorderPane) currentRoot;
+                    dashboard.setCenter(root);
+                }
                 else {
-                    System.out.println("⚠️ Dashboard không phải BorderPane, đang dùng cách ghi đè cục bộ...");
-                    // Chỗ này tùy thuộc vào việc ông thiết kế Dashboard FXML như thế nào.
-                    // Nếu code rơi vào dòng này, ông cứ chụp cái file DashboardView.fxml lên đây t chỉ cách nhét chính xác.
+                    System.out.println("⚠️ Dashboard layout không khớp (không phải HBox hay BorderPane).");
                 }
 
             } catch (Exception ex) {

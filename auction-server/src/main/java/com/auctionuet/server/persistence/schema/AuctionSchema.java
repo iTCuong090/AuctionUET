@@ -13,6 +13,8 @@ public class AuctionSchema extends BaseSchema {
     private AuctionStatus status;
     private double highestBid;
     private String winnerId;
+    private int antiSnipingWindowSeconds = 60;     // Mặc định 60 giây
+    private int antiSnipingExtensionSeconds = 120; // Mặc định gia hạn 2 phút
 
     public AuctionSchema() {
     }
@@ -20,7 +22,8 @@ public class AuctionSchema extends BaseSchema {
     public AuctionSchema(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                          String itemId, String sellerId, String title, String description,
                          LocalDateTime startTime, LocalDateTime endTime,
-                         AuctionStatus status, double highestBid, String winnerId) {
+                         AuctionStatus status, double highestBid, String winnerId,
+                         int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
@@ -31,6 +34,8 @@ public class AuctionSchema extends BaseSchema {
         this.status = status;
         this.highestBid = highestBid;
         this.winnerId = winnerId;
+        this.antiSnipingWindowSeconds = antiSnipingWindowSeconds;
+        this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
     }
 
     public String getItemId() { return itemId; }
@@ -59,4 +64,10 @@ public class AuctionSchema extends BaseSchema {
     
     public String getWinnerId() { return winnerId; }
     public void setWinnerId(String winnerId) { this.winnerId = winnerId; }
+
+    public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
+    public void setAntiSnipingWindowSeconds(int antiSnipingWindowSeconds) { this.antiSnipingWindowSeconds = antiSnipingWindowSeconds; }
+
+    public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
+    public void setAntiSnipingExtensionSeconds(int antiSnipingExtensionSeconds) { this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds; }
 }

@@ -3,103 +3,95 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.effect.InnerShadow?>
-<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.paint.Color?>
-<?import javafx.scene.paint.LinearGradient?>
-<?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.DashboardController">
+<HBox prefHeight="650.0" prefWidth="1050.0" spacing="25.0" styleClass="dashboard-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.DashboardController">
+    <padding>
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+    </padding>
 
-   <top>
-      <HBox alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #1a252f;" BorderPane.alignment="CENTER">
-         <padding>
-            <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-         </padding>
-         <children>
-            <Label text="🏛 AuctionUET">
-               <font>
-                  <Font name="System Bold" size="24.0" />
-               </font>
-               <textFill>
-                  <LinearGradient endX="1.0" endY="1.0">
-                     <stops>
-                        <Stop>
-                           <color>
-                              <Color red="0.009999999776482582" green="0.5889238119125366" blue="1.0" />
-                           </color>
-                        </Stop>
-                        <Stop offset="1.0">
-                           <color>
-                              <Color red="1.0" green="1.0" blue="1.0" />
-                           </color>
-                        </Stop>
-                     </stops>
-                  </LinearGradient>
-               </textFill>
-            </Label>
-            <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="userNameLabel" text="◎ Đang tải..." textFill="#4ecdc4">
-               <font>
-                  <Font name="System Bold" size="14.0" />
-               </font>
-            </Label>
-         </children>
-      </HBox>
-   </top>
+    <!-- ====== THẺ SIDEBAR BÊN TRÁI ====== -->
+    <VBox prefWidth="260.0" styleClass="dashboard-sidebar-card" HBox.hgrow="NEVER">
+        <padding>
+            <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
+        </padding>
+        <children>
+            <!-- Logo / Tên App trên cùng Sidebar -->
+            <HBox alignment="CENTER" spacing="10.0">
+                <Label text="🏛" textFill="WHITE">
+                    <font><Font size="28.0" /></font>
+                </Label>
+                <Label text="AuctionUET" styleClass="sidebar-title-text">
+                    <font><Font name="System Bold" size="24.0" /></font>
+                </Label>
+            </HBox>
+            
+            <Region prefHeight="40.0" />
 
-   <left>
-      <VBox prefWidth="250.0" styleClass="sidebar" BorderPane.alignment="CENTER">
-         <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="30.0" />
-         </padding>
-         <children>
-
-            <VBox spacing="8.0">
-               <children>
-                  <Button fx:id="btnHome" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="🏠   Home" />
-                  <Button fx:id="btnMyItems" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="📦   Activity" />
-                  <Button fx:id="btnCreateAuction" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="⚡   Create Auction" />
-                  <Button fx:id="btnAuctionList" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="🏛   Auction List" />
-               </children>
+            <!-- Các nút menu chính -->
+            <VBox spacing="10.0">
+                <children>
+                    <Button fx:id="btnHome" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="🏠   Trang chủ" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnMyItems" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="📦   Hoạt động" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnCreateAuction" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="⚡   Tạo phiên mới" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnAuctionList" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="🏛   Danh sách đấu giá" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnWallet" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="💰   Ví tiền" alignment="BASELINE_LEFT" />
+                </children>
             </VBox>
 
+            <!-- Khoảng trống đẩy footer xuống đáy -->
             <Region VBox.vgrow="ALWAYS" />
 
-            <VBox spacing="8.0" styleClass="sidebar-footer-box">
-               <children>
-                  <Button fx:id="btnProfile" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="👤   Profile" />
-                  <Button fx:id="btnLogout" maxWidth="1.7976931348623157E308" mnemonicParsing="false" styleClass="sidebar-item" text="🚪   Logout" />
-               </children>
+            <!-- Các nút cài đặt / đăng xuất -->
+            <VBox spacing="10.0">
+                <children>
+                    <Button fx:id="btnProfile" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="👤   Hồ sơ cá nhân" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnLogout" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="🚪   Đăng xuất" alignment="BASELINE_LEFT" />
+                </children>
             </VBox>
+        </children>
+    </VBox>
 
-         </children>
-      </VBox>
-   </left>
+    <!-- ====== THẺ NỘI DUNG TRUNG TÂM ====== -->
+    <VBox styleClass="dashboard-main-card" HBox.hgrow="ALWAYS">
+        <children>
+            <!-- Header của thẻ chính -->
+            <HBox alignment="CENTER_RIGHT" prefHeight="70.0" styleClass="dashboard-header">
+                <padding>
+                    <Insets bottom="10.0" left="30.0" right="30.0" top="20.0" />
+                </padding>
+                <children>
+                    <!-- Dòng chữ chào mừng -->
+                    <Label text="Chào mừng trở lại!" styleClass="text-secondary">
+                        <font><Font name="System Bold" size="16.0" /></font>
+                    </Label>
+                    
+                    <Region HBox.hgrow="ALWAYS" />
+                    
+                    <!-- Nút đổi theme -->
+                    <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="🌙" />
+                    <Region prefWidth="20.0" />
+                    
+                    <!-- Thông tin user -->
+                    <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                        <Label fx:id="userNameLabel" text="◎ Đang tải..." styleClass="text-heading">
+                            <font><Font name="System Bold" size="15.0" /></font>
+                        </Label>
+                    </VBox>
+                </children>
+            </HBox>
 
-   <center>
-      <StackPane fx:id="contentArea" prefHeight="510.0" prefWidth="733.0" style="-fx-background-color: #ecf0f1;" BorderPane.alignment="CENTER" />
-   </center>
+            <!-- Vùng chứa các Scene con (Content Area) -->
+            <StackPane fx:id="contentArea" VBox.vgrow="ALWAYS" styleClass="dashboard-content-area">
+                <padding>
+                    <Insets bottom="30.0" left="30.0" right="30.0" top="10.0" />
+                </padding>
+            </StackPane>
+        </children>
+    </VBox>
 
-   <bottom>
-      <HBox alignment="CENTER" prefHeight="30.0" style="-fx-background-color: #bdc3c7;" BorderPane.alignment="CENTER">
-         <children>
-            <Label text="© 2026 AuctionUET" textFill="#7f8c8d" />
-         </children>
-      </HBox>
-   </bottom>
-
-   <effect>
-      <InnerShadow>
-         <color>
-            <Color green="0.6867817044258118" blue="1.0" />
-         </color>
-      </InnerShadow>
-   </effect>
-
-</BorderPane>
+</HBox>

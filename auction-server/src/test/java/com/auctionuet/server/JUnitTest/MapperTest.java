@@ -72,7 +72,9 @@ class MapperTest {
                 now.plusDays(1),
                 AuctionStatus.OPEN,
                 0.0,
-                null
+                null,
+                60,
+                120
         );
 
         ItemDTO itemDTO = new ItemDTO(

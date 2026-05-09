@@ -1,5 +1,7 @@
 package com.auctionuet.server.domain.model;
 
+import java.time.LocalDateTime;
+
 /**
  * Observer interface cho LiveAuction.
  * Dùng để thông báo các sự kiện đấu giá (bid mới, phiên kết thúc) đến các listener.
@@ -19,4 +21,11 @@ public interface AuctionObserver {
      * @param finalPrice giá cuối cùng
      */
     void onAuctionEnded(String auctionId, String winnerId, double finalPrice);
+
+    /**
+     * Được gọi khi phiên đấu giá được gia hạn thêm thời gian.
+     * @param auctionId ID phiên đấu giá
+     * @param newEndTime thời gian kết thúc mới
+     */
+    void onAuctionExtended(String auctionId, LocalDateTime newEndTime);
 }

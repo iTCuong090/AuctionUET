@@ -1,55 +1,75 @@
 package com.auctionuet.client.view;
 
-import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-import javafx.util.Duration;
+import javafx.scene.layout.StackPane;
+import javafx.scene.Parent;
 
-// Lớp MainController đóng vai trò xử lý logic cho giao diện MainView.fxml
+/**
+ * MainController - Điều khiển màn hình chính (MainView).
+ * Layout chia đôi: Trái là banner branding, Phải là panel Login/Register.
+ * Login/Register chuyển đổi trong cùng panel phải mà không đổi Scene.
+ */
 public class MainController {
 
+    @FXML private StackPane rightPanel;
+    @FXML private Button btnToggleTheme;
 
-    // 1. CÁC BIẾN
-
-    @FXML private Label titleLabel;
-    @FXML private Label subtitleLabel;
-    @FXML private Button startButton;
-    @FXML private Label statusLabel;
-    @FXML private Label versionLabel;
-
-
-    // 2. KHỞI TẠO
-
+    @FXML
     public void initialize() {
-        statusLabel.setText("");
+        // Mặc định load LoginView vào panel bên phải
+        loadViewIntoPanel("/fxml/LoginView.fxml");
+
+        // Cập nhật icon toggle theme
+        if (btnToggleTheme != null) {
+            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+        }
     }
 
+    /**
+     * Load một FXML view vào ô bên phải (rightPanel).
+     * Dùng để chuyển đổi Login <-> Register mà không đổi Scene.
+     */
+    public void loadViewIntoPanel(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent view = loader.load();
 
-    // 3. CODE
+            // Truyền reference của MainController cho controller con
+            Object controller = loader.getController();
+            if (controller instanceof LoginController) {
+                ((LoginController) controller).setMainController(this);
+            } else if (controller instanceof RegisterController) {
+                ((RegisterController) controller).setMainController(this);
+            }
 
-    public void handleLogin() {
-        System.out.println("Đang nhảy sang trang Đăng nhập...");
-        SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
+            rightPanel.getChildren().clear();
+            rightPanel.getChildren().add(view);
+        } catch (Exception e) {
+            System.out.println("❌ Lỗi load view vào panel: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Chuyển panel phải sang RegisterView.
+     */
+    public void switchToRegister() {
+        loadViewIntoPanel("/fxml/RegisterView.fxml");
+    }
+
+    /**
+     * Chuyển panel phải sang LoginView.
+     */
+    public void switchToLogin() {
+        loadViewIntoPanel("/fxml/LoginView.fxml");
     }
 
     @FXML
-    public void handleRegister() {
-        System.out.println("Đang nhảy sang trang Đăng ký...");
-        SceneManager.getInstance().switchScene("/fxml/RegisterView.fxml");
-    }
-
-
-    // 4. HIỆU ỨNG NÚT BẮT ĐẦU
-
-    // 4. CHUYỂN TRANG ĐĂNG NHẬP
-
-    @FXML
-    private void onStartClicked() {
-        System.out.println("Đang nhảy sang trang Đăng nhập...");
-
-        // Mượn luôn con đường cao tốc SceneManager để chuyển trang
-        SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
+    private void handleToggleTheme() {
+        ThemeManager.getInstance().toggleTheme();
+        ThemeManager.getInstance().applyTheme(btnToggleTheme.getScene());
+        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
     }
 }

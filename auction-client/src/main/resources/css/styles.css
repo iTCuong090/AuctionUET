@@ -1,10 +1,9 @@
 /* =======================================
-   1. NỀN TỔNG THỂ & KHU VỰC CHÍNH
+   styles.css - CHỈ CHỨA LAYOUT / SPACING / FONT
+   Màu sắc được quản lý bởi dark-theme.css và light-theme.css
    ======================================= */
-.root {
-    -fx-background-color: #1a1a2e;
-}
 
+/* --- 1. HERO SECTION --- */
 .hero-section {
     /* Đảm bảo ảnh anhnen.jpg nằm trong resources/images/ */
     -fx-background-image: url('../images/anhnen.jpg');
@@ -14,11 +13,8 @@
     -fx-background-color: rgba(236, 240, 241, 0.8);
 }
 
-/* =======================================
-   2. SIDEBAR NAVIGATION (ĐÃ ĐỘ LẠI BẢN PRO)
-   ======================================= */
+/* --- 2. SIDEBAR NAVIGATION --- */
 .sidebar {
-    -fx-background-color: #0d1117; /* Màu nền tối sâu hơn, sang trọng hơn */
     -fx-min-width: 250px;
 }
 
@@ -28,105 +24,43 @@
 }
 
 .sidebar-item {
-    -fx-background-color: transparent;
-    -fx-text-fill: #b3b3b3; /* Chữ xám nhạt tinh tế */
     -fx-font-size: 15px;
     -fx-padding: 12 15;
-    -fx-background-radius: 8px; /* Bo góc nút giống Ảnh 2 */
+    -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-alignment: CENTER-LEFT;
 }
 
-/* Hiệu ứng khi lướt chuột qua */
-.sidebar-item:hover {
-    -fx-background-color: #1a1e26; /* Nổi nền xám đen nhẹ */
-    -fx-text-fill: #ffffff; /* Chữ sáng lên */
-}
-
-/* Trạng thái Đang chọn (Active) - Đổ dải màu Xanh Biển cực xịn */
 .sidebar-item.active {
-    -fx-background-color: linear-gradient(to right, #0a66c2, #1a73e8);
-    -fx-text-fill: #ffffff;
     -fx-font-weight: bold;
-    /* Xóa bỏ cái viền đỏ cũ đi cho hợp tone xanh */
     -fx-border-width: 0;
 }
 
 .sidebar-footer-box {
-    -fx-padding: 20 0 0 0; /* Tạo khoảng cách cho nút ở đáy */
+    -fx-padding: 20 0 0 0;
 }
 
-/* =======================================
-   3. Ô NHẬP LIỆU (TextField & PasswordField)
-   ======================================= */
-.text-field, .password-field {
-    -fx-background-color: #16213e;
-    -fx-text-fill: #e0e0e0;
-    -fx-border-color: #0f3460;
+/* --- 3. Ô NHẬP LIỆU --- */
+.text-field, .password-field, .text-area {
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-padding: 10;
     -fx-font-size: 14;
 }
 
-.text-field:focused, .password-field:focused {
-    -fx-border-color: #e94560;
-    -fx-effect: dropshadow(gaussian, #e94560, 10, 0, 0, 0);
-}
-
-/* =======================================
-   4. COMBOBOX (Dropdown)
-   ======================================= */
+/* --- 4. COMBOBOX --- */
 .combo-box {
-    -fx-background-color: #16213e;
-    -fx-border-color: #0f3460;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-font-size: 14;
 }
 
-.combo-box:focused {
-    -fx-border-color: #e94560;
-    -fx-effect: dropshadow(gaussian, #e94560, 10, 0, 0, 0);
-}
-
-.combo-box > .list-cell {
-    -fx-text-fill: #e0e0e0;
-}
-
-.combo-box .arrow {
-    -fx-background-color: #e0e0e0;
-}
-.combo-box .arrow-button {
-    -fx-background-color: transparent;
-}
-
-.combo-box-popup .list-view {
-    -fx-background-color: #16213e;
-    -fx-border-color: #0f3460;
-}
-
 .combo-box-popup .list-view .list-cell {
-    -fx-text-fill: #e0e0e0;
     -fx-padding: 8px;
 }
 
-.combo-box-popup .list-view .list-cell:hover {
-    -fx-background-color: #e94560;
-    -fx-text-fill: white;
-}
-
-.combo-box-popup .list-view .list-cell:selected {
-    -fx-background-color: #ff6b6b;
-    -fx-text-fill: white;
-}
-
-/* =======================================
-   5. NÚT BẤM CHÍNH (Buttons đỏ cam)
-   ======================================= */
+/* --- 5. NÚT BẤM CHÍNH --- */
 .button {
-    -fx-background-color: linear-gradient(to right, #e94560, #0f3460);
-    -fx-text-fill: white;
     -fx-font-size: 16;
     -fx-font-weight: bold;
     -fx-padding: 12 40;
@@ -135,11 +69,7 @@
     -fx-cursor: hand;
 }
 
-.button:hover {
-    -fx-background-color: linear-gradient(to right, #ff6b6b, #1a5276);
-}
-
-/* Đảm bảo mấy cái nút trên Sidebar không bị dính CSS của nút Button chính */
+/* Đảm bảo sidebar buttons không bị dính CSS của Button chính */
 .sidebar-item.button {
     -fx-padding: 12 15;
     -fx-font-size: 15px;
@@ -149,63 +79,73 @@
     -fx-font-weight: bold;
 }
 
-/* =======================================
-   6. CÁC THÀNH PHẦN KHÁC
-   ======================================= */
+/* --- 6. CÁC THÀNH PHẦN KHÁC --- */
 .error-label {
-    -fx-text-fill: #e94560;
     -fx-font-size: 12;
 }
 .hyperlink {
-    -fx-text-fill: #4ecdc4;
     -fx-font-size: 12;
 }
 
-/* =======================================
-   7. THẺ SẢN PHẨM (AUCTION CARDS)
-   ======================================= */
+/* --- 7. THẺ SẢN PHẨM (AUCTION CARDS) --- */
 .auction-card {
-    -fx-background-color: #16213e;
     -fx-background-radius: 12;
     -fx-padding: 16;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.2, 0, 2);
     -fx-cursor: hand;
 }
 
 .auction-card:hover {
     -fx-translate-y: -4;
-    -fx-effect: dropshadow(gaussian, rgba(233,69,96,0.4), 16, 0.3, 0, 4);
 }
 
-/* --- HUY HIỆU TRẠNG THÁI (BADGES) --- */
+/* --- 8. HUY HIỆU TRẠNG THÁI (BADGES) --- */
 .status-badge-running {
-    -fx-background-color: #2ecc71;
     -fx-background-radius: 20;
     -fx-padding: 4 12;
-    -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 
 .status-badge-open {
-    -fx-background-color: #f39c12;
     -fx-background-radius: 20;
     -fx-padding: 4 12;
-    -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 
 .status-badge-finished {
-    -fx-background-color: #7f8c8d;
     -fx-background-radius: 20;
     -fx-padding: 4 12;
-    -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 
 .status-badge-canceled {
-    -fx-background-color: #e74c3c;
     -fx-background-radius: 20;
     -fx-padding: 4 12;
-    -fx-text-fill: white;
     -fx-font-weight: bold;
+}
+
+/* --- 9. LOGIN / REGISTER TITLES --- */
+.login-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.register-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+/* --- 10. HOME BANNER & PAGINATION --- */
+.pagination-button {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-min-width: 40;
+    -fx-alignment: center;
+}
+
+/* --- 11. WALLET CARD --- */
+.wallet-card {
+    -fx-background-radius: 20;
+    -fx-padding: 30;
 }

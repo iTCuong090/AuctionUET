@@ -17,5 +17,23 @@ public enum ActionType {
     CREATE_AUCTION,
     START_AUCTION,
     GET_AUCTIONS,
-    GET_AUCTION_DETAIL
+    GET_AUCTION_DETAIL,
+
+    // MỚI tuần 5 — Bidding
+    PLACE_BID,
+    GET_BID_HISTORY,
+    SET_AUTO_BID,
+    CANCEL_AUTO_BID,
+
+    // MỚI tuần 5 — Bidding (Realtime Push)
+    SUBSCRIBE,
+    UNSUBSCRIBE,
+
+    // MỚI tuần 5 — Wallet
+    DEPOSIT,
+    WITHDRAW,
+    GET_WALLET,
+
+    // MỚI tuần 5 — Payment
+    PAY_AUCTION
 }

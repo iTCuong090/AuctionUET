@@ -17,7 +17,8 @@ public class DashboardController {
     @FXML private StackPane contentArea;
 
     // Các nút trên Sidebar
-    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout;
+    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout, btnWallet;
+    @FXML private Button btnToggleTheme;
 
     @FXML
     public void initialize() {
@@ -60,6 +61,13 @@ public class DashboardController {
             setActiveButton(btnAuctionList);
         });
 
+        if (btnWallet != null) {
+            btnWallet.setOnAction(e -> {
+                loadView("/fxml/WalletView.fxml");
+                setActiveButton(btnWallet);
+            });
+        }
+
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
             setActiveButton(btnProfile);
@@ -69,6 +77,11 @@ public class DashboardController {
 
         // Ép nó sáng sẵn nút Auction List khi vừa mở lên
         setActiveButton(btnAuctionList);
+
+        // 5. Cập nhật icon nút toggle theme theo trạng thái hiện tại
+        if (btnToggleTheme != null) {
+            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+        }
     }
 
     private void setupPermissions() {
@@ -110,6 +123,7 @@ public class DashboardController {
         if (btnMyItems != null) btnMyItems.getStyleClass().remove("active");
         if (btnCreateAuction != null) btnCreateAuction.getStyleClass().remove("active");
         if (btnAuctionList != null) btnAuctionList.getStyleClass().remove("active");
+        if (btnWallet != null) btnWallet.getStyleClass().remove("active");
         if (btnProfile != null) btnProfile.getStyleClass().remove("active");
 
         // Khoác áo "active" cho cái nút vừa được bấm
@@ -121,7 +135,14 @@ public class DashboardController {
     private void handleLogout() {
         // Dọn dẹp session bằng hàm mới clearSession() thay vì setSession()
         ClientSession.getInstance().clearSession();
-        // Quay về đăng nhập
-        SceneManager.getInstance().switchScene("/fxml/LoginView.fxml");
+        // Quay về trang chủ MainView
+        SceneManager.getInstance().switchScene("/fxml/MainView.fxml");
+    }
+
+    @FXML
+    private void handleToggleTheme() {
+        ThemeManager.getInstance().toggleTheme();
+        ThemeManager.getInstance().applyTheme(btnToggleTheme.getScene());
+        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
     }
 }

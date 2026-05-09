@@ -1,15 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="20" styleClass="root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.LoginController">
-    <padding><Insets bottom="50" left="200" right="200" top="50"/></padding>
+<VBox alignment="CENTER" spacing="18" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.LoginController">
+    <children>
+        <!-- Tiêu đề -->
+        <Label styleClass="text-heading" text="Đăng nhập">
+            <font><Font name="System Bold" size="28.0" /></font>
+        </Label>
+        <Label styleClass="text-secondary" text="Đăng nhập để truy cập hệ thống đấu giá">
+            <font><Font size="13.0" /></font>
+            <VBox.margin><Insets bottom="10.0" /></VBox.margin>
+        </Label>
 
-    <Label text="Đăng nhập hệ thống" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-    <TextField fx:id="usernameField" promptText="Tên đăng nhập" />
-    <PasswordField fx:id="passwordField" promptText="Mật khẩu" />
-    <Label fx:id="errorLabel" styleClass="error-label" visible="false" />
-    <Button fx:id="loginButton" text="Đăng nhập" onAction="#handleLogin" maxWidth="Infinity" />
-    <Hyperlink fx:id="registerLink" text="Chưa có tài khoản? Quay về Trang chủ" onAction="#handleBack" />
+        <!-- Form fields -->
+        <VBox spacing="5.0">
+            <Label styleClass="text-secondary" text="Tên đăng nhập" />
+            <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập..." />
+        </VBox>
+
+        <VBox spacing="5.0">
+            <Label styleClass="text-secondary" text="Mật khẩu" />
+            <PasswordField fx:id="passwordField" promptText="Nhập mật khẩu..." />
+        </VBox>
+
+        <!-- Error label -->
+        <Label fx:id="errorLabel" styleClass="error-label" visible="false" wrapText="true" />
+
+        <!-- Nút Đăng nhập -->
+        <Button fx:id="loginButton" text="Đăng nhập" onAction="#handleLogin" maxWidth="Infinity" styleClass="main-login-btn">
+            <VBox.margin><Insets top="8.0" /></VBox.margin>
+        </Button>
+
+        <!-- Link chuyển sang Đăng ký -->
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label styleClass="text-secondary" text="Bạn chưa có tài khoản?" />
+                <Hyperlink fx:id="registerLink" text="Đăng ký" onAction="#handleSwitchToRegister" />
+            </children>
+            <VBox.margin><Insets top="5.0" /></VBox.margin>
+        </HBox>
+    </children>
 </VBox>

@@ -18,6 +18,8 @@ public class AuctionDTO {
     private AuctionStatus status;
     private double currentHighestBid;
     private String currentWinnerUsername;
+    private int antiSnipingWindowSeconds;
+    private int antiSnipingExtensionSeconds;
 
     public AuctionDTO() {}
 
@@ -66,4 +68,10 @@ public class AuctionDTO {
 
     public String getCurrentWinnerUsername() { return currentWinnerUsername; }
     public void setCurrentWinnerUsername(String currentWinnerUsername) { this.currentWinnerUsername = currentWinnerUsername; }
+
+    public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
+    public void setAntiSnipingWindowSeconds(int antiSnipingWindowSeconds) { this.antiSnipingWindowSeconds = antiSnipingWindowSeconds; }
+
+    public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
+    public void setAntiSnipingExtensionSeconds(int antiSnipingExtensionSeconds) { this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds; }
 }
