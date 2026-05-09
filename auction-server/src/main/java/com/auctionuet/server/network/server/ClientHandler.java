@@ -1,19 +1,25 @@
 package com.auctionuet.server.network.server;
 
+import com.auctionuet.server.domain.model.AuctionObserver;
+import com.auctionuet.server.domain.model.BidRecord;
 import com.auctionuet.server.network.protocol.ActionType;
 import com.auctionuet.server.network.protocol.MessageSerializer;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 import com.auctionuet.server.util.AppLogger;
+import com.google.gson.Gson;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable, AuctionObserver {
 
     private final Socket socket;
     private final PrintWriter out;
@@ -80,7 +86,7 @@ public class ClientHandler implements Runnable {
         );
 
         // 4. Route request → Response
-        Response response = router.route(request);
+        Response response = router.route(request,this);
 
         // 5. Gửi response về client
         sendMessage(response);
@@ -92,7 +98,13 @@ public class ClientHandler implements Runnable {
     }
 
     public synchronized void sendMessage(Response response) {
-        String json = MessageSerializer.serialize(response);
+        // Thêm trường type = "RESPONSE" để client listener thread phân loại
+        Map<String, Object> wrapper = new HashMap<>();
+        wrapper.put("type", "RESPONSE");
+        wrapper.put("status", response.getStatus());
+        wrapper.put("message", response.getMessage());
+        wrapper.put("data", response.getData());
+        String json = new Gson().toJson(wrapper);
         out.println(json);
     }
 
@@ -107,4 +119,52 @@ public class ClientHandler implements Runnable {
             // Ignore
         }
     }
+    // ========== AuctionObserver PUSH METHODS ==========
+
+    @Override
+    public void onBidPlaced(BidRecord record) {
+        // Server chủ động push JSON về client khi có bid mới
+        Map<String, Object> push = new HashMap<>();
+        push.put("type", "PUSH");
+        push.put("pushType", "BID_UPDATE");
+        push.put("bidderUsername", record.getBidderUsername());
+        push.put("amount", record.getAmount());
+        push.put("timestamp", record.getTimestamp().toString());
+
+        String json = new Gson().toJson(push);
+        sendPush(json);
+    }
+
+    @Override
+    public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
+        Map<String, Object> push = new HashMap<>();
+        push.put("type", "PUSH");
+        push.put("pushType", "AUCTION_ENDED");
+        push.put("auctionId", auctionId);
+        push.put("winnerId", winnerId);
+        push.put("finalPrice", finalPrice);
+
+        String json = new Gson().toJson(push);
+        sendPush(json);
+    }
+
+    @Override
+    public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
+        Map<String, Object> push = new HashMap<>();
+        push.put("type", "PUSH");
+        push.put("pushType", "AUCTION_EXTENDED");
+        push.put("auctionId", auctionId);
+        push.put("newEndTime", newEndTime.toString());
+
+        String json = new Gson().toJson(push);
+        sendPush(json);
+    }
+    /**
+     * Push JSON trực tiếp xuống Client qua PrintWriter.
+     * Thread-safe nhờ synchronized.
+     */
+    public synchronized void sendPush(String json) {
+        out.println(json);
+    }
+
 }

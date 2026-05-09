@@ -22,21 +22,21 @@ public class RequestRouter {
         this.auctionController = auctionController;
     }
 
-    public Response route(Request request) {
+    public Response route(Request request,ClientHandler clientHandler) {
         if (request == null || request.getAction() == null) {
             AppLogger.logUnknownAction("null");
             return Response.error("Invalid request: missing action");
         }
 
         try {
-            return internalRoute(request);
+            return internalRoute(request,clientHandler);
         } catch (Exception e) {
             // Exception được log bởi GlobalExceptionHandler
             return GlobalExceptionHandler.handle(e);
         }
     }
 
-    private Response internalRoute(Request request) throws Exception {
+    private Response internalRoute(Request request,ClientHandler clientHandler) throws Exception {
         String action = request.getAction().name();
 
         switch (request.getAction()) {
