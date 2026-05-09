@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -15,8 +17,9 @@ public class LiveAuction {
     private final String id;
     private final String itemId;
     private final String sellerId;
-    private final LocalDateTime endTime;
+    private LocalDateTime endTime;
     private final List<BidRecord> bidHistory;
+    private final Map<String, AutoBidConfig> autoBids = new ConcurrentHashMap<>();
 
     // Các biến ko final
     private AuctionStatus status;
@@ -125,5 +128,25 @@ public class LiveAuction {
 
     public void setStatus(AuctionStatus status) {
         this.status = status;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public void addAutoBid(AutoBidConfig config) {
+        autoBids.put(config.getBidderId(), config);
+    }
+
+    public void removeAutoBid(String bidderId) {
+        autoBids.remove(bidderId);
+    }
+
+    public AutoBidConfig getAutoBidConfig(String bidderId) {
+        return autoBids.get(bidderId);
+    }
+
+    public Map<String, AutoBidConfig> getAutoBids() {
+        return autoBids;
     }
 }

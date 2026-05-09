@@ -35,7 +35,8 @@ public class AuctionMapper {
         return new AuctionSchema(
                 IdGenerator.generate(), LocalDateTime.now(), LocalDateTime.now(),
                 itemId, sellerId, title, description,
-                startTime, endTime, AuctionStatus.OPEN, 0.0, null
+                startTime, endTime, AuctionStatus.OPEN, 0.0, null,
+                60, 120
         );
     }
 

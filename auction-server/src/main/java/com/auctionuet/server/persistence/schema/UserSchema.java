@@ -9,6 +9,8 @@ public class UserSchema extends BaseSchema {
     private String passwordSalt;
     private String email;
     private UserRole role;
+    private double balance = 0;
+    private double frozenBalance = 0;
 
     protected UserSchema() {
         super();
@@ -64,4 +66,12 @@ public class UserSchema extends BaseSchema {
     public void setRole(UserRole role) {
         this.role = role;
     }
+
+    public double getBalance() { return balance; }
+    
+    public void setBalance(double balance) { this.balance = balance; }
+    
+    public double getFrozenBalance() { return frozenBalance; }
+    
+    public void setFrozenBalance(double frozenBalance) { this.frozenBalance = frozenBalance; }
 }

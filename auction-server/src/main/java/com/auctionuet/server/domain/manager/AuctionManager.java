@@ -50,4 +50,17 @@ public class AuctionManager {
             // Cường's AuctionService sẽ ghi kết quả vào DB
         }
     }
+
+    public void extendAuction(String auctionId, LocalDateTime newEndTime) {
+        LiveAuction auction = liveAuctions.get(auctionId);
+        if (auction != null) {
+            auction.setEndTime(newEndTime);
+            // In a real app we might need to cancel the previous scheduled task and create a new one.
+            // For now, assume it's handled or we just re-schedule a new one.
+            long delayMs = Duration.between(LocalDateTime.now(), newEndTime).toMillis();
+            if (delayMs > 0) {
+                scheduler.schedule(() -> endAuction(auctionId), delayMs, TimeUnit.MILLISECONDS);
+            }
+        }
+    }
 }
