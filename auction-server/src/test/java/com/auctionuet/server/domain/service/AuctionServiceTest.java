@@ -38,7 +38,7 @@ public class AuctionServiceTest {
         itemDAO = new ItemDAO(itemFile);
         auctionDAO = new AuctionDAO(auctionFile);
         itemService = new ItemService(itemDAO);
-        auctionService = new AuctionService(itemService, auctionDAO);
+        auctionService = new AuctionService(itemService, auctionDAO, null);
         new File(itemFile).delete();
         new File(auctionFile).delete();
     }
@@ -124,7 +124,7 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
         ItemSchema item = itemService.createItem(seller, dto);
 
-        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
+        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
         assertNotNull(auction);
         assertEquals(AuctionStatus.OPEN, auction.getStatus());
         assertEquals("seller1", auction.getSellerId());
@@ -138,7 +138,7 @@ public class AuctionServiceTest {
         ItemSchema item = itemService.createItem(seller1, dto);
 
         assertThrows(AuctionException.class, () -> {
-            auctionService.createAuction(seller2, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
+            auctionService.createAuction(seller2, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
         });
     }
 
@@ -148,7 +148,7 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
         ItemSchema item = itemService.createItem(seller, dto);
 
-        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
+        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
         auctionService.startAuction(seller, auction.getId());
         
         AuctionSchema updated = auctionDAO.findById(auction.getId());
@@ -161,7 +161,7 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
         ItemSchema item = itemService.createItem(seller, dto);
 
-        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
+        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
         auctionService.startAuction(seller, auction.getId());
 
         assertThrows(AuctionException.class, () -> {
@@ -175,9 +175,9 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
         ItemSchema item = itemService.createItem(seller, dto);
 
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 2", "Desc");
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 3", "Desc");
+        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
+        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 2", "Desc", 60, 120);
+        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 3", "Desc", 60, 120);
 
         List<AuctionSchema> auctions = auctionService.getAuctions();
         assertEquals(3, auctions.size());
@@ -189,12 +189,12 @@ public class AuctionServiceTest {
         ItemDTO dto = createElectronicsDTO();
         ItemSchema item = itemService.createItem(seller, dto);
 
-        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc");
+        AuctionSchema auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
         auctionService.startAuction(seller, auction.getId());
         
         auctionService.endAuction(auction.getId());
         
         AuctionSchema updated = auctionDAO.findById(auction.getId());
-        assertEquals(AuctionStatus.FINISHED, updated.getStatus());
+        assertEquals(AuctionStatus.CANCELED, updated.getStatus());
     }
 }

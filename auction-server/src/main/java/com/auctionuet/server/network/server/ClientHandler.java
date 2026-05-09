@@ -8,6 +8,7 @@ import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;
 import com.auctionuet.server.util.AppLogger;
 import com.google.gson.Gson;
+import com.auctionuet.server.util.json.GsonFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         wrapper.put("status", response.getStatus());
         wrapper.put("message", response.getMessage());
         wrapper.put("data", response.getData());
-        String json = new Gson().toJson(wrapper);
+        String json = GsonFactory.createForNetwork().toJson(wrapper);
         out.println(json);
     }
 
@@ -131,7 +132,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         push.put("amount", record.getAmount());
         push.put("timestamp", record.getTimestamp().toString());
 
-        String json = new Gson().toJson(push);
+        String json = GsonFactory.createForNetwork().toJson(push);
         sendPush(json);
     }
 
@@ -144,7 +145,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         push.put("winnerId", winnerId);
         push.put("finalPrice", finalPrice);
 
-        String json = new Gson().toJson(push);
+        String json = GsonFactory.createForNetwork().toJson(push);
         sendPush(json);
     }
 
@@ -156,7 +157,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         push.put("auctionId", auctionId);
         push.put("newEndTime", newEndTime.toString());
 
-        String json = new Gson().toJson(push);
+        String json = GsonFactory.createForNetwork().toJson(push);
         sendPush(json);
     }
     /**

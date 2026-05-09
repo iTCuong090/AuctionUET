@@ -32,7 +32,7 @@ public class AuctionDAOTest {
     public void testAuctionSaveAndFind() {
         AuctionSchema a = new AuctionSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
                 "item1", "seller1", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusDays(1),
-                AuctionStatus.OPEN, 0.0, null);
+                AuctionStatus.OPEN, 0.0, null, 60, 120);
         auctionDAO.save(a);
 
         AuctionSchema found = auctionDAO.findById(a.getId());
@@ -45,13 +45,13 @@ public class AuctionDAOTest {
     public void testFindByStatus() {
         AuctionSchema a1 = new AuctionSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
                 "item1", "seller1", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusDays(1),
-                AuctionStatus.OPEN, 0.0, null);
+                AuctionStatus.OPEN, 0.0, null, 60, 120);
         AuctionSchema a2 = new AuctionSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
                 "item2", "seller1", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusDays(1),
-                AuctionStatus.OPEN, 0.0, null);
+                AuctionStatus.OPEN, 0.0, null, 60, 120);
         AuctionSchema a3 = new AuctionSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
                 "item3", "seller1", "Title", "Desc", LocalDateTime.now(), LocalDateTime.now().plusDays(1),
-                AuctionStatus.RUNNING, 0.0, null);
+                AuctionStatus.RUNNING, 0.0, null, 60, 120);
 
         auctionDAO.save(a1);
         auctionDAO.save(a2);

@@ -23,7 +23,7 @@ class DomainModelTest {
     @Test
     void testLiveAuctionPlaceBid() throws Exception {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 100.0, null);
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 100.0, null, 60, 120);
 
         User bidder = new Bidder("bid1", "user1");
         auction.placeBid(bidder, 150.0);
@@ -36,7 +36,7 @@ class DomainModelTest {
     @Test
     void testLiveAuctionBidTooLow() {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 200.0, null);
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 200.0, null, 60, 120);
 
         User bidder = new Bidder("bid1", "user1");
         assertThrows(InvalidBidException.class, () -> auction.placeBid(bidder, 200.0));
@@ -46,7 +46,7 @@ class DomainModelTest {
     @Test
     void testLiveAuctionSellerCannotBid() {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 100.0, null);
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 100.0, null, 60, 120);
 
         User seller = new Seller("seller1", "seller1");
         assertThrows(InvalidBidException.class, () -> auction.placeBid(seller, 200.0));
@@ -55,7 +55,7 @@ class DomainModelTest {
     @Test
     void testLiveAuctionClosed() {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.FINISHED, 100.0, null);
+                LocalDateTime.now().plusHours(1), AuctionStatus.FINISHED, 100.0, null, 60, 120);
 
         User bidder = new Bidder("bid1", "user1");
         assertThrows(AuctionClosedException.class, () -> auction.placeBid(bidder, 200.0));
