@@ -24,7 +24,7 @@ public class CreateAuctionController {
     // ĐÃ SỬA: Đổi sang nhận ItemDTO thật
     @FXML private ComboBox<ItemDTO> itemComboBox;
     @FXML private Label previewName, previewPrice, previewType, durationLabel, statusLabel;
-    @FXML private TextField titleField;
+    @FXML private TextField titleField, antiSnipingWindowField, antiSnipingExtensionField;
     @FXML private TextArea descArea;
     @FXML private DatePicker startDatePicker, endDatePicker;
     @FXML private ComboBox<String> startHourCombo, startMinuteCombo, endHourCombo, endMinuteCombo;
@@ -110,12 +110,28 @@ public class CreateAuctionController {
             showError("Thời gian kết thúc không hợp lệ!"); return;
         }
 
+        int windowSec = 60;
+        int extensionSec = 120;
+        try {
+            if (!antiSnipingWindowField.getText().trim().isEmpty()) {
+                windowSec = Integer.parseInt(antiSnipingWindowField.getText().trim());
+            }
+            if (!antiSnipingExtensionField.getText().trim().isEmpty()) {
+                extensionSec = Integer.parseInt(antiSnipingExtensionField.getText().trim());
+            }
+        } catch (NumberFormatException ex) {
+            showError("Cửa sổ Anti-Sniping phải là số nguyên!");
+            return;
+        }
+
         Map<String, Object> requestData = new HashMap<>();
         requestData.put("itemId", selectedItem.getId());
         requestData.put("title", title);
         requestData.put("description", descArea.getText());
         requestData.put("startTime", start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         requestData.put("endTime", end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        requestData.put("antiSnipingWindowSeconds", windowSec);
+        requestData.put("antiSnipingExtensionSeconds", extensionSec);
 
         System.out.println("=== CHUẨN BỊ GỬI REQUEST TẠO AUCTION LÊN SERVER ===");
         requestData.forEach((k, v) -> System.out.println(k + ": " + v));
@@ -129,6 +145,9 @@ public class CreateAuctionController {
         statusLabel.setText("Đang xử lý...");
         statusLabel.setStyle("-fx-text-fill: #f39c12;");
 
+        final int finalWindowSec = windowSec;
+        final int finalExtSec = extensionSec;
+
         new Thread(() -> {
             try {
                 auctionClient.createAuction(
@@ -137,7 +156,9 @@ public class CreateAuctionController {
                         start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                         end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                         title,
-                        descArea.getText()
+                        descArea.getText(),
+                        finalWindowSec,
+                        finalExtSec
                 );
                 
                 Platform.runLater(() -> {

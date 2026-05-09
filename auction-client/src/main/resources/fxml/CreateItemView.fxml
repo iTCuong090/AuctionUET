@@ -30,7 +30,7 @@
 
                 <VBox spacing="5.0">
                     <Label styleClass="text-secondary" text="Mô tả chi tiết" />
-                    <TextArea fx:id="descArea" prefHeight="80.0" promptText="Tình trạng xước xát, phụ kiện đi kèm..." styleClass="text-field" wrapText="true" />
+                    <TextArea fx:id="descArea" prefHeight="80.0" promptText="Tình trạng xước xát, phụ kiện đi kèm..." styleClass="text-area" wrapText="true" />
                 </VBox>
 
                 <VBox spacing="5.0">

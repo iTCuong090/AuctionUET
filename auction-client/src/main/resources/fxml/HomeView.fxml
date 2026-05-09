@@ -16,7 +16,7 @@
                 <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
             </padding>
             <children>
-                <StackPane prefHeight="220.0" style="-fx-background-color: linear-gradient(to right bottom, #0f3460, #e94560); -fx-background-radius: 15;">
+                <StackPane prefHeight="220.0" styleClass="home-banner">
                     <children>
                         <VBox alignment="CENTER" spacing="15.0">
                             <children>

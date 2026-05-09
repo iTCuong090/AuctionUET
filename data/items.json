@@ -88,5 +88,21 @@
     "id": "ef836b12-0b72-434a-a9ca-a50570cc367c",
     "createdAt": "2026-05-08T14:34:11.3163694",
     "updatedAt": "2026-05-08T14:34:11.3163694"
+  },
+  {
+    "itemType": "VEHICLE",
+    "mileage": 0,
+    "vehicleYear": 0,
+    "name": "vinfast 9",
+    "description": "đểu",
+    "startingPrice": 5.0E8,
+    "type": "VEHICLE",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "xe.jpg",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "id": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
+    "createdAt": "2026-05-09T13:12:06.2308898",
+    "updatedAt": "2026-05-09T13:13:05.5277631"
   }
 ]

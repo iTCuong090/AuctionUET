@@ -36,11 +36,11 @@
 
         <HBox alignment="CENTER" spacing="10.0">
             <children>
-                <Button mnemonicParsing="false" style="-fx-background-color: #16213e; -fx-text-fill: white;" text="&lt;" />
-                <Button mnemonicParsing="false" style="-fx-background-color: #e94560; -fx-text-fill: white;" text="1" />
-                <Button mnemonicParsing="false" style="-fx-background-color: #16213e; -fx-text-fill: white;" text="2" />
-                <Button mnemonicParsing="false" style="-fx-background-color: #16213e; -fx-text-fill: white;" text="3" />
-                <Button mnemonicParsing="false" style="-fx-background-color: #16213e; -fx-text-fill: white;" text="&gt;" />
+                <Button mnemonicParsing="false" styleClass="pagination-button" text="&lt;" />
+                <Button mnemonicParsing="false" styleClass="pagination-button, active" text="1" />
+                <Button mnemonicParsing="false" styleClass="pagination-button" text="2" />
+                <Button mnemonicParsing="false" styleClass="pagination-button" text="3" />
+                <Button mnemonicParsing="false" styleClass="pagination-button" text="&gt;" />
             </children>
         </HBox>
     </children>

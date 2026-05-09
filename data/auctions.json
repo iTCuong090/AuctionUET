@@ -11,5 +11,18 @@
     "id": "9951c064-caa4-4a95-8dde-ebd890102b84",
     "createdAt": "2026-05-08T14:35:14.2407945",
     "updatedAt": "2026-05-08T14:35:28.637011"
+  },
+  {
+    "itemId": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "title": "Đấu giá: vinfast 9",
+    "description": "",
+    "startTime": "2026-05-09T16:20:00",
+    "endTime": "2026-05-11T06:40:00",
+    "status": "OPEN",
+    "highestBid": 0.0,
+    "id": "1494fa4f-0451-45ff-88e7-b4fe340e85b2",
+    "createdAt": "2026-05-09T13:13:05.5216135",
+    "updatedAt": "2026-05-09T13:13:05.5216135"
   }
 ]

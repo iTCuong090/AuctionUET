@@ -10,7 +10,14 @@ import com.auctionuet.client.model.AuctionDTO;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.model.UserDTO;
 import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.client.network.protocol.AuctionStatus;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
+import java.util.Map;
 
 public class ProfileController {
 
@@ -51,7 +58,7 @@ public class ProfileController {
             }
 
             // Số dư (Tạm để cứng vì DTO hiện tại chưa có trường Balance)
-            balanceLabel.setText("5,000,000 VNĐ");
+            balanceLabel.setText("Đang tải...");
 
         } else {
             // Chưa đăng nhập hoặc session bị lỗi
@@ -61,9 +68,47 @@ public class ProfileController {
         }
 
         // ==============================
-        // PHẦN 2: GỌI API LẤY THỐNG KÊ THẬT
+        // PHẦN 2: GỌI API LẤY THỐNG KÊ THẬT VÀ SỐ DƯ VÍ
         // ==============================
         loadProfileStats();
+        loadWalletBalance();
+    }
+
+    private void loadWalletBalance() {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) return;
+
+        new Thread(() -> {
+            try {
+                WalletClient walletClient = new WalletClient();
+                Map<String, Double> walletInfo = walletClient.getWallet(token);
+                double balance = walletInfo.getOrDefault("balance", 0.0);
+                Platform.runLater(() -> balanceLabel.setText(String.format("%,.0f VNĐ", balance)));
+            } catch (Exception e) {
+                Platform.runLater(() -> balanceLabel.setText("Lỗi"));
+            }
+        }).start();
+    }
+
+    @FXML
+    private void handleTopUp() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/WalletView.fxml"));
+            Parent root = loader.load();
+            
+            // Tìm Dashboard HBox/StackPane
+            Parent currentRoot = balanceLabel.getScene().getRoot();
+            if (currentRoot instanceof HBox) {
+                // Trong DashboardView, contentArea nằm trong main-card VBox
+                VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
+                StackPane contentArea = (StackPane) mainCard.getChildren().get(1);
+                contentArea.getChildren().setAll(root);
+            } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+                ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi chuyển sang ví: " + e.getMessage());
+        }
     }
 
     /**
