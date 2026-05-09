@@ -9,15 +9,17 @@ import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
 
-public static LiveAuction toDomain(AuctionSchema schema) {
-    return new LiveAuction(
-            schema.getId(), schema.getItemId(), schema.getSellerId(),
-            schema.getEndTime(), schema.getStatus(),
-            schema.getHighestBid(), schema.getWinnerId(),
-            schema.getAntiSnipingWindowSeconds(),
-            schema.getAntiSnipingExtensionSeconds()
-    );
-}
+public class AuctionMapper {
+
+    public static LiveAuction toDomain(AuctionSchema schema) {
+        return new LiveAuction(
+                schema.getId(), schema.getItemId(), schema.getSellerId(),
+                schema.getEndTime(), schema.getStatus(),
+                schema.getHighestBid(), schema.getWinnerId(),
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds()
+        );
+    }
 
     public static AuctionDTO toDTO(AuctionSchema schema, ItemDTO itemDTO,
                                    String sellerUsername, String winnerUsername ) {
@@ -54,4 +56,3 @@ public static LiveAuction toDomain(AuctionSchema schema) {
         return schema;
     }
 }
-

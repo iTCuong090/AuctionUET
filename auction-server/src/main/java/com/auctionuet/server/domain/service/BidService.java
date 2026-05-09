@@ -45,11 +45,11 @@ public class BidService {
         }
         double depositAmount = itemSchema.getStartingPrice() * 0.10;
 
-        boolean hasDeposited = liveAuction.getBidHistory().stream()
-                .anyMatch(b -> b.getBidderId().equals(bidder.getId()));
+        boolean hasDeposited = liveAuction.hasDeposited(bidder.getId());
 
         if (!hasDeposited) {
             walletService.freezeDeposit(bidder.getId(), depositAmount);
+            liveAuction.markDeposited(bidder.getId());
         }
 
         String previousWinnerId = liveAuction.getCurrentWinnerId();
@@ -61,27 +61,15 @@ public class BidService {
             auctionSchema.setHighestBid(liveAuction.getCurrentHighestBid());
             auctionSchema.setWinnerId(liveAuction.getCurrentWinnerId());
             auctionSchema.setUpdatedAt(LocalDateTime.now());
-            
-            // Handle Anti-Sniping
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime endTime = auctionSchema.getEndTime();
-            if (now.plusSeconds(auctionSchema.getAntiSnipingWindowSeconds()).isAfter(endTime)) {
-                LocalDateTime newEndTime = endTime.plusSeconds(auctionSchema.getAntiSnipingExtensionSeconds());
-                auctionSchema.setEndTime(newEndTime);
-                liveAuction.setEndTime(newEndTime);
-                auctionManager.extendAuction(auctionId, newEndTime);
-            }
-            
+
+            // Sync endTime from LiveAuction (anti-sniping may have extended it)
+            auctionSchema.setEndTime(liveAuction.getEndTime());
+
             auctionDAO.update(auctionSchema);
         }
 
         if (previousWinnerId != null && !previousWinnerId.equals(bidder.getId())) {
             walletService.unfreezeDeposit(previousWinnerId, depositAmount);
-            if (liveAuction.getAutoBidConfig(previousWinnerId) != null) {
-                // Should not unfreeze if they have autobid? Autobid should keep the freeze. Wait. 
-                // The task says: "Nếu có previous winner khác: unfreezeDeposit cho người cũ"
-                // Let's stick to the basic instructions.
-            }
         }
 
         BidSchema bidSchema = new BidSchema(
@@ -89,8 +77,6 @@ public class BidService {
                 auctionId, bidder.getId(), amount, LocalDateTime.now()
         );
         bidDAO.save(bidSchema);
-
-        resolveAutoBids(liveAuction, itemSchema);
 
         return record;
     }
@@ -104,7 +90,7 @@ public class BidService {
         if (liveAuction == null) {
             throw new IllegalArgumentException("Auction not found");
         }
-        
+
         if (maxBid <= liveAuction.getCurrentHighestBid() || increment <= 0) {
             throw new IllegalArgumentException("Invalid autobid parameters");
         }
@@ -115,17 +101,15 @@ public class BidService {
         }
         double depositAmount = itemSchema.getStartingPrice() * 0.10;
 
-        boolean hasDeposited = liveAuction.getBidHistory().stream()
-                .anyMatch(b -> b.getBidderId().equals(bidder.getId()));
+        boolean hasDeposited = liveAuction.hasDeposited(bidder.getId());
 
         if (!hasDeposited) {
             walletService.freezeDeposit(bidder.getId(), depositAmount);
+            liveAuction.markDeposited(bidder.getId());
         }
 
-        AutoBidConfig config = new AutoBidConfig(bidder.getId(), maxBid, increment);
+        AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
         liveAuction.addAutoBid(config);
-
-        resolveAutoBids(liveAuction, itemSchema);
     }
 
     public void cancelAutoBid(User bidder, String auctionId) {
@@ -134,11 +118,5 @@ public class BidService {
             throw new IllegalArgumentException("Auction not found");
         }
         liveAuction.removeAutoBid(bidder.getId());
-    }
-    
-    private void resolveAutoBids(LiveAuction liveAuction, ItemSchema itemSchema) {
-        // Implementation of auto bid resolution...
-        // For simplicity, we can recursively place bids for the user who can outbid the current highest.
-        // Needs a loop to resolve competition between auto bidders.
     }
 }

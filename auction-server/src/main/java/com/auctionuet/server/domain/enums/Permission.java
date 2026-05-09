@@ -17,5 +17,12 @@ public enum Permission {
     DELETE_ITEM,
     GET_MY_ITEMS,
     CREATE_AUCTION,
-    START_AUCTION
+    START_AUCTION,
+    DEPOSIT,
+    WITHDRAW,
+    GET_WALLET,
+    PAY_AUCTION,
+    SET_AUTO_BID,
+    CANCEL_AUTO_BID
+
 }

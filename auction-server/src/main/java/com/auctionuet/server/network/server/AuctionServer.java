@@ -1,19 +1,13 @@
 package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.manager.DataManager;
-import com.auctionuet.server.domain.service.AuctionService;
-import com.auctionuet.server.domain.service.AuthService;
-import com.auctionuet.server.domain.service.ItemService;
-import com.auctionuet.server.network.controller.AuctionController;
-import com.auctionuet.server.network.controller.AuthController;
-import com.auctionuet.server.network.controller.ItemController;
+import com.auctionuet.server.domain.service.*;
+import com.auctionuet.server.network.controller.*;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
+import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.domain.manager.AuctionManager;
-import com.auctionuet.server.domain.service.BidService;
-import com.auctionuet.server.domain.service.WalletService;
-import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.util.AppLogger;
 
 import java.io.IOException;
@@ -75,8 +69,14 @@ public class AuctionServer {
             AuctionController auctionController = new AuctionController(auctionService, itemService);
             AppLogger.logInit("AuctionController", null);
 
+            WalletController walletController = new WalletController(walletService);
+            AppLogger.logInit("WalletController", null);
+
+            BidController bidController = new BidController(bidService);
+            AppLogger.logInit("BidController", null);
+
             // ── Khởi tạo Router ──
-            this.router = new RequestRouter(authController, itemController, auctionController);
+            this.router = new RequestRouter(bidController, walletController, authController, itemController, auctionController);
             AppLogger.logInit("RequestRouter", "Ready");
 
             isRunning = true;

@@ -148,7 +148,15 @@ public class AuctionController {
             "Found auction=" + schema.getId() + " status=" + schema.getStatus());
         return Response.ok(auctionDTO);
     }
+    // ──────────────────── PAY AUCTION  ────────────────────
+    public Response handlePayAuction(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = request.getData();
+        String auctionId = (String) data.get("auctionId");
 
+        auctionService.payAuction(user, auctionId);
+        return Response.ok("Thanh toán thành công! Sản phẩm đã thuộc về bạn.");
+    }
     // ──────────────────── HELPERS ────────────────────
 
     /**

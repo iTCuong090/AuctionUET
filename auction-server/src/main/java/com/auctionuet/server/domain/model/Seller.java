@@ -13,7 +13,8 @@ public class Seller extends User{
             case CREATE_ITEM, UPDATE_ITEM, DELETE_ITEM, GET_MY_ITEMS,
                  CREATE_AUCTION, START_AUCTION,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
-                 GET_PROFILE, UPDATE_PROFILE
+                 GET_PROFILE, UPDATE_PROFILE,
+                 DEPOSIT, WITHDRAW, GET_WALLET
                     -> true;
             default -> false;
         };

@@ -22,6 +22,10 @@ public interface AuctionObserver {
      */
     void onAuctionEnded(String auctionId, String winnerId, double finalPrice);
 
-    // THÊM method cho anti-sniping notification:
+    /**
+     * Được gọi khi phiên đấu giá được gia hạn thêm thời gian.
+     * @param auctionId ID phiên đấu giá
+     * @param newEndTime thời gian kết thúc mới
+     */
     void onAuctionExtended(String auctionId, LocalDateTime newEndTime);
 }
