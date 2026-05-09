@@ -1,13 +1,10 @@
 package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.manager.DataManager;
-import com.auctionuet.server.domain.service.AuctionService;
-import com.auctionuet.server.domain.service.AuthService;
-import com.auctionuet.server.domain.service.ItemService;
-import com.auctionuet.server.network.controller.AuctionController;
-import com.auctionuet.server.network.controller.AuthController;
-import com.auctionuet.server.network.controller.ItemController;
+import com.auctionuet.server.domain.service.*;
+import com.auctionuet.server.network.controller.*;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
+import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.util.AppLogger;
@@ -42,6 +39,8 @@ public class AuctionServer {
             AuctionDAO auctionDAO = DataManager.getInstance().getAuctionDAO();
             AppLogger.logInit("AuctionDAO", null);
 
+            BidDAO bidDAO = DataManager.getInstance().getBidDAO();
+            AppLogger.logInit("BidDAO", null);
             // ── Khởi tạo Service ──
             AuthService authService = new AuthService(userDAO);
             AppLogger.logInit("AuthService", null);
@@ -52,6 +51,10 @@ public class AuctionServer {
             AuctionService auctionService = new AuctionService(itemService, auctionDAO);
             AppLogger.logInit("AuctionService", null);
 
+            WalletService walletService = new WalletService(userDAO);
+            AppLogger.logInit("WalletService", null);
+
+            BidService bidService = new BidService(walletService, bidDAO, itemService, auctionDAO);
             // ── Khởi tạo Controller ──
             AuthController authController = new AuthController(authService);
             AppLogger.logInit("AuthController", null);
@@ -62,8 +65,14 @@ public class AuctionServer {
             AuctionController auctionController = new AuctionController(auctionService, itemService);
             AppLogger.logInit("AuctionController", null);
 
+            WalletController walletController = new WalletController(walletService);
+            AppLogger.logInit("WalletController", null);
+
+            BidController bidController = new BidController(bidService);
+            AppLogger.logInit("WalletController", null);
+
             // ── Khởi tạo Router ──
-            this.router = new RequestRouter(authController, itemController, auctionController);
+            this.router = new RequestRouter(bidController,walletController,authController, itemController, auctionController);
             AppLogger.logInit("RequestRouter", "Ready");
 
             isRunning = true;
