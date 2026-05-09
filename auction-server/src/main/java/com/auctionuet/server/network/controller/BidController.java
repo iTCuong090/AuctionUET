@@ -20,8 +20,11 @@ import java.util.stream.Collectors;
 
 public class BidController {
     private final BidService bidService;
-    private final SessionManager sessionManager=SessionManager.getInstance();
-
+    private final SessionManager sessionManager;
+    public BidController(BidService bidService){
+        this.bidService=bidService;
+        this.sessionManager=SessionManager.getInstance();
+    }
     // PLACE_BID
     public Response handlePlaceBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
