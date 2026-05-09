@@ -19,5 +19,10 @@ public class BidMapper {
                 auctionId, record.getBidderId(), record.getAmount(), record.getTimestamp()
         );
     }
+
+    public static BidDTO schemaToDTO(BidSchema schema) {
+        return new BidDTO(schema.getAuctionId(), /* resolve username */,
+                schema.getAmount(), schema.getTimestamp());
+    }
 }
 
