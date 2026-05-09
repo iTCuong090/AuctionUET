@@ -17,7 +17,7 @@ public class DashboardController {
     @FXML private StackPane contentArea;
 
     // Các nút trên Sidebar
-    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout;
+    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout, btnWallet;
     @FXML private Button btnToggleTheme;
 
     @FXML
@@ -60,6 +60,13 @@ public class DashboardController {
             loadView("/fxml/AuctionListView.fxml");
             setActiveButton(btnAuctionList);
         });
+
+        if (btnWallet != null) {
+            btnWallet.setOnAction(e -> {
+                loadView("/fxml/WalletView.fxml");
+                setActiveButton(btnWallet);
+            });
+        }
 
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
@@ -116,6 +123,7 @@ public class DashboardController {
         if (btnMyItems != null) btnMyItems.getStyleClass().remove("active");
         if (btnCreateAuction != null) btnCreateAuction.getStyleClass().remove("active");
         if (btnAuctionList != null) btnAuctionList.getStyleClass().remove("active");
+        if (btnWallet != null) btnWallet.getStyleClass().remove("active");
         if (btnProfile != null) btnProfile.getStyleClass().remove("active");
 
         // Khoác áo "active" cho cái nút vừa được bấm

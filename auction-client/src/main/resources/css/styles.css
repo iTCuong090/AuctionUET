@@ -41,7 +41,7 @@
 }
 
 /* --- 3. Ô NHẬP LIỆU --- */
-.text-field, .password-field {
+.text-field, .password-field, .text-area {
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-padding: 10;
@@ -132,4 +132,20 @@
 .register-title {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
+}
+
+/* --- 10. HOME BANNER & PAGINATION --- */
+.pagination-button {
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-min-width: 40;
+    -fx-alignment: center;
+}
+
+/* --- 11. WALLET CARD --- */
+.wallet-card {
+    -fx-background-radius: 20;
+    -fx-padding: 30;
 }

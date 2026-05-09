@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.WalletController">
+    <content>
+        <VBox spacing="25.0" styleClass="dark-bg">
+            <padding>
+                <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
+            </padding>
+            <children>
+                <Label styleClass="text-heading" text="💰 VÍ TIỀN CỦA TÔI">
+                    <font>
+                        <Font name="System Bold" size="28.0" />
+                    </font>
+                </Label>
+
+                <!-- THÔNG TIN SỐ DƯ -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <HBox spacing="20.0" alignment="CENTER_LEFT">
+                            <Label styleClass="text-secondary" text="Số dư khả dụng:" prefWidth="120.0" />
+                            <Label fx:id="balanceLabel" styleClass="text-primary" text="0 VNĐ">
+                                <font><Font name="System Bold" size="18.0" /></font>
+                            </Label>
+                        </HBox>
+                        <HBox spacing="20.0" alignment="CENTER_LEFT">
+                            <Label styleClass="text-secondary" text="Tiền đang cọc:" prefWidth="120.0" />
+                            <Label fx:id="frozenLabel" styleClass="text-secondary" text="0 VNĐ">
+                                <font><Font size="16.0" /></font>
+                            </Label>
+                        </HBox>
+                        <VBox style="-fx-border-color: #c7cdd1; -fx-border-width: 1 0 0 0; -fx-padding: 10 0 0 0;">
+                            <HBox spacing="20.0" alignment="CENTER_LEFT">
+                                <Label styleClass="text-secondary" text="Tổng tài sản:" prefWidth="120.0" />
+                                <Label fx:id="totalLabel" styleClass="text-accent" text="0 VNĐ">
+                                    <font><Font name="System Bold" size="20.0" /></font>
+                                </Label>
+                            </HBox>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <!-- NẠP TIỀN -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <Label styleClass="text-primary" text="NẠP TIỀN">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                        <HBox spacing="15.0" alignment="CENTER_LEFT">
+                            <Label styleClass="text-secondary" text="Số tiền:" />
+                            <TextField fx:id="depositAmountField" promptText="Nhập số tiền..." styleClass="text-field" prefWidth="250.0" />
+                            <Button fx:id="generateQrBtn" mnemonicParsing="false" styleClass="button" text="Tạo mã QR" onAction="#handleGenerateQr" />
+                        </HBox>
+                        
+                        <VBox fx:id="qrPlaceholder" alignment="CENTER" spacing="10.0" visible="false" managed="false" style="-fx-border-color: #c7cdd1; -fx-border-radius: 8; -fx-padding: 20; -fx-background-color: #f8f9fa;">
+                            <Label text="🏦 QR Code Placeholder" style="-fx-text-fill: #2d3b45; -fx-font-weight: bold; -fx-font-size: 16px;" />
+                            <Label text="(Sẽ tích hợp VietQR trong phiên bản sau)" style="-fx-text-fill: #6b7780;" />
+                        </VBox>
+                        
+                        <Button fx:id="confirmDepositBtn" visible="false" managed="false" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #22c55e;" text="✅ Xác nhận đã chuyển khoản" onAction="#handleDeposit" />
+                    </children>
+                </VBox>
+
+                <!-- RÚT TIỀN -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <Label styleClass="text-primary" text="RÚT TIỀN">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                        <HBox spacing="15.0" alignment="CENTER_LEFT">
+                            <Label styleClass="text-secondary" text="Số tiền:" />
+                            <TextField fx:id="withdrawAmountField" promptText="Nhập số tiền..." styleClass="text-field" prefWidth="250.0" />
+                            <Button mnemonicParsing="false" styleClass="button" style="-fx-background-color: #e94560;" text="Rút tiền" onAction="#handleWithdraw" />
+                        </HBox>
+                    </children>
+                </VBox>
+                
+                <Label fx:id="statusLabel" styleClass="error-label" text="" />
+
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>

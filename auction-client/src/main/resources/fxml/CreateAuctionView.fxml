@@ -55,7 +55,7 @@
                 <children>
                     <Label styleClass="text-secondary" text="Thời gian bắt đầu (*)" />
                     <HBox spacing="5.0">
-                        <DatePicker fx:id="startDatePicker" prefWidth="130.0" promptText="Ngày" style="-fx-control-inner-background: #16213e; -fx-background-color: #16213e;" />
+                        <DatePicker fx:id="startDatePicker" prefWidth="130.0" promptText="Ngày" styleClass="date-picker" />
                         <ComboBox fx:id="startHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
                         <ComboBox fx:id="startMinuteCombo" prefWidth="80.0" promptText="Phút" styleClass="combo-box" />
                     </HBox>
@@ -65,7 +65,7 @@
                 <children>
                     <Label styleClass="text-secondary" text="Thời gian kết thúc (*)" />
                     <HBox spacing="5.0">
-                        <DatePicker fx:id="endDatePicker" prefWidth="130.0" promptText="Ngày" style="-fx-control-inner-background: #16213e; -fx-background-color: #16213e;" />
+                        <DatePicker fx:id="endDatePicker" prefWidth="130.0" promptText="Ngày" styleClass="date-picker" />
                         <ComboBox fx:id="endHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
                         <ComboBox fx:id="endMinuteCombo" prefWidth="80.0" promptText="Phút" styleClass="combo-box" />
                     </HBox>
@@ -76,6 +76,23 @@
         <Label fx:id="durationLabel" text="⏱️ Thời lượng dự kiến: Vui lòng chọn ngày giờ" textFill="#f39c12">
             <font><Font name="System Bold" size="13.0" /></font>
         </Label>
+
+        <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
+
+        <HBox spacing="20.0">
+            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                <children>
+                    <Label styleClass="text-secondary" text="Cửa sổ Anti-Sniping (giây)" />
+                    <TextField fx:id="antiSnipingWindowField" promptText="Mặc định: 60" text="60" styleClass="text-field" />
+                </children>
+            </VBox>
+            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                <children>
+                    <Label styleClass="text-secondary" text="Gia hạn Anti-Sniping (giây)" />
+                    <TextField fx:id="antiSnipingExtensionField" promptText="Mặc định: 120" text="120" styleClass="text-field" />
+                </children>
+            </VBox>
+        </HBox>
 
         <VBox alignment="CENTER" spacing="10.0">
             <children>

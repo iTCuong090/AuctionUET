@@ -1,0 +1,32 @@
+[
+  {
+    "username": "ccc",
+    "hashedPassword": "68e0329e75d4450c4c998294fcccfa5eac52fb77aec2e68d55bc142fe29dc146",
+    "passwordSalt": "9c8386fc86e083c8645e8b0cf2ca1ecd",
+    "email": "123@gmail.com",
+    "role": "SELLER",
+    "id": "c7268b59-6fff-473f-9ffa-3147e29d8c6d",
+    "createdAt": "2026-04-21T07:20:46.4835924",
+    "updatedAt": "2026-04-21T07:20:46.4835924"
+  },
+  {
+    "username": "ccc123",
+    "hashedPassword": "b039a149a442197e10cbdceea34fb7e7eb2464671fcdcfc60a3ce2243e00d4d2",
+    "passwordSalt": "7de1e8190524b2d3a1c27994714cbca8",
+    "email": "ccc@gmail.com",
+    "role": "SELLER",
+    "id": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "createdAt": "2026-05-08T14:03:52.4258721",
+    "updatedAt": "2026-05-08T14:03:52.4258721"
+  },
+  {
+    "username": "ccc456",
+    "hashedPassword": "69cbc6e948e10217a0346b9ffa8d8d5febd414049a9203f818d56fa203d3d833",
+    "passwordSalt": "47b2cb8010446034c03219029f07ca41",
+    "email": "ccc@gmail.com",
+    "role": "BIDDER",
+    "id": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "createdAt": "2026-05-08T14:05:41.3492979",
+    "updatedAt": "2026-05-08T14:05:41.3492979"
+  }
+]

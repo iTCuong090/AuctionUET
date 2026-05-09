@@ -19,7 +19,8 @@ public class AuctionClient {
      * Gửi yêu cầu tạo một phiên đấu giá mới
      */
     public AuctionDTO createAuction(String token, String itemId, String startTime,
-            String endTime, String title, String description) throws Exception {
+                                    String endTime, String title, String description,
+                                    int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) throws Exception {
         // 1. Đóng gói dữ liệu vào Map
         Map<String, Object> data = new HashMap<>();
         data.put("itemId", itemId);
@@ -27,6 +28,8 @@ public class AuctionClient {
         data.put("endTime", endTime);
         data.put("title", title);
         data.put("description", description);
+        data.put("antiSnipingWindowSeconds", antiSnipingWindowSeconds);
+        data.put("antiSnipingExtensionSeconds", antiSnipingExtensionSeconds);
 
         // 2. Tạo Request với ActionType enum (Chuẩn file Request của ông)
         Request request = new Request(ActionType.CREATE_AUCTION, data);
