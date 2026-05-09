@@ -159,6 +159,7 @@ public class LiveAuction {
      *    - Không còn auto-bid nào đủ điều kiện, HOẶC
      *    - Người dẫn đầu chính là top auto-bidder
      */
+
     public void resolveAutoBids() {
         // KHÔNG CẦN lock vì hàm này luôn được gọi trong placeBid() đã lock sẵn
 
