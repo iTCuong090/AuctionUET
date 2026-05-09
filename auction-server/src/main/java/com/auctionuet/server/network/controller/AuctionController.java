@@ -46,12 +46,13 @@ public class AuctionController {
         String description = (String) data.get("description");
         LocalDateTime startTime = parseDateTime(data.get("startTime"));
         LocalDateTime endTime   = parseDateTime(data.get("endTime"));
-
+        int antiSnipingWindowSeconds= (int) data.get("antiSnipingWindowSeconds");
+        int antiSnipingExtensionSeconds=(int) data.get("antiSnipingExtensionSeconds ");
         AppLogger.logControllerEnter("AuctionController", "handleCreateAuction",
             "user=" + user.getUsername() + " itemId=" + itemId + " title=" + title);
 
         AuctionSchema auctionSchema = auctionService.createAuction(
-                user, itemId, startTime, endTime, title, description);
+                user, itemId, startTime, endTime, title, description,antiSnipingWindowSeconds,antiSnipingExtensionSeconds);
 
         ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
         ItemDTO itemDTO = null;
@@ -142,7 +143,15 @@ public class AuctionController {
             "Found auction=" + schema.getId() + " status=" + schema.getStatus());
         return Response.ok(auctionDTO);
     }
+    // ──────────────────── PAY AUCTION  ────────────────────
+    public Response handlePayAuction(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = request.getData();
+        String auctionId = (String) data.get("auctionId");
 
+        auctionService.payAuction(user, auctionId);
+        return Response.ok("Thanh toán thành công! Sản phẩm đã thuộc về bạn.");
+    }
     // ──────────────────── HELPERS ────────────────────
 
     /**
