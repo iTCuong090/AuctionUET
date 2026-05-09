@@ -23,7 +23,7 @@ public class MainController {
 
         // Cập nhật icon toggle theme
         if (btnToggleTheme != null) {
-            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "T" : "S");
         }
     }
 
@@ -70,6 +70,6 @@ public class MainController {
     private void handleToggleTheme() {
         ThemeManager.getInstance().toggleTheme();
         ThemeManager.getInstance().applyTheme(btnToggleTheme.getScene());
-        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "T" : "S");
     }
 }

@@ -11,7 +11,7 @@ public class ThemeManager {
     public enum Theme { DARK, LIGHT }
 
     private static ThemeManager instance;
-    private Theme currentTheme = Theme.DARK; // Mặc định là Dark Mode
+    private Theme currentTheme = Theme.LIGHT; // Mặc định là Light Mode
 
     private ThemeManager() {}
 
@@ -51,10 +51,18 @@ public class ThemeManager {
      */
     public void applyTheme(Scene scene) {
         if (scene == null) return;
-        // Xoá file theme cũ (giữ lại styles.css)
+        
+        // 1. Đảm bảo luôn có styles.css ở cấp Scene (nếu chưa có)
+        String baseCss = getClass().getResource("/css/styles.css").toExternalForm();
+        if (!scene.getStylesheets().contains(baseCss)) {
+            scene.getStylesheets().add(0, baseCss); // Cho vào đầu để theme có thể override
+        }
+
+        // 2. Xoá file theme cũ
         scene.getStylesheets().removeIf(s -> s.contains("dark-theme") || s.contains("light-theme"));
-        // Thêm file theme mới
-        String cssPath = getClass().getResource(getThemeCssPath()).toExternalForm();
-        scene.getStylesheets().add(cssPath);
+        
+        // 3. Thêm file theme mới
+        String themeCss = getClass().getResource(getThemeCssPath()).toExternalForm();
+        scene.getStylesheets().add(themeCss);
     }
 }

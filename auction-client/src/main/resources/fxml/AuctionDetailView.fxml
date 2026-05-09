@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="900.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.AuctionDetailController">
+<ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="900.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.AuctionDetailController">
    <content>
       <VBox spacing="30.0" styleClass="dark-bg">
          <padding>

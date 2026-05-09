@@ -7,7 +7,7 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<HBox prefHeight="650.0" prefWidth="1000.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">
+<HBox prefHeight="650.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.MainController">
 
     <!-- ====== PHẦN TRÁI (50%): BANNER GRADIENT + BRANDING ====== -->
     <VBox alignment="CENTER" spacing="20.0" styleClass="main-banner-left" HBox.hgrow="ALWAYS" prefWidth="500.0">
@@ -49,7 +49,7 @@
         <HBox alignment="CENTER_RIGHT">
             <padding><Insets top="12.0" right="15.0" /></padding>
             <children>
-                <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="🌙" />
+                <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="S" />
             </children>
         </HBox>
 

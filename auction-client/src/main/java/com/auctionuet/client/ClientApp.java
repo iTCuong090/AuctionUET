@@ -28,6 +28,7 @@ public class ClientApp extends Application {
         Parent root = loader.load();
 
         Scene scene = new Scene(root, 900, 600);
+        com.auctionuet.client.view.ThemeManager.getInstance().applyTheme(scene);
 
         primaryStage.setTitle(APP_NAME);
         primaryStage.setScene(scene);
