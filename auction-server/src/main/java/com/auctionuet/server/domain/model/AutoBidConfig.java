@@ -26,4 +26,22 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
         // Nếu bằng → đăng ký sớm hơn ưu tiên
         return this.registeredAt.compareTo(other.registeredAt);
     }
+
+    // Getters
+    public String getBidderId() {
+        return bidderId;
+    }
+    public String getBidderUsername() {
+        return bidderUsername;
+    }
+    public double getMaxBid() {
+        return maxBid;
+    }
+    public double getIncrement() {
+        return increment;
+    }
+    public LocalDateTime getRegisteredAt() {
+        return registeredAt;
+    }
+
 }
