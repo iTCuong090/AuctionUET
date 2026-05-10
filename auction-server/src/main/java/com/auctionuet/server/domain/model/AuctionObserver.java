@@ -10,9 +10,10 @@ public interface AuctionObserver {
 
     /**
      * Được gọi khi có một bid mới được đặt thành công.
+     * @param auctionId ID phiên đấu giá
      * @param record thông tin bid mới
      */
-    void onBidPlaced(BidRecord record);
+    void onBidPlaced(String auctionId, BidRecord record);
 
     /**
      * Được gọi khi phiên đấu giá kết thúc.

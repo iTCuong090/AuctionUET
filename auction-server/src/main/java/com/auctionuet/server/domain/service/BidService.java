@@ -54,7 +54,13 @@ public class BidService {
 
         String previousWinnerId = liveAuction.getCurrentWinnerId();
 
-        BidRecord record = liveAuction.placeBid(bidder, amount);
+        BidRecord record = liveAuction.placeBid(bidder, amount, autoRecord -> {
+            BidSchema autoBidSchema = new BidSchema(
+                    IdGenerator.generate(), LocalDateTime.now(), LocalDateTime.now(),
+                    auctionId, autoRecord.getBidderId(), autoRecord.getAmount(), autoRecord.getTimestamp()
+            );
+            bidDAO.save(autoBidSchema);
+        });
 
         AuctionSchema auctionSchema = auctionDAO.findById(auctionId);
         if (auctionSchema != null) {

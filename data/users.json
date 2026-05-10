@@ -46,5 +46,29 @@
     "id": "510e1245-545b-4eb4-8768-233a97e447a3",
     "createdAt": "2026-05-10T00:02:08.8921252",
     "updatedAt": "2026-05-10T00:02:08.8921252"
+  },
+  {
+    "username": "bidder1",
+    "hashedPassword": "8ea3da661650d64959543c3ba235dcdec2af63cce52e6f89d9e5fc75667da58b",
+    "passwordSalt": "c7f4ef392976fbbef7a104f107b325a6",
+    "email": "bidder1@gmail.com",
+    "role": "BIDDER",
+    "balance": 1.0E9,
+    "frozenBalance": 0.0,
+    "id": "beaefa98-2613-46b2-a890-7a872792aa0f",
+    "createdAt": "2026-05-10T00:53:23.096961",
+    "updatedAt": "2026-05-10T17:30:42.4644287"
+  },
+  {
+    "username": "bidder2",
+    "hashedPassword": "9c9149a8a188b26988fb05a1338fd27771fc2970365f252c4e125365f11f79b6",
+    "passwordSalt": "f231ad86366b95a8c1e1ec1c76025dad",
+    "email": "sfesdf@dgsg.sgsg",
+    "role": "BIDDER",
+    "balance": 1000000.0,
+    "frozenBalance": 0.0,
+    "id": "ad188e8e-fb5b-41a6-bb2b-eb9f4ae82bf8",
+    "createdAt": "2026-05-10T17:20:52.5046717",
+    "updatedAt": "2026-05-10T17:30:33.8123149"
   }
 ]

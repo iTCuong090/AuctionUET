@@ -104,5 +104,20 @@
     "id": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
     "createdAt": "2026-05-09T13:12:06.2308898",
     "updatedAt": "2026-05-09T13:13:05.5277631"
+  },
+  {
+    "itemType": "ELECTRONICS",
+    "warrantyMonths": 0,
+    "name": "Iphone 17 pro max",
+    "description": "Nát",
+    "startingPrice": 1.0E7,
+    "type": "ELECTRONICS",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "imageUrl": "fgfgrg",
+    "condition": "NEW",
+    "auctionCount": 2,
+    "id": "3924b4d1-662e-424c-ac1e-f828d582ebba",
+    "createdAt": "2026-05-10T00:50:40.1844946",
+    "updatedAt": "2026-05-10T17:20:13.8375325"
   }
 ]

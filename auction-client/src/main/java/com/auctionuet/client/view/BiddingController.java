@@ -45,6 +45,9 @@ public class BiddingController {
     private String currentAuctionId;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
+    
+    private javafx.animation.Timeline countdownTimeline;
+    private java.time.LocalDateTime endDateTime;
 
     public void setAuctionId(String auctionId) {
         this.currentAuctionId = auctionId;
@@ -58,6 +61,9 @@ public class BiddingController {
 
         // 3. Đăng ký listener nhận push message từ ServerConnection
         ServerConnection.getInstance().setPushListener(this::onPushMessage);
+        
+        // 4. Kiểm tra trạng thái Auto-Bid hiện tại
+        checkAutoBidState();
     }
 
     private void loadAuctionDetail() {
@@ -71,7 +77,10 @@ public class BiddingController {
                     priceLabel.setText(String.format("💰 %,.0f VNĐ", auction.getCurrentHighestBid()));
                     
                     if (auction.getEndTime() != null) {
-                        timeLeftLabel.setText("⏰ Còn: " + auction.getEndTime());
+                        try {
+                            endDateTime = java.time.LocalDateTime.parse(auction.getEndTime());
+                            startCountdown();
+                        } catch (Exception e) {}
                     }
                 });
             } catch (Exception e) {
@@ -118,10 +127,15 @@ public class BiddingController {
                     break;
 
                 case "AUCTION_EXTENDED":
-                    timeLeftLabel.setText("⏰ Gia hạn đến: " + push.getNewEndTime());
+                    try {
+                        endDateTime = java.time.LocalDateTime.parse(push.getNewEndTime());
+                        startCountdown();
+                    } catch (Exception e) {}
                     break;
 
                 case "AUCTION_ENDED":
+                    if (countdownTimeline != null) countdownTimeline.stop();
+                    timeLeftLabel.setText("⏰ Đã kết thúc");
                     statusBadge.setText("🔴 ĐÃ KẾT THÚC");
                     statusBadge.getStyleClass().remove("status-badge-running");
                     statusBadge.getStyleClass().add("status-badge-finished");
@@ -147,11 +161,54 @@ public class BiddingController {
     }
 
     public void cleanup() {
+        if (countdownTimeline != null) countdownTimeline.stop();
         ServerConnection.getInstance().setPushListener(null);
         new Thread(() -> {
             try {
                 bidClient.unsubscribe(ClientSession.getInstance().getToken(), currentAuctionId);
             } catch (Exception ignored) {}
+        }).start();
+    }
+    
+    private void startCountdown() {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        countdownTimeline = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
+            long secs = java.time.Duration.between(java.time.LocalDateTime.now(), endDateTime).getSeconds();
+            if (secs <= 0) {
+                timeLeftLabel.setText("⏰ Đã kết thúc");
+                countdownTimeline.stop();
+            } else {
+                long h = secs / 3600;
+                long m = (secs % 3600) / 60;
+                long s = secs % 60;
+                timeLeftLabel.setText(String.format("⏰ Còn: %02d:%02d:%02d", h, m, s));
+            }
+        }));
+        countdownTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    private void checkAutoBidState() {
+        String token = ClientSession.getInstance().getToken();
+        new Thread(() -> {
+            try {
+                Map<String, Object> state = bidClient.checkAutoBid(token, currentAuctionId);
+                Platform.runLater(() -> {
+                    if (state != null) {
+                        enableAutoBidBtn.setDisable(true);
+                        cancelAutoBidBtn.setDisable(false);
+                        maxBidField.setText(String.format("%.0f", ((Number)state.get("maxBid")).doubleValue()));
+                        incrementField.setText(String.format("%.0f", ((Number)state.get("increment")).doubleValue()));
+                        autoBidStatusLabel.setText("✅ Đang bật Auto-Bid");
+                        autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
+                    } else {
+                        enableAutoBidBtn.setDisable(false);
+                        cancelAutoBidBtn.setDisable(true);
+                    }
+                });
+            } catch (Exception e) {}
         }).start();
     }
 

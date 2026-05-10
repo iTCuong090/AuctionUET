@@ -123,11 +123,12 @@ public class ClientHandler implements Runnable, AuctionObserver {
     // ========== AuctionObserver PUSH METHODS ==========
 
     @Override
-    public void onBidPlaced(BidRecord record) {
+    public void onBidPlaced(String auctionId, BidRecord record) {
         // Server chủ động push JSON về client khi có bid mới
         Map<String, Object> push = new HashMap<>();
         push.put("type", "PUSH");
         push.put("pushType", "BID_UPDATE");
+        push.put("auctionId", auctionId);
         push.put("bidderUsername", record.getBidderUsername());
         push.put("amount", record.getAmount());
         push.put("timestamp", record.getTimestamp().toString());

@@ -90,7 +90,15 @@ public class AuctionListController {
 
         VBox infoBox = new VBox(5);
         // Kiểm tra null cho thời gian và người bán
-        String endTime = item.getEndTime() != null ? item.getEndTime() : "Chưa rõ";
+        String endTime = "Chưa rõ";
+        if (item.getEndTime() != null) {
+            try {
+                java.time.LocalDateTime dt = java.time.LocalDateTime.parse(item.getEndTime());
+                endTime = dt.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            } catch (Exception e) {
+                endTime = item.getEndTime();
+            }
+        }
         String seller = item.getSellerUsername() != null ? item.getSellerUsername() : "Chưa rõ";
 
         Label timeLabel = new Label("⏰ Kết thúc: " + endTime);

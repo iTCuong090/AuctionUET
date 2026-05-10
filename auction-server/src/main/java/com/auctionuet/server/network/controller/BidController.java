@@ -78,6 +78,25 @@ public class BidController {
         return Response.ok("Đã hủy Auto-Bid");
     }
 
+    // CHECK_AUTO_BID
+    public Response handleCheckAutoBid(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        Map<String, Object> data = request.getData();
+        String auctionId = (String) data.get("auctionId");
+
+        LiveAuction liveAuction = AuctionManager.getInstance().getAuction(auctionId);
+        if (liveAuction != null) {
+            com.auctionuet.server.domain.model.AutoBidConfig config = liveAuction.getAutoBidConfig(user.getId());
+            if (config != null) {
+                java.util.Map<String, Object> resp = new java.util.HashMap<>();
+                resp.put("maxBid", config.getMaxBid());
+                resp.put("increment", config.getIncrement());
+                return Response.ok(resp);
+            }
+        }
+        return Response.ok((Object)null);
+    }
+
     // SUBSCRIBE — Đăng ký nhận push notification cho một phiên đấu giá
     public Response handleSubscribe(Request request, ClientHandler clientHandler) throws Exception {
         User user = sessionManager.validateToken(request.getToken());

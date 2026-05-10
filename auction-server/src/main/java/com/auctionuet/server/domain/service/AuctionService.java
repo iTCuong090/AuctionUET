@@ -33,6 +33,7 @@ public class AuctionService {
         this.auctionDAO = auctionDAO;
         this.walletService = walletService;
         this.auctionManager = AuctionManager.getInstance();
+        this.auctionManager.setEndAuctionCallback(this::endAuction);
     }
 
     public AuctionSchema createAuction(User seller, String itemId, LocalDateTime startTime,

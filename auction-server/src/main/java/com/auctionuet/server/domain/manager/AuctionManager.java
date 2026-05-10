@@ -11,9 +11,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class AuctionManager {
+public class AuctionManager implements com.auctionuet.server.domain.model.AuctionObserver {
 
     // Singleton
     private AuctionManager() {}
@@ -24,16 +25,38 @@ public class AuctionManager {
 
     private final Map<String, LiveAuction> liveAuctions = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private java.util.function.Consumer<String> endAuctionCallback;
+
+    public void setEndAuctionCallback(java.util.function.Consumer<String> callback) {
+        this.endAuctionCallback = callback;
+    }
+
+    private void scheduleAuctionEnd(String auctionId, long delayMs) {
+        ScheduledFuture<?> task = scheduledTasks.get(auctionId);
+        if (task != null) task.cancel(false);
+
+        if (delayMs > 0) {
+            scheduledTasks.put(auctionId, scheduler.schedule(() -> {
+                if (endAuctionCallback != null) {
+                    endAuctionCallback.accept(auctionId);
+                }
+            }, delayMs, TimeUnit.MILLISECONDS));
+        } else {
+            if (endAuctionCallback != null) {
+                endAuctionCallback.accept(auctionId);
+            }
+        }
+    }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
         LiveAuction auction = AuctionMapper.toDomain(schema);
         liveAuctions.put(auction.getId(), auction);
+        auction.addObserver(this); // Đăng ký để lắng nghe sự kiện gia hạn
 
         // Schedule auto-end
         long delayMs = Duration.between(LocalDateTime.now(), schema.getEndTime()).toMillis();
-        if (delayMs > 0) {
-            scheduler.schedule(() -> endAuction(auction.getId()), delayMs, TimeUnit.MILLISECONDS);
-        }
+        scheduleAuctionEnd(auction.getId(), delayMs);
 
         return auction;
     }
@@ -55,12 +78,24 @@ public class AuctionManager {
         LiveAuction auction = liveAuctions.get(auctionId);
         if (auction != null) {
             auction.setEndTime(newEndTime);
-            // In a real app we might need to cancel the previous scheduled task and create a new one.
-            // For now, assume it's handled or we just re-schedule a new one.
             long delayMs = Duration.between(LocalDateTime.now(), newEndTime).toMillis();
-            if (delayMs > 0) {
-                scheduler.schedule(() -> endAuction(auctionId), delayMs, TimeUnit.MILLISECONDS);
-            }
+            scheduleAuctionEnd(auctionId, delayMs);
         }
+    }
+
+    // --- AuctionObserver methods ---
+    @Override
+    public void onBidPlaced(String auctionId, com.auctionuet.server.domain.model.BidRecord record) {
+        // Do nothing here
+    }
+
+    @Override
+    public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
+        // Do nothing here
+    }
+
+    @Override
+    public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
+        extendAuction(auctionId, newEndTime);
     }
 }

@@ -8,6 +8,8 @@
     "endTime": "2026-05-09T20:35:00",
     "status": "RUNNING",
     "highestBid": 0.0,
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
     "id": "9951c064-caa4-4a95-8dde-ebd890102b84",
     "createdAt": "2026-05-08T14:35:14.2407945",
     "updatedAt": "2026-05-08T14:35:28.637011"
@@ -21,8 +23,42 @@
     "endTime": "2026-05-11T06:40:00",
     "status": "OPEN",
     "highestBid": 0.0,
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
     "id": "1494fa4f-0451-45ff-88e7-b4fe340e85b2",
     "createdAt": "2026-05-09T13:13:05.5216135",
     "updatedAt": "2026-05-09T13:13:05.5216135"
+  },
+  {
+    "itemId": "3924b4d1-662e-424c-ac1e-f828d582ebba",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "title": "Đấu giá: Iphone 17 pro max",
+    "description": "hello",
+    "startTime": "2026-05-10T00:55:00",
+    "endTime": "2026-05-10T01:00:00",
+    "status": "RUNNING",
+    "highestBid": 1000000.0,
+    "winnerId": "beaefa98-2613-46b2-a890-7a872792aa0f",
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "c8a05287-d71a-46e7-a261-912d59a9bbfd",
+    "createdAt": "2026-05-10T00:51:46.1830637",
+    "updatedAt": "2026-05-10T00:54:03.7698808"
+  },
+  {
+    "itemId": "3924b4d1-662e-424c-ac1e-f828d582ebba",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "title": "Đấu giá: Iphone 17 pro max",
+    "description": "gfdgfdgdfg",
+    "startTime": "2026-05-10T17:25:00",
+    "endTime": "2026-05-10T17:32:00",
+    "status": "WAITING_PAYMENT",
+    "highestBid": 9000000.0,
+    "winnerId": "ad188e8e-fb5b-41a6-bb2b-eb9f4ae82bf8",
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "6482d0f7-f147-42f3-a0d9-0ceb5610f07b",
+    "createdAt": "2026-05-10T17:20:13.8260404",
+    "updatedAt": "2026-05-10T17:32:00.0066063"
   }
 ]

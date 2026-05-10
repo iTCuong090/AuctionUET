@@ -24,6 +24,7 @@ public enum ActionType {
     GET_BID_HISTORY,
     SET_AUTO_BID,
     CANCEL_AUTO_BID,
+    CHECK_AUTO_BID,
 
     // MỚI tuần 5 — Bidding (Realtime Push)
     SUBSCRIBE,

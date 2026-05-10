@@ -63,7 +63,7 @@ public class LiveAuction {
     }
 
 
-    public BidRecord placeBid(User bidder, double amount)
+    public BidRecord placeBid(User bidder, double amount, java.util.function.Consumer<BidRecord> onAutoBidPlaced)
             throws InvalidBidException, AuctionClosedException {
 
         bidLock.lock();
@@ -94,7 +94,7 @@ public class LiveAuction {
             notifyObservers(record);
 
             // Trigger Auto-Bid resolution — THÊM MỚI
-            resolveAutoBids();
+            resolveAutoBids(onAutoBidPlaced);
 
             return record;
         } finally {
@@ -157,7 +157,7 @@ public class LiveAuction {
      *    - Người dẫn đầu chính là top auto-bidder
      */
 
-    public void resolveAutoBids() {
+    public void resolveAutoBids(java.util.function.Consumer<BidRecord> onAutoBidPlaced) {
         // KHÔNG CẦN lock vì hàm này luôn được gọi trong placeBid() đã lock sẵn
 
         boolean keepResolving = true;
@@ -192,6 +192,11 @@ public class LiveAuction {
                 this.currentHighestBid = newBidAmount;
                 this.currentWinnerId = bestConfig.getBidderId();
                 this.bidHistory.add(autoRecord);
+                
+                // Gửi callback để lưu vào DB
+                if (onAutoBidPlaced != null) {
+                    onAutoBidPlaced.accept(autoRecord);
+                }
 
                 // Anti-sniping cho auto-bid
                 extendIfSniping();
@@ -231,7 +236,7 @@ public class LiveAuction {
     }
     private void notifyObservers(BidRecord record) {
         for (AuctionObserver obs : observers) {
-            obs.onBidPlaced(record);
+            obs.onBidPlaced(this.id, record);
         }
     }
 

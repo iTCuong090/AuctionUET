@@ -95,4 +95,22 @@ public class BidClient {
             throw new Exception(res.getMessage());
         }
     }
+
+    public Map<String, Object> checkAutoBid(String token, String auctionId) throws Exception {
+        Map<String, Object> data = new HashMap<>();
+        data.put("auctionId", auctionId);
+        
+        Request req = new Request(ActionType.CHECK_AUTO_BID, data);
+        req.setToken(token);
+        
+        Response res = ServerConnection.getInstance().sendRequest(req);
+        if ("OK".equals(res.getStatus())) {
+            if (res.getData() != null) {
+                Gson gson = new Gson();
+                return gson.fromJson(gson.toJson(res.getData()), new TypeToken<Map<String, Object>>(){}.getType());
+            }
+            return null;
+        }
+        throw new Exception(res.getMessage());
+    }
 }

@@ -88,6 +88,8 @@ public class RequestRouter {
                 return bidController.handleSetAutoBid(request);
             case CANCEL_AUTO_BID:
                 return bidController.handleCancelAutoBid(request);
+            case CHECK_AUTO_BID:
+                return bidController.handleCheckAutoBid(request);
             // Subcribe──
 
             case SUBSCRIBE:
