@@ -3,7 +3,7 @@ package com.auctionuet.server.network.controller;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.ItemService;
-import com.auctionuet.server.domain.service.SessionManager;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.mapper.ItemMapper;
 import com.auctionuet.server.network.dto.AuctionDTO;

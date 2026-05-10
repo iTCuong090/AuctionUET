@@ -6,7 +6,7 @@ import com.auctionuet.server.domain.model.BidRecord;
 import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.BidService;
-import com.auctionuet.server.domain.service.SessionManager;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.BidMapper;
 import com.auctionuet.server.network.dto.BidDTO;
 import com.auctionuet.server.network.protocol.Request;

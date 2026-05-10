@@ -1,6 +1,6 @@
 package com.auctionuet.server.network.server;
 
-import com.auctionuet.server.domain.service.SessionManager;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.network.controller.*;
 import com.auctionuet.server.network.protocol.Request;
 import com.auctionuet.server.network.protocol.Response;

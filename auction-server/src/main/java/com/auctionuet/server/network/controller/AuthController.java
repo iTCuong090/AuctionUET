@@ -2,7 +2,7 @@ package com.auctionuet.server.network.controller;
 
 import com.auctionuet.server.domain.enums.UserRole;
 import com.auctionuet.server.domain.service.AuthService;
-import com.auctionuet.server.domain.service.SessionManager;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
 import com.auctionuet.server.exception.UserNotFoundException;

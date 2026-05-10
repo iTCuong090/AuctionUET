@@ -1,4 +1,4 @@
-package com.auctionuet.server.domain.service;
+package com.auctionuet.server.domain.manager;
 
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuthenticationException;

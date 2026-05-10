@@ -1,6 +1,7 @@
 package com.auctionuet.server.domain.service;
 
 import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
