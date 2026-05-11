@@ -4,7 +4,7 @@ import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
 import com.auctionuet.server.exception.UserNotFoundException;
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.protocol.Response;
 import com.auctionuet.server.util.AppLogger;
 
 import java.time.format.DateTimeParseException;
@@ -20,9 +20,13 @@ import java.time.format.DateTimeParseException;
  */
 public class GlobalExceptionHandler {
 
+    private GlobalExceptionHandler() {
+        // Ngăn khởi tạo đối tượng vì đây là Utility Class
+    }
+
     public static Response handle(Exception e) {
 
-        // ── Business Exceptions (WARN — không cần stack trace) ──
+        // —— Business Exceptions (WARN — không cần stack trace) ——
 
         if (e instanceof AuthenticationException) {
             AppLogger.logBusinessException(e);
@@ -57,7 +61,7 @@ public class GlobalExceptionHandler {
             return Response.error("Định dạng thời gian không hợp lệ");
         }
 
-        // ── System / Unexpected Exceptions (ERROR — kèm stack trace) ──
+        // —— System / Unexpected Exceptions (ERROR — kèm stack trace) ——
         AppLogger.logSystemException(e);
         return Response.error("Lỗi Server: " + e.getMessage());
     }

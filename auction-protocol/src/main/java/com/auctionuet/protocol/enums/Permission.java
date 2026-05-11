@@ -1,0 +1,28 @@
+package com.auctionuet.protocol.enums;
+
+public enum Permission {
+    MANAGE_USERS,
+    GET_ALL_USERS,
+    DELETE_USER,
+    UPDATE_ROLE,
+    VIEW_AUCTION,
+    VIEW_BID_HISTORY,
+    GET_PROFILE,
+    UPDATE_PROFILE,
+    PLACE_BID,
+    SUBSCRIBE,
+    UNSUBSCRIBE,
+    CREATE_ITEM,
+    UPDATE_ITEM,
+    DELETE_ITEM,
+    GET_MY_ITEMS,
+    CREATE_AUCTION,
+    START_AUCTION,
+    DEPOSIT,
+    WITHDRAW,
+    GET_WALLET,
+    PAY_AUCTION,
+    SET_AUTO_BID,
+    CANCEL_AUTO_BID
+
+}

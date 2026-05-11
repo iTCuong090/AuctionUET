@@ -1,4 +1,4 @@
-package com.auctionuet.server.network.dto;
+package com.auctionuet.protocol.dto.response;
 
 import java.time.LocalDateTime;
 
@@ -36,4 +36,3 @@ public class BidDTO {
         return timestamp;
     }
 }
-

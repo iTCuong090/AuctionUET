@@ -2,9 +2,8 @@ package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.network.controller.*;
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
-import com.auctionuet.server.util.AppLogger;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
 
 public class RequestRouter {
     private final BidController bidController;
@@ -24,7 +23,6 @@ public class RequestRouter {
 
     public Response route(Request request,ClientHandler clientHandler) {
         if (request == null || request.getAction() == null) {
-            AppLogger.logUnknownAction("null");
             return Response.error("Invalid request: missing action");
         }
 
@@ -43,41 +41,32 @@ public class RequestRouter {
 
             // ── Auth ──
             case LOGIN:
-                AppLogger.logRouting(action, "AuthController", "handleLogin");
                 return authController.handleLogin(request);
 
             case REGISTER:
-                AppLogger.logRouting(action, "AuthController", "handleRegister");
                 return authController.handleRegister(request);
 
             case LOGOUT:
-                AppLogger.logRouting(action, "AuthController", "handleLogout");
                 return authController.handleLogout(request);
 
             // ── Item Management ──
             case CREATE_ITEM:
-                AppLogger.logRouting(action, "ItemController", "handleCreateItem");
                 return itemController.handleCreateItem(request);
 
             case GET_MY_ITEMS:
-                AppLogger.logRouting(action, "ItemController", "handleGetMyItems");
                 return itemController.handleGetMyItems(request);
 
             // ── Auction Management ──
             case CREATE_AUCTION:
-                AppLogger.logRouting(action, "AuctionController", "handleCreateAuction");
                 return auctionController.handleCreateAuction(request);
 
             case START_AUCTION:
-                AppLogger.logRouting(action, "AuctionController", "handleStartAuction");
                 return auctionController.handleStartAuction(request);
 
             case GET_AUCTIONS:
-                AppLogger.logRouting(action, "AuctionController", "handleGetAuctions");
                 return auctionController.handleGetAuctions(request);
 
             case GET_AUCTION_DETAIL:
-                AppLogger.logRouting(action, "AuctionController", "handleGetAuctionDetail");
                 return auctionController.handleGetAuctionDetail(request);
             // ── Bidding ──
             case PLACE_BID:
@@ -90,7 +79,7 @@ public class RequestRouter {
                 return bidController.handleCancelAutoBid(request);
             case CHECK_AUTO_BID:
                 return bidController.handleCheckAutoBid(request);
-            // Subcribe──
+            // ── Subscribe ──
 
             case SUBSCRIBE:
                 return bidController.handleSubscribe(request, clientHandler);
@@ -110,15 +99,14 @@ public class RequestRouter {
                 return auctionController.handlePayAuction(request);
             // ── Utils ──
             case PING:
-                AppLogger.logRouting(action, "RequestRouter", "PING");
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
                     SessionManager.getInstance().validateToken(request.getToken());
                 }
                 return Response.ok("PONG");
 
             default:
-                AppLogger.logUnknownAction(action);
                 return Response.error("Unknown action: " + action);
         }
     }
 }
+

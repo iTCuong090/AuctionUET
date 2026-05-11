@@ -1,19 +1,12 @@
 package com.auctionuet.server.network.controller;
 
-import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.protocol.enums.UserRole;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.server.exception.AuthenticationException;
-import com.auctionuet.server.exception.DuplicateUserException;
-import com.auctionuet.server.exception.UserNotFoundException;
-import com.auctionuet.server.mapper.UserMapper;
-import com.auctionuet.server.network.dto.UserDTO;
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
-import com.auctionuet.server.domain.service.LoginResult;
-import com.auctionuet.server.util.AppLogger;
-
-import java.util.Map;
+import com.auctionuet.protocol.dto.response.LoginResponseDTO;
+import com.auctionuet.protocol.dto.request.AuthRequests;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
 
 public class AuthController {
 
@@ -24,45 +17,32 @@ public class AuthController {
     }
 
     public Response handleLogin(Request request) throws Exception {
-        String username = (String) request.getData().get("username");
-        AppLogger.logControllerEnter("AuthController", "handleLogin",
-            "username=" + username);
+        AuthRequests.LoginReq req = request.getDataAs(AuthRequests.LoginReq.class);
+        String username = req.getUsername();
 
-        LoginResult result = authService.login(username, (String) request.getData().get("password"));
+        LoginResponseDTO responseDTO = authService.login(username, req.getPassword());
 
-        UserDTO dto = UserMapper.toDTO(result.getUser());
-        Map<String, Object> responseData = Map.of("token", result.getToken(), "user", dto);
-
-        AppLogger.logControllerResult("AuthController", "handleLogin",
-            "Login OK | user=" + username + " role=" + result.getUser().getRole());
-        return Response.ok(responseData);
+        return Response.ok(responseDTO);
     }
 
     public Response handleRegister(Request request) throws Exception {
-        String username = request.getDataString("username");
-        String email    = request.getDataString("email");
-        String roleStr  = request.getDataString("role");
-        UserRole role   = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
+        AuthRequests.RegisterReq req = request.getDataAs(AuthRequests.RegisterReq.class);
+        String username = req.getUsername();
+        String email = req.getEmail();
+        String roleStr = req.getRole();
+        UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
 
-        AppLogger.logControllerEnter("AuthController", "handleRegister",
-            "username=" + username + " email=" + email + " role=" + role);
+        authService.register(username, req.getPassword(), email, role);
 
-        authService.register(username, request.getDataString("password"), email, role);
-
-        AppLogger.logControllerResult("AuthController", "handleRegister",
-            "Register OK | user=" + username);
         return Response.ok("Đăng ký thành công");
     }
 
     public Response handleLogout(Request request) throws Exception {
         String token = request.getToken();
-        AppLogger.logControllerEnter("AuthController", "handleLogout",
-            "token=" + AppLogger.maskToken(token));
 
         SessionManager.getInstance().validateToken(token);
         SessionManager.getInstance().removeSession(token);
 
-        AppLogger.logControllerResult("AuthController", "handleLogout", "Logout OK");
         return Response.ok("Đã đăng xuất");
     }
 }

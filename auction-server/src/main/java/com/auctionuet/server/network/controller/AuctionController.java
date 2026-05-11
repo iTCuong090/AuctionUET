@@ -6,23 +6,17 @@ import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.server.network.dto.AuctionDTO;
-import com.auctionuet.server.network.dto.ItemDTO;
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.protocol.dto.response.AuctionDTO;
+import com.auctionuet.protocol.dto.response.ItemDTO;
+import com.auctionuet.protocol.dto.request.AuctionRequests;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
-import com.auctionuet.server.util.AppLogger;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Controller chuyên xử lý các request liên quan tới Auction Management.
- * Logic về Item đã được tách sang ItemController.
- */
 public class AuctionController {
 
     private final AuctionService auctionService;
@@ -35,28 +29,17 @@ public class AuctionController {
         this.sessionManager = SessionManager.getInstance();
     }
 
-    // ──────────────────── CREATE AUCTION ────────────────────
+    // ———————————————————— CREATE AUCTION ————————————————————
 
     public Response handleCreateAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = validateRequestData(request);
+        AuctionRequests.CreateAuctionReq req = request.getDataAs(AuctionRequests.CreateAuctionReq.class);
 
-        String itemId      = (String) data.get("itemId");
-        String title       = (String) data.get("title");
-        String description = (String) data.get("description");
-        LocalDateTime startTime = parseDateTime(data.get("startTime"));
-        LocalDateTime endTime   = parseDateTime(data.get("endTime"));
-
-        int antiSnipingWindowSeconds = data.containsKey("antiSnipingWindowSeconds") ? 
-            ((Number) data.get("antiSnipingWindowSeconds")).intValue() : 60;
-        int antiSnipingExtensionSeconds = data.containsKey("antiSnipingExtensionSeconds") ? 
-            ((Number) data.get("antiSnipingExtensionSeconds")).intValue() : 120;
-
-        AppLogger.logControllerEnter("AuctionController", "handleCreateAuction",
-            "user=" + user.getUsername() + " itemId=" + itemId + " title=" + title);
+        int antiSnipingWindowSeconds = req.getAntiSnipingWindowSeconds() != null ? req.getAntiSnipingWindowSeconds() : 60;
+        int antiSnipingExtensionSeconds = req.getAntiSnipingExtensionSeconds() != null ? req.getAntiSnipingExtensionSeconds() : 120;
 
         AuctionSchema auctionSchema = auctionService.createAuction(
-                user, itemId, startTime, endTime, title, description,
+                user, req.getItemId(), req.getStartTime(), req.getEndTime(), req.getTitle(), req.getDescription(),
                 antiSnipingWindowSeconds, antiSnipingExtensionSeconds);
 
         ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
@@ -66,34 +49,24 @@ public class AuctionController {
         }
         AuctionDTO auctionDTO = AuctionMapper.toDTO(auctionSchema, itemDTO, user.getUsername(), null);
 
-        AppLogger.logControllerResult("AuctionController", "handleCreateAuction",
-            "Created auctionId=" + auctionSchema.getId() + " status=" + auctionSchema.getStatus());
         return Response.ok(auctionDTO);
     }
 
-    // ──────────────────── START AUCTION ────────────────────
+    // ———————————————————— START AUCTION ————————————————————
 
     public Response handleStartAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = validateRequestData(request);
+        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
 
-        String auctionId = (String) data.get("auctionId");
-        AppLogger.logControllerEnter("AuctionController", "handleStartAuction",
-            "user=" + user.getUsername() + " auctionId=" + auctionId);
+        auctionService.startAuction(user, req.getAuctionId());
 
-        auctionService.startAuction(user, auctionId);
-
-        AppLogger.logControllerResult("AuctionController", "handleStartAuction",
-            "Auction started | auctionId=" + auctionId);
         return Response.ok("Đã bắt đầu phiên đấu giá");
     }
 
-    // ──────────────────── GET AUCTIONS ────────────────────
+    // ———————————————————— GET AUCTIONS ————————————————————
 
     public Response handleGetAuctions(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        AppLogger.logControllerEnter("AuctionController", "handleGetAuctions",
-            "user=" + user.getUsername());
 
         List<AuctionSchema> auctions = auctionService.getAuctions();
         List<AuctionDTO> auctionDTOList = new ArrayList<>();
@@ -101,9 +74,6 @@ public class AuctionController {
         for (AuctionSchema auction : auctions) {
             ItemSchema itemSchema = itemService.getItemById(auction.getItemId());
             if (itemSchema == null) {
-                // Cảnh báo data integrity — dùng logger WARN thay vì System.err
-                AppLogger.logBusinessException(new IllegalStateException(
-                    "Bỏ qua đấu giá " + auction.getId() + " do không tìm thấy vật phẩm!"));
                 continue;
             }
             String sellerUsername = itemSchema.getSellerId();
@@ -112,26 +82,20 @@ public class AuctionController {
             auctionDTOList.add(auctionDTO);
         }
 
-        AppLogger.logControllerResult("AuctionController", "handleGetAuctions",
-            "Returned " + auctionDTOList.size() + "/" + auctions.size() + " auctions");
         return Response.ok(auctionDTOList);
     }
 
-    // ──────────────────── GET AUCTION DETAIL ────────────────────
+    // ———————————————————— GET AUCTION DETAIL ————————————————————
 
     public Response handleGetAuctionDetail(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = validateRequestData(request);
+        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
 
-        String auctionId = (String) data.get("auctionId");
-        AppLogger.logControllerEnter("AuctionController", "handleGetAuctionDetail",
-            "user=" + user.getUsername() + " auctionId=" + auctionId);
-
-        if (auctionId == null || auctionId.isEmpty()) {
+        if (req.getAuctionId() == null || req.getAuctionId().isEmpty()) {
             return Response.error("Thiếu auctionId");
         }
 
-        AuctionSchema schema = auctionService.getAuctionById(auctionId);
+        AuctionSchema schema = auctionService.getAuctionById(req.getAuctionId());
         if (schema == null) {
             return Response.error("Không tìm thấy phiên đấu giá");
         }
@@ -144,40 +108,14 @@ public class AuctionController {
         ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
         AuctionDTO auctionDTO = AuctionMapper.toDTO(schema, itemDTO, user.getUsername(), null);
 
-        AppLogger.logControllerResult("AuctionController", "handleGetAuctionDetail",
-            "Found auction=" + schema.getId() + " status=" + schema.getStatus());
         return Response.ok(auctionDTO);
     }
-    // ──────────────────── PAY AUCTION  ────────────────────
+    // ———————————————————— PAY AUCTION  ————————————————————
     public Response handlePayAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = request.getData();
-        String auctionId = (String) data.get("auctionId");
+        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
 
-        auctionService.payAuction(user, auctionId);
-        return Response.ok("Thanh toán thành công! Sản phẩm đã thuộc về bạn.");
-    }
-    // ──────────────────── HELPERS ────────────────────
-
-    /**
-     * Kiểm tra request có data hay không. Ném IllegalArgumentException nếu data null.
-     */
-    private Map<String, Object> validateRequestData(Request request) {
-        Map<String, Object> data = request.getData();
-        if (data == null) {
-            throw new IllegalArgumentException("Request thiếu data");
-        }
-        return data;
-    }
-
-    /**
-     * Parse chuỗi thời gian từ client (ISO-8601) thành LocalDateTime.
-     * Ném IllegalArgumentException nếu giá trị null hoặc sai format.
-     */
-    private LocalDateTime parseDateTime(Object value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Thiếu thời gian (startTime/endTime)");
-        }
-        return LocalDateTime.parse(value.toString());
+        auctionService.payAuction(user, req.getAuctionId());
+        return Response.ok("Thành toán thành công! Sản phẩm đã thuộc về bạn.");
     }
 }

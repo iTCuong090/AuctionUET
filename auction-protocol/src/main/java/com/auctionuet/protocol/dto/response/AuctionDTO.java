@@ -1,6 +1,6 @@
-package com.auctionuet.server.network.dto;
+package com.auctionuet.protocol.dto.response;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 
 import java.time.LocalDateTime;
 
@@ -12,7 +12,7 @@ public class AuctionDTO {
     private final String description;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
-    private final AuctionStatus status; // Giả định là một Enum (OPEN, CLOSED, v.v.)
+    private final AuctionStatus status; // GiÃ¡ÂºÂ£ Ã„â€˜Ã¡Â»â€¹nh lÃƒÂ  mÃ¡Â»â„¢t Enum (OPEN, CLOSED, v.v.)
     private final double currentHighestBid;
     private final String currentWinnerUsername;
 
@@ -81,3 +81,4 @@ public class AuctionDTO {
         return currentWinnerUsername;
     }
 }
+

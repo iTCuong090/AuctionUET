@@ -1,11 +1,11 @@
-package com.auctionuet.server.network.protocol;
+package com.auctionuet.protocol;
 
-import com.auctionuet.server.util.json.GsonFactory;
+import com.auctionuet.protocol.util.NetworkGson;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 public class MessageSerializer {
-    private static Gson gson=GsonFactory.createForNetwork();
+    private static Gson gson=NetworkGson.create();
     public static String serialize(Response response){
         if (response== null) {
             return "";
@@ -24,4 +24,5 @@ public class MessageSerializer {
         }
     }
 }
+
 

@@ -1,6 +1,6 @@
-package com.auctionuet.server.network.dto;
+package com.auctionuet.protocol.dto.response;
 
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 import java.util.Collections;
 import java.util.Map;
 
@@ -9,7 +9,7 @@ public class ItemDTO {
     private final String name;
     private final String description;
     private final double startingPrice;
-    private final ItemType type; // Giả định bạn đã có enum hoặc class ItemType
+    private final ItemType type; // GiÃ¡ÂºÂ£ Ã„â€˜Ã¡Â»â€¹nh bÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ cÃƒÂ³ enum hoÃ¡ÂºÂ·c class ItemType
     private final String sellerUsername;
     private final String imageUrl;
     private final String condition;
@@ -74,4 +74,5 @@ public class ItemDTO {
         return extraFields;
     }
 }
+
 

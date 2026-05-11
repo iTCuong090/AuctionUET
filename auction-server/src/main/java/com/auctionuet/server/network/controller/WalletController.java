@@ -3,10 +3,10 @@ package com.auctionuet.server.network.controller;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.service.WalletService;
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
-
-import java.util.Map;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.dto.request.WalletRequests;
+import com.auctionuet.protocol.dto.response.WalletResponseDTO;
 
 public class WalletController {
     private final WalletService walletService;
@@ -19,25 +19,24 @@ public class WalletController {
 
     public Response handleDeposit(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = request.getData();
-        double amount = ((Number) data.get("amount")).doubleValue();
+        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
 
-        Map<String, Double> wallet = walletService.deposit(user.getId(), amount);
+        WalletResponseDTO wallet = walletService.deposit(user.getId(), req.getAmount());
         return Response.ok(wallet);
     }
 
     public Response handleWithdraw(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Object> data = request.getData();
-        double amount = ((Number) data.get("amount")).doubleValue();
+        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
 
-        Map<String, Double> wallet = walletService.withdraw(user.getId(), amount);
+        WalletResponseDTO wallet = walletService.withdraw(user.getId(), req.getAmount());
         return Response.ok(wallet);
     }
 
     public Response handleGetWallet(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        Map<String, Double> wallet = walletService.getWallet(user.getId());
+        WalletResponseDTO wallet = walletService.getWallet(user.getId());
         return Response.ok(wallet);
     }
 }
+

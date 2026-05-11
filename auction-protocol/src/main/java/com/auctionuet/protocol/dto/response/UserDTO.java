@@ -1,6 +1,6 @@
-package com.auctionuet.server.network.dto;
+package com.auctionuet.protocol.dto.response;
 
-import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.protocol.enums.UserRole;
 
 public class UserDTO {
     private final String id;
@@ -17,3 +17,4 @@ public class UserDTO {
     public String getUsername() { return username; }
     public UserRole getRole() { return role; }
 }
+

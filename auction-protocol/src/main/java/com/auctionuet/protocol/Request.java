@@ -1,4 +1,4 @@
-package com.auctionuet.server.network.protocol;
+package com.auctionuet.protocol;
 
 import java.util.Map;
 
@@ -36,13 +36,19 @@ public class Request {
     public void setToken(String token) {
         this.token = token;
     }
+
+    public <T> T getDataAs(Class<T> clazz) {
+        if (data == null) return null;
+        String json = com.auctionuet.protocol.util.NetworkGson.create().toJson(this.data);
+        return com.auctionuet.protocol.util.NetworkGson.create().fromJson(json, clazz);
+    }
     public String getDataString(String key) {
-        Object value = data.get(key); // Lấy giá trị ra dưới dạng Object
+        Object value = data.get(key); // Láº¥y giÃ¡ trá»‹ ra dÆ°á»›i dáº¡ng Object
 
         if (value == null) {
             return null;
         }
-        // Dù giá trị gốc là số (Double), boolean, hay chuỗi, nó đều convert về dạng String hết.
+        // DÃ¹ giÃ¡ trá»‹ gá»‘c lÃ  sá»‘ (Double), boolean, hay chuá»—i, nÃ³ Ä‘á»u convert vá» dáº¡ng String háº¿t.
         return String.valueOf(value);
     }
     public Integer getDataInt(String key) {
@@ -58,9 +64,12 @@ public class Request {
         try {
             return Integer.parseInt(value.toString());
         } catch (NumberFormatException e) {
-            // Trả về null nếu dữ liệu bị sai định dạng (ví dụ gửi lên "Tám tám tám tám")
+            // Tráº£ vá»  null náº¿u dá»¯ liá»‡u bá»‹ sai Ä‘á»‹nh dáº¡ng (vÃ­ dá»¥ gá»­i lÃªn "TÃ¡m tÃ¡m tÃ¡m tÃ¡m")
             return null;
         }
     }
-}
 
+    public String toJson() {
+        return com.auctionuet.protocol.util.NetworkGson.create().toJson(this);
+    }
+}

@@ -1,4 +1,4 @@
-package com.auctionuet.server.network.protocol;
+package com.auctionuet.protocol;
 
 public class Response {
     private String type,status,event,message;
@@ -45,4 +45,9 @@ public class Response {
     public String getType() {
         return type;
     }
+
+    public String toJson() {
+        return com.auctionuet.protocol.util.NetworkGson.create().toJson(this);
+    }
 }
+
