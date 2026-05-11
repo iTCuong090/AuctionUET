@@ -1,7 +1,10 @@
 package com.auctionuet.server.UnitTest;
 
-import com.auctionuet.server.domain.enums.Permission;
-import com.auctionuet.server.domain.model.*;
+import com.auctionuet.protocol.enums.Permission;
+import com.auctionuet.server.domain.model.User;
+import com.auctionuet.server.domain.model.Bidder;
+import com.auctionuet.server.domain.model.Seller;
+import com.auctionuet.server.domain.model.Admin;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

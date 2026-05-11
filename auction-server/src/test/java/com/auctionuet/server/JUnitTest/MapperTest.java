@@ -1,10 +1,10 @@
 package com.auctionuet.server.JUnitTest;
 
-import com.auctionuet.server.domain.enums.*;
+import com.auctionuet.protocol.enums.*;
 import com.auctionuet.server.domain.model.*;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.server.network.dto.*;
+import com.auctionuet.protocol.dto.response.*;
 import com.auctionuet.server.persistence.schema.*;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +49,7 @@ class MapperTest {
         );
         // Cường refactored: Map → ItemDTO (fromRequestData) → Schema (toNewSchema)
         ItemDTO dto = ItemMapper.fromRequestData(data);
-        ItemSchema schema = ItemMapper.toNewSchema(dto, "seller_id");
+        ItemSchema schema = ItemMapper.toNewSchema(dto.getName(), dto.getDescription(), dto.getStartingPrice(), dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields(), "seller_id");
 
         assertTrue(schema instanceof ArtSchema);
         assertEquals("Nghe nhan A", ((ArtSchema)schema).getArtist());

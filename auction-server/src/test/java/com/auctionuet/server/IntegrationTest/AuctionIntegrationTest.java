@@ -1,6 +1,6 @@
 package com.auctionuet.server.IntegrationTest;
 
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.protocol.Response;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;

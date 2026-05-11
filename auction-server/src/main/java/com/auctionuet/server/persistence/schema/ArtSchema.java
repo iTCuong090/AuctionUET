@@ -1,6 +1,6 @@
 package com.auctionuet.server.persistence.schema;
 
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 import java.time.LocalDateTime;
 
 public class ArtSchema extends ItemSchema {

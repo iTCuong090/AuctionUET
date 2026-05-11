@@ -1,7 +1,7 @@
 package com.auctionuet.server.persistence.schema;
 
 import java.time.LocalDateTime;
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 
 public abstract class ItemSchema extends BaseSchema {
     private String name;

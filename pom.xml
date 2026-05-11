@@ -9,6 +9,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>auction-protocol</module>
         <module>auction-server</module>
         <module>auction-client</module>
     </modules>

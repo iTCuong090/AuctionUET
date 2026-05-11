@@ -1,7 +1,7 @@
 package com.auctionuet.server;
 
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
 import com.auctionuet.server.util.json.GsonFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;

@@ -2,8 +2,7 @@ package com.auctionuet.server.domain.service;
 
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
-import java.util.HashMap;
-import java.util.Map;
+import com.auctionuet.protocol.dto.response.WalletResponseDTO;
 
 public class WalletService {
     private final UserDAO userDAO;
@@ -12,7 +11,7 @@ public class WalletService {
         this.userDAO = userDAO;
     }
 
-    public synchronized Map<String, Double> deposit(String userId, double amount) {
+    public synchronized WalletResponseDTO deposit(String userId, double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
         }
@@ -23,13 +22,10 @@ public class WalletService {
         userSchema.setBalance(userSchema.getBalance() + amount);
         userDAO.update(userSchema);
         
-        Map<String, Double> result = new HashMap<>();
-        result.put("balance", userSchema.getBalance());
-        result.put("frozenBalance", userSchema.getFrozenBalance());
-        return result;
+        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
     }
 
-    public synchronized Map<String, Double> withdraw(String userId, double amount) {
+    public synchronized WalletResponseDTO withdraw(String userId, double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
         }
@@ -43,10 +39,7 @@ public class WalletService {
         userSchema.setBalance(userSchema.getBalance() - amount);
         userDAO.update(userSchema);
         
-        Map<String, Double> result = new HashMap<>();
-        result.put("balance", userSchema.getBalance());
-        result.put("frozenBalance", userSchema.getFrozenBalance());
-        return result;
+        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
     }
 
     public synchronized void freezeDeposit(String userId, double amount) {
@@ -87,14 +80,12 @@ public class WalletService {
         userDAO.update(userSchema);
     }
 
-    public Map<String, Double> getWallet(String userId) {
+    public WalletResponseDTO getWallet(String userId) {
         UserSchema userSchema = userDAO.findById(userId);
         if (userSchema == null) {
             throw new IllegalArgumentException("Không tìm thấy User");
         }
-        Map<String, Double> result = new HashMap<>();
-        result.put("balance", userSchema.getBalance());
-        result.put("frozenBalance", userSchema.getFrozenBalance());
-        return result;
+        
+        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
     }
 }

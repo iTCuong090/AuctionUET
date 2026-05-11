@@ -1,6 +1,6 @@
 package com.auctionuet.server.domain.model;
-import com.auctionuet.server.domain.enums.UserRole;
-import com.auctionuet.server.domain.enums.Permission;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.Permission;
 
 public abstract class User {
     private final String id;

@@ -1,6 +1,6 @@
 package com.auctionuet.server.domain.model;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.exception.*;
 
 import java.time.LocalDateTime;

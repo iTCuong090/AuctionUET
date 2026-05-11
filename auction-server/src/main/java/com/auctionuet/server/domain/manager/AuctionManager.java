@@ -1,6 +1,6 @@
 package com.auctionuet.server.domain.manager;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.persistence.schema.AuctionSchema;

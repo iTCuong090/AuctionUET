@@ -1,7 +1,7 @@
 package com.auctionuet.server.mapper;
 
 import com.auctionuet.server.domain.model.BidRecord;
-import com.auctionuet.server.network.dto.BidDTO;
+import com.auctionuet.protocol.dto.response.BidDTO;
 import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.util.IdGenerator;
 
@@ -25,3 +25,4 @@ public class BidMapper {
                 schema.getAmount(), schema.getTimestamp());
     }
 }
+

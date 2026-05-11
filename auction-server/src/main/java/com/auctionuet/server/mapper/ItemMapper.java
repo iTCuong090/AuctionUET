@@ -1,8 +1,8 @@
 package com.auctionuet.server.mapper;
 
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.server.domain.model.Item;
-import com.auctionuet.server.network.dto.ItemDTO;
+import com.auctionuet.protocol.dto.response.ItemDTO;
 import com.auctionuet.server.persistence.schema.*;
 import com.auctionuet.server.util.IdGenerator;
 
@@ -105,13 +105,11 @@ public class ItemMapper {
         }
     }
 
-    // TO SCHEMA (DTO → Schema, tự sinh id/timestamps, logic extraFields ở đây)
-    public static ItemSchema toNewSchema(ItemDTO dto, String sellerId) {
+    // TO SCHEMA (Raw Data → Schema, tự sinh id/timestamps, logic extraFields ở đây)
+    public static ItemSchema toNewSchema(String name, String description, double startingPrice, ItemType type, String imageUrl, String condition, Map<String, Object> extra, String sellerId) {
         String id = IdGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
-        ItemType type = dto.getType();
 
-        Map<String, Object> extra = dto.getExtraFields();
         if (extra == null) {
             extra = new HashMap<>();
         }
@@ -119,23 +117,23 @@ public class ItemMapper {
         return switch (type) {
             case ELECTRONICS -> new ElectronicsSchema(
                     id, now, now,
-                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
-                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    name, description, startingPrice,
+                    type, sellerId, imageUrl, condition, 0,
                     (String) extra.getOrDefault("brand", ""),
                     safeInt(extra.get("warrantyMonths"))
             );
             case ART -> new ArtSchema(
                     id, now, now,
-                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
-                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    name, description, startingPrice,
+                    type, sellerId, imageUrl, condition, 0,
                     (String) extra.getOrDefault("artist", ""),
                     safeInt(extra.get("year")),
                     (String) extra.getOrDefault("medium", "")
             );
             case VEHICLE -> new VehicleSchema(
                     id, now, now,
-                    dto.getName(), dto.getDescription(), dto.getStartingPrice(),
-                    type, sellerId, dto.getImageUrl(), dto.getCondition(), 0,
+                    name, description, startingPrice,
+                    type, sellerId, imageUrl, condition, 0,
                     (String) extra.getOrDefault("make", ""),
                     (String) extra.getOrDefault("model", ""),
                     safeInt(extra.get("mileage")),

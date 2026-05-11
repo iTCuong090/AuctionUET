@@ -1,6 +1,6 @@
 package com.auctionuet.server.domain.model;
 
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 
 public class Item {
     private final String id;            // ID sản phẩm (liên kết với ItemSchema.id)
@@ -58,4 +58,3 @@ public class Item {
         return condition;
     }
 }
-

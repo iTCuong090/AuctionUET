@@ -1,10 +1,11 @@
 package com.auctionuet.server.domain.model;
 
-import com.auctionuet.server.domain.enums.UserRole;
-import com.auctionuet.server.domain.enums.Permission;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.Permission;
 
-public class Seller extends User{
-    public Seller(String id, String name) {super(id,name, UserRole.SELLER);
+public class Seller extends User {
+    public Seller(String id, String name) {
+        super(id, name, UserRole.SELLER);
     }
 
     @Override

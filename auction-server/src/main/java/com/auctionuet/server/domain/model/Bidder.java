@@ -1,6 +1,6 @@
 package com.auctionuet.server.domain.model;
-import com.auctionuet.server.domain.enums.UserRole;
-import com.auctionuet.server.domain.enums.Permission;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.Permission;
 
 public class Bidder extends User {
     public Bidder(String id, String username) {

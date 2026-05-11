@@ -1,6 +1,6 @@
 package com.auctionuet.server.persistence.dao;
 
-import com.auctionuet.server.domain.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.server.persistence.schema.ArtSchema;
 import com.auctionuet.server.persistence.schema.ElectronicsSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;

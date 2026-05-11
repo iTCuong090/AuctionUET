@@ -2,7 +2,7 @@ package com.auctionuet.server.IntegrationTest;
 
 import java.io.*;
 import java.net.Socket;
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.protocol.Response;
 import com.auctionuet.server.network.server.AuctionServer;
 import com.google.gson.Gson;
 
