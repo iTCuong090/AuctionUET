@@ -69,11 +69,10 @@ public class LoginController {
                             }
                             // NẾU LÀ SERVER THẬT
                             else {
-                                JsonObject dataObj = JsonParser.parseString(dataStr).getAsJsonObject();
-                                String exactToken = dataObj.get("token").getAsString();
-
-                                // Lấy object "user" từ dataObj rồi map qua UserDTO
-                                UserDTO loggedInUser = gson.fromJson(dataObj.get("user"), UserDTO.class);
+                                // Server trả về object LoginResponseDTO (có chứa token và UserDTO)
+                                com.auctionuet.client.model.LoginResponseDTO loginResponse = gson.fromJson(dataStr, com.auctionuet.client.model.LoginResponseDTO.class);
+                                String exactToken = loginResponse.getToken();
+                                UserDTO loggedInUser = loginResponse.getUser();
 
                                 ClientSession.getInstance().login(exactToken, loggedInUser);
                                 System.out.println("✅ Server Thật - Đăng nhập thành công! Role: " + loggedInUser.getRole());
