@@ -3,6 +3,7 @@ package com.auctionuet.protocol.dto.request.item;
 import com.auctionuet.protocol.dto.ValidatableDTO;
 import com.auctionuet.protocol.enums.ItemType;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CreateItemRequestDTO implements ValidatableDTO {
@@ -40,6 +41,10 @@ public class CreateItemRequestDTO implements ValidatableDTO {
         if (type == null) {
             throw new IllegalArgumentException("type must not be null");
         }
+        if (extraFields == null) {
+            throw new IllegalArgumentException("extraFields must not be null");
+        }
+        this.extraFields = new LinkedHashMap<>(type.normalizeAndValidateExtraFields(extraFields));
         if (condition != null && condition.isBlank()) {
             throw new IllegalArgumentException("condition must not be blank when provided");
         }

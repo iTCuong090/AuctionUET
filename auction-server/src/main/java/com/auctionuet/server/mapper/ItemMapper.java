@@ -1,157 +1,175 @@
 package com.auctionuet.server.mapper;
 
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.server.domain.model.Item;
-import com.auctionuet.protocol.dto.response.item.ItemDTO;
-import com.auctionuet.server.persistence.schema.*;
+import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ItemMapper {
 
-    // TO DOMAIN
     public static Item toDomain(ItemSchema schema) {
         return new Item(
-                schema.getId(), schema.getName(), schema.getDescription(),
-                schema.getStartingPrice(), schema.getType(), schema.getSellerId(),
-                schema.getImageUrl(), schema.getCondition()
+                schema.getId(),
+                schema.getName(),
+                schema.getDescription(),
+                schema.getStartingPrice(),
+                schema.getType(),
+                schema.getSellerId(),
+                schema.getImageUrl(),
+                schema.getCondition()
         );
     }
 
-    // TO DTO (Schema → DTO, chiều ra cho client xem)
     public static ItemDTO toDTO(ItemSchema schema, String sellerUsername) {
-        Map<String, Object> extraFields = new HashMap<>();
-
-        if (schema instanceof ElectronicsSchema e) {
-            extraFields.put("brand", e.getBrand());
-            extraFields.put("warrantyMonths", e.getWarrantyMonths());
-        } else if (schema instanceof ArtSchema a) {
-            extraFields.put("artist", a.getArtist());
-            extraFields.put("year", a.getYear());
-            extraFields.put("medium", a.getMedium());
-        } else if (schema instanceof VehicleSchema v) {
-            extraFields.put("make", v.getMake());
-            extraFields.put("model", v.getModel());
-            extraFields.put("mileage", v.getMileage());
-            extraFields.put("vehicleYear", v.getVehicleYear());
+        Map<String, Object> extra = schema.getExtraFields();
+        if (extra == null || extra.isEmpty()) {
+            extra = legacyExtraFields(schema);
         }
+        Map<String, Object> normalizedExtra = schema.getType().normalizeAndValidateExtraFields(extra);
 
         return new ItemDTO(
-                schema.getId(), schema.getName(), schema.getDescription(),
-                schema.getStartingPrice(), schema.getType(), sellerUsername,
-                schema.getImageUrl(), schema.getCondition(), extraFields
+                schema.getId(),
+                schema.getName(),
+                schema.getDescription(),
+                schema.getStartingPrice(),
+                schema.getType(),
+                sellerUsername,
+                schema.getImageUrl(),
+                schema.getCondition(),
+                normalizedExtra
         );
     }
 
-    // FROM REQUEST DATA (Map → DTO, chiều vào từ client gửi lên)
-    public static ItemDTO fromRequestData(Map<String, Object> data) {
-        if (data == null) {
-            throw new IllegalArgumentException("Item data không được null");
+    private static Map<String, Object> legacyExtraFields(ItemSchema schema) {
+        Map<String, Object> legacy = new LinkedHashMap<>();
+        switch (schema.getType()) {
+            case ELECTRONICS -> {
+                legacy.put("brand", schema.getBrand());
+                legacy.put("warrantyMonths", schema.getWarrantyMonths());
+            }
+            case ART -> {
+                legacy.put("artist", schema.getArtist());
+                legacy.put("year", schema.getYear());
+                legacy.put("medium", schema.getMedium());
+            }
+            case VEHICLE -> {
+                legacy.put("make", schema.getMake());
+                legacy.put("model", schema.getModel());
+                legacy.put("mileage", schema.getMileage());
+                legacy.put("vehicleYear", schema.getVehicleYear());
+            }
         }
-
-        try {
-            String name = (String) data.get("name");
-            String description = (String) data.get("description");
-            String imageUrl = (String) data.get("imageUrl");
-            String condition = (String) data.get("condition");
-
-            double startingPrice = 0;
-            Object spObj = data.get("startingPrice");
-            if (spObj instanceof Number) {
-                startingPrice = ((Number) spObj).doubleValue();
-            } else if (spObj instanceof String) {
-                startingPrice = Double.parseDouble((String) spObj);
-            }
-
-            String typeStr = data.getOrDefault("type", "ELECTRONICS").toString();
-            ItemType type;
-            try {
-                type = ItemType.valueOf(typeStr);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Loại item không hợp lệ: " + typeStr);
-            }
-
-            // Thu thập extra fields theo loại item
-            Map<String, Object> extraFields = new HashMap<>();
-            switch (type) {
-                case ELECTRONICS -> {
-                    extraFields.put("brand", data.get("brand"));
-                    extraFields.put("warrantyMonths", data.get("warrantyMonths"));
-                }
-                case ART -> {
-                    extraFields.put("artist", data.get("artist"));
-                    extraFields.put("year", data.get("year"));
-                    extraFields.put("medium", data.get("medium"));
-                }
-                case VEHICLE -> {
-                    extraFields.put("make", data.get("make"));
-                    extraFields.put("model", data.get("model"));
-                    extraFields.put("mileage", data.get("mileage"));
-                    extraFields.put("vehicleYear", data.get("vehicleYear"));
-                }
-            }
-
-            return new ItemDTO(
-                    null, name, description, startingPrice, type,
-                    null, imageUrl, condition, extraFields
-            );
-        } catch (ClassCastException e) {
-            throw new IllegalArgumentException("Sai kiểu dữ liệu trong item data: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Giá trị số không hợp lệ: " + e.getMessage());
-        }
+        return legacy;
     }
 
-    // TO SCHEMA (Raw Data → Schema, tự sinh id/timestamps, logic extraFields ở đây)
-    public static ItemSchema toNewSchema(String name, String description, double startingPrice, ItemType type, String imageUrl, String condition, Map<String, Object> extra, String sellerId) {
+    public static ItemDTO fromRequestData(Map<String, Object> data) {
+        if (data == null) {
+            throw new IllegalArgumentException("Item data must not be null");
+        }
+
+        String name = readString(data, "name");
+        String description = readOptionalString(data, "description");
+        String imageUrl = readOptionalString(data, "imageUrl");
+        String condition = readOptionalString(data, "condition");
+        double startingPrice = readDouble(data, "startingPrice");
+
+        String typeStr = String.valueOf(data.getOrDefault("type", ItemType.ELECTRONICS.name()));
+        ItemType type = ItemType.valueOf(typeStr);
+
+        Map<String, Object> extra = new LinkedHashMap<>();
+        for (String key : data.keySet()) {
+            if (!isCoreItemKey(key)) {
+                extra.put(key, data.get(key));
+            }
+        }
+        Map<String, Object> normalizedExtra = type.normalizeAndValidateExtraFields(extra);
+
+        return new ItemDTO(
+                "request-item",
+                name,
+                description,
+                startingPrice,
+                type,
+                "request-seller",
+                imageUrl,
+                condition,
+                normalizedExtra
+        );
+    }
+
+    public static ItemSchema toNewSchema(
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            String imageUrl,
+            String condition,
+            Map<String, Object> extraFields,
+            String sellerId) {
         String id = IdGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
 
-        if (extra == null) {
-            extra = new HashMap<>();
-        }
+        Map<String, Object> normalizedExtra = type.normalizeAndValidateExtraFields(
+                extraFields == null ? Map.of() : extraFields
+        );
 
-        return switch (type) {
-            case ELECTRONICS -> new ElectronicsSchema(
-                    id, now, now,
-                    name, description, startingPrice,
-                    type, sellerId, imageUrl, condition, 0,
-                    (String) extra.getOrDefault("brand", ""),
-                    safeInt(extra.get("warrantyMonths"))
-            );
-            case ART -> new ArtSchema(
-                    id, now, now,
-                    name, description, startingPrice,
-                    type, sellerId, imageUrl, condition, 0,
-                    (String) extra.getOrDefault("artist", ""),
-                    safeInt(extra.get("year")),
-                    (String) extra.getOrDefault("medium", "")
-            );
-            case VEHICLE -> new VehicleSchema(
-                    id, now, now,
-                    name, description, startingPrice,
-                    type, sellerId, imageUrl, condition, 0,
-                    (String) extra.getOrDefault("make", ""),
-                    (String) extra.getOrDefault("model", ""),
-                    safeInt(extra.get("mileage")),
-                    safeInt(extra.get("vehicleYear"))
-            );
-        };
+        return new ItemSchema(
+                id,
+                now,
+                now,
+                name,
+                description,
+                startingPrice,
+                type,
+                sellerId,
+                imageUrl,
+                condition,
+                0,
+                normalizedExtra
+        );
     }
 
-    /**
-     * Safely extract an int from an Object that may be null, a Number, or a String.
-     */
-    private static int safeInt(Object value) {
-        if (value == null) return 0;
-        if (value instanceof Number) return ((Number) value).intValue();
-        try {
-            return Integer.parseInt(value.toString());
-        } catch (NumberFormatException e) {
-            return 0;
+    private static boolean isCoreItemKey(String key) {
+        return "name".equals(key)
+                || "description".equals(key)
+                || "startingPrice".equals(key)
+                || "type".equals(key)
+                || "imageUrl".equals(key)
+                || "condition".equals(key);
+    }
+
+    private static String readString(Map<String, Object> data, String key) {
+        Object value = data.get(key);
+        if (!(value instanceof String s) || s.isBlank()) {
+            throw new IllegalArgumentException(key + " must be a non-blank string");
         }
+        return s;
+    }
+
+    private static String readOptionalString(Map<String, Object> data, String key) {
+        Object value = data.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof String s)) {
+            throw new IllegalArgumentException(key + " must be a string");
+        }
+        return s;
+    }
+
+    private static double readDouble(Map<String, Object> data, String key) {
+        Object value = data.get(key);
+        if (value instanceof Number n) {
+            return n.doubleValue();
+        }
+        if (value instanceof String s) {
+            return Double.parseDouble(s);
+        }
+        throw new IllegalArgumentException(key + " must be a number");
     }
 }

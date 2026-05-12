@@ -40,7 +40,9 @@ public class Request {
     }
 
     public <T> T getDataAs(Class<T> clazz) {
-        if (data == null) return null;
+        if (data == null) {
+            throw new IllegalArgumentException("Request thiếu data");
+        }
         String json = com.auctionuet.protocol.util.NetworkGson.create().toJson(this.data);
         T dto = com.auctionuet.protocol.util.NetworkGson.create().fromJson(json, clazz);
         if (dto instanceof ValidatableDTO validatableDTO) {

@@ -33,10 +33,6 @@ public class ItemController {
         User user = sessionManager.validateToken(request.getToken());
 
         CreateItemRequestDTO req = request.getDataAs(CreateItemRequestDTO.class);
-        if (req == null) {
-            throw new IllegalArgumentException("Request thiếu data");
-        }
-        req.validate();
 
         ItemSchema created = itemService.createItem(
             user, 

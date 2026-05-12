@@ -105,7 +105,7 @@ public class CreateItemController {
                 extraFields.put("make", makeField.getText());
                 extraFields.put("model", modelField.getText());
                 extraFields.put("mileage", mileageField.getText());
-                extraFields.put("year", vehicleYearField.getText());
+                extraFields.put("vehicleYear", vehicleYearField.getText());
                 break;
         }
         itemData.put("extraFields", extraFields);

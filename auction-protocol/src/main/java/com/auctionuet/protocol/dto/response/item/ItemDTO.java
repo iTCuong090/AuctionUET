@@ -53,6 +53,10 @@ public class ItemDTO implements ValidatableDTO {
         if (type == null) {
             throw new IllegalArgumentException("type must not be null");
         }
+        if (extraFields == null) {
+            throw new IllegalArgumentException("extraFields must not be null");
+        }
+        type.normalizeAndValidateExtraFields(extraFields);
         if (sellerUsername == null || sellerUsername.isBlank()) {
             throw new IllegalArgumentException("sellerUsername must not be blank");
         }

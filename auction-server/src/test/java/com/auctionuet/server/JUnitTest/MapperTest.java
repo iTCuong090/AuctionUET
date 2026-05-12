@@ -1,40 +1,41 @@
 package com.auctionuet.server.JUnitTest;
 
-import com.auctionuet.protocol.enums.*;
-import com.auctionuet.server.domain.model.*;
-import com.auctionuet.server.mapper.AuctionMapper;
-import com.auctionuet.server.mapper.ItemMapper;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
-import com.auctionuet.server.persistence.schema.*;
+import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.ItemType;
+import com.auctionuet.server.mapper.AuctionMapper;
+import com.auctionuet.server.mapper.ItemMapper;
+import com.auctionuet.server.persistence.schema.AuctionSchema;
+import com.auctionuet.server.persistence.schema.ItemSchema;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MapperTest {
 
     @Test
     void testItemMapperToDTO() {
-        ElectronicsSchema schema = new ElectronicsSchema(
+        ItemSchema schema = new ItemSchema(
                 "E1",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 "ThinkPad",
-                "Laptop xịn",
+                "Laptop",
                 1000.0,
                 ItemType.ELECTRONICS,
                 "seller1",
                 "img.png",
                 "NEW",
                 0,
-                "Lenovo",
-                24
+                new LinkedHashMap<>(Map.of("brand", "Lenovo", "warrantyMonths", 24))
         );
 
         ItemDTO dto = ItemMapper.toDTO(schema, "seller1");
-
         assertEquals("E1", dto.getId());
         assertEquals("ThinkPad", dto.getName());
         assertEquals("Lenovo", dto.getExtraFields().get("brand"));
@@ -42,23 +43,23 @@ class MapperTest {
 
     @Test
     void testItemMapperToNewSchema() {
-        Map<String, Object> data = Map.of(
-                "type", "ART",
-                "name", "Tranh Dong Ho",
-                "startingPrice", 500.0,
-                "artist", "Nghe nhan A"
+        ItemSchema schema = ItemMapper.toNewSchema(
+                "Tranh Dong Ho",
+                null,
+                500.0,
+                ItemType.ART,
+                null,
+                null,
+                new LinkedHashMap<>(Map.of("artist", "Nghe nhan A", "year", 1995, "medium", "Watercolor")),
+                "seller_id"
         );
-        // Cường refactored: Map → ItemDTO (fromRequestData) → Schema (toNewSchema)
-        ItemDTO dto = ItemMapper.fromRequestData(data);
-        ItemSchema schema = ItemMapper.toNewSchema(dto.getName(), dto.getDescription(), dto.getStartingPrice(), dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields(), "seller_id");
 
-        assertTrue(schema instanceof ArtSchema);
-        assertEquals("Nghe nhan A", ((ArtSchema)schema).getArtist());
+        assertEquals(ItemType.ART, schema.getType());
+        assertEquals("Nghe nhan A", schema.getExtraFields().get("artist"));
     }
 
     @Test
     void testAuctionMapperToDTO() {
-
         LocalDateTime now = LocalDateTime.now();
 
         AuctionSchema schema = new AuctionSchema(
@@ -67,8 +68,8 @@ class MapperTest {
                 now,
                 "I1",
                 "S1",
-                "Đấu giá laptop",
-                "Mô tả",
+                "Auction",
+                "Desc",
                 now,
                 now.plusDays(1),
                 AuctionStatus.OPEN,
@@ -87,12 +88,11 @@ class MapperTest {
                 "seller1",
                 "",
                 "NEW",
-                null
+                new LinkedHashMap<>(Map.of("brand", "Lenovo", "warrantyMonths", 24))
         );
 
         AuctionDTO dto = AuctionMapper.toDTO(schema, itemDTO, "seller1", null);
-
-        assertEquals("Đấu giá laptop", dto.getTitle());
+        assertEquals("Auction", dto.getTitle());
         assertEquals(AuctionStatus.OPEN, dto.getStatus());
     }
 }
