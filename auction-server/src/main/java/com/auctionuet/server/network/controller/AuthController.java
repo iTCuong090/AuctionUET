@@ -3,8 +3,9 @@ package com.auctionuet.server.network.controller;
 import com.auctionuet.protocol.enums.UserRole;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.protocol.dto.response.LoginResponseDTO;
-import com.auctionuet.protocol.dto.request.AuthRequests;
+import com.auctionuet.protocol.dto.request.auth.LoginRequestDTO;
+import com.auctionuet.protocol.dto.request.auth.RegisterRequestDTO;
+import com.auctionuet.protocol.dto.response.auth.LoginResponseDTO;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 
@@ -17,7 +18,7 @@ public class AuthController {
     }
 
     public Response handleLogin(Request request) throws Exception {
-        AuthRequests.LoginReq req = request.getDataAs(AuthRequests.LoginReq.class);
+        LoginRequestDTO req = request.getDataAs(LoginRequestDTO.class);
         String username = req.getUsername();
 
         LoginResponseDTO responseDTO = authService.login(username, req.getPassword());
@@ -26,7 +27,7 @@ public class AuthController {
     }
 
     public Response handleRegister(Request request) throws Exception {
-        AuthRequests.RegisterReq req = request.getDataAs(AuthRequests.RegisterReq.class);
+        RegisterRequestDTO req = request.getDataAs(RegisterRequestDTO.class);
         String username = req.getUsername();
         String email = req.getEmail();
         String roleStr = req.getRole();

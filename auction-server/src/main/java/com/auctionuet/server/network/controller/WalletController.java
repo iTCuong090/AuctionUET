@@ -5,8 +5,8 @@ import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.service.WalletService;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
-import com.auctionuet.protocol.dto.request.WalletRequests;
-import com.auctionuet.protocol.dto.response.WalletResponseDTO;
+import com.auctionuet.protocol.dto.request.wallet.AmountRequestDTO;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 
 public class WalletController {
     private final WalletService walletService;
@@ -19,7 +19,7 @@ public class WalletController {
 
     public Response handleDeposit(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
+        AmountRequestDTO req = request.getDataAs(AmountRequestDTO.class);
 
         WalletResponseDTO wallet = walletService.deposit(user.getId(), req.getAmount());
         return Response.ok(wallet);
@@ -27,7 +27,7 @@ public class WalletController {
 
     public Response handleWithdraw(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
+        AmountRequestDTO req = request.getDataAs(AmountRequestDTO.class);
 
         WalletResponseDTO wallet = walletService.withdraw(user.getId(), req.getAmount());
         return Response.ok(wallet);

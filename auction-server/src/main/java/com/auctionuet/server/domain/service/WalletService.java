@@ -2,7 +2,7 @@ package com.auctionuet.server.domain.service;
 
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
-import com.auctionuet.protocol.dto.response.WalletResponseDTO;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 
 public class WalletService {
     private final UserDAO userDAO;

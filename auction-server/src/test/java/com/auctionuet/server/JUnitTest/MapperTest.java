@@ -4,7 +4,8 @@ import com.auctionuet.protocol.enums.*;
 import com.auctionuet.server.domain.model.*;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.protocol.dto.response.*;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.server.persistence.schema.*;
 import org.junit.jupiter.api.Test;
 

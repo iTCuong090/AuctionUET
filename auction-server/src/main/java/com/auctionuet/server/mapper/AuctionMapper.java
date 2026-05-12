@@ -2,8 +2,8 @@ package com.auctionuet.server.mapper;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.LiveAuction;
-import com.auctionuet.protocol.dto.response.AuctionDTO;
-import com.auctionuet.protocol.dto.response.ItemDTO;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.util.IdGenerator;
 

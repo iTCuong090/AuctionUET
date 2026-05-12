@@ -4,8 +4,8 @@ import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.protocol.dto.response.ItemDTO;
-import com.auctionuet.protocol.dto.request.ItemRequests;
+import com.auctionuet.protocol.dto.request.item.CreateItemRequestDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.server.persistence.schema.ItemSchema;
@@ -32,7 +32,7 @@ public class ItemController {
     public Response handleCreateItem(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
 
-        ItemRequests.CreateItemReq req = request.getDataAs(ItemRequests.CreateItemReq.class);
+        CreateItemRequestDTO req = request.getDataAs(CreateItemRequestDTO.class);
         if (req == null) {
             throw new IllegalArgumentException("Request thiếu data");
         }

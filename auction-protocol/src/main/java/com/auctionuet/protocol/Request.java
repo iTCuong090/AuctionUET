@@ -1,5 +1,7 @@
 package com.auctionuet.protocol;
 
+import com.auctionuet.protocol.dto.ValidatableDTO;
+
 import java.util.Map;
 
 public class Request {
@@ -40,15 +42,19 @@ public class Request {
     public <T> T getDataAs(Class<T> clazz) {
         if (data == null) return null;
         String json = com.auctionuet.protocol.util.NetworkGson.create().toJson(this.data);
-        return com.auctionuet.protocol.util.NetworkGson.create().fromJson(json, clazz);
+        T dto = com.auctionuet.protocol.util.NetworkGson.create().fromJson(json, clazz);
+        if (dto instanceof ValidatableDTO validatableDTO) {
+            validatableDTO.validate();
+        }
+        return dto;
     }
     public String getDataString(String key) {
-        Object value = data.get(key); // Láº¥y giÃ¡ trá»‹ ra dÆ°á»›i dáº¡ng Object
+        Object value = data.get(key); // Lấy giá trị ra dưới dạng Object
 
         if (value == null) {
             return null;
         }
-        // DÃ¹ giÃ¡ trá»‹ gá»‘c lÃ  sá»‘ (Double), boolean, hay chuá»—i, nÃ³ Ä‘á»u convert vá» dáº¡ng String háº¿t.
+        // Dù giá trị gốc là số (Double), boolean, hay chuỗi, nó đều convert về dạng String hết.
         return String.valueOf(value);
     }
     public Integer getDataInt(String key) {
@@ -64,7 +70,7 @@ public class Request {
         try {
             return Integer.parseInt(value.toString());
         } catch (NumberFormatException e) {
-            // Tráº£ vá»  null náº¿u dá»¯ liá»‡u bá»‹ sai Ä‘á»‹nh dáº¡ng (vÃ­ dá»¥ gá»­i lÃªn "TÃ¡m tÃ¡m tÃ¡m tÃ¡m")
+            // Trả về null nếu dữ liệu bị sai định dạng (ví dụ gửi lên "Tám tám tám tám")
             return null;
         }
     }

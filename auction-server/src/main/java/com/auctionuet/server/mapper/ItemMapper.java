@@ -2,7 +2,7 @@ package com.auctionuet.server.mapper;
 
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.server.domain.model.Item;
-import com.auctionuet.protocol.dto.response.ItemDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.server.persistence.schema.*;
 import com.auctionuet.server.util.IdGenerator;
 

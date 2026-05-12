@@ -3,7 +3,7 @@ package com.auctionuet.server.domain.service;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.protocol.dto.response.ItemDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 

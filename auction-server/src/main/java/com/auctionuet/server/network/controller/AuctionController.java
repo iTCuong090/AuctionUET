@@ -6,9 +6,10 @@ import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.protocol.dto.response.AuctionDTO;
-import com.auctionuet.protocol.dto.response.ItemDTO;
-import com.auctionuet.protocol.dto.request.AuctionRequests;
+import com.auctionuet.protocol.dto.request.auction.AuctionIdRequestDTO;
+import com.auctionuet.protocol.dto.request.auction.CreateAuctionRequestDTO;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
@@ -33,7 +34,7 @@ public class AuctionController {
 
     public Response handleCreateAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        AuctionRequests.CreateAuctionReq req = request.getDataAs(AuctionRequests.CreateAuctionReq.class);
+        CreateAuctionRequestDTO req = request.getDataAs(CreateAuctionRequestDTO.class);
 
         int antiSnipingWindowSeconds = req.getAntiSnipingWindowSeconds() != null ? req.getAntiSnipingWindowSeconds() : 60;
         int antiSnipingExtensionSeconds = req.getAntiSnipingExtensionSeconds() != null ? req.getAntiSnipingExtensionSeconds() : 120;
@@ -56,7 +57,7 @@ public class AuctionController {
 
     public Response handleStartAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         auctionService.startAuction(user, req.getAuctionId());
 
@@ -89,7 +90,7 @@ public class AuctionController {
 
     public Response handleGetAuctionDetail(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         if (req.getAuctionId() == null || req.getAuctionId().isEmpty()) {
             return Response.error("Thiếu auctionId");
@@ -113,7 +114,7 @@ public class AuctionController {
     // ———————————————————— PAY AUCTION  ————————————————————
     public Response handlePayAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        AuctionRequests.AuctionIdReq req = request.getDataAs(AuctionRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         auctionService.payAuction(user, req.getAuctionId());
         return Response.ok("Thành toán thành công! Sản phẩm đã thuộc về bạn.");

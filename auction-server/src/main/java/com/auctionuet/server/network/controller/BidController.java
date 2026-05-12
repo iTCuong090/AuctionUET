@@ -8,9 +8,11 @@ import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.BidService;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.BidMapper;
-import com.auctionuet.protocol.dto.response.BidDTO;
-import com.auctionuet.protocol.dto.response.AutoBidConfigDTO;
-import com.auctionuet.protocol.dto.request.BidRequests;
+import com.auctionuet.protocol.dto.request.bid.AuctionIdRequestDTO;
+import com.auctionuet.protocol.dto.request.bid.PlaceBidRequestDTO;
+import com.auctionuet.protocol.dto.request.bid.SetAutoBidRequestDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.server.network.server.ClientHandler;
@@ -33,7 +35,7 @@ public class BidController {
         if (!user.hasPermission(Permission.PLACE_BID)) {
             return Response.error("Bạn không có quyền đặt giá");
         }
-        BidRequests.PlaceBidReq req = request.getDataAs(BidRequests.PlaceBidReq.class);
+        PlaceBidRequestDTO req = request.getDataAs(PlaceBidRequestDTO.class);
 
         BidRecord record = bidService.placeBid(user, req.getAuctionId(), req.getAmount());
 
@@ -45,7 +47,7 @@ public class BidController {
     // GET_BID_HISTORY
     public Response handleGetBidHistory(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         List<BidSchema> bids = bidService.getBidHistory(req.getAuctionId());
         List<BidDTO> dtos = bids.stream()
@@ -57,7 +59,7 @@ public class BidController {
     // SET_AUTO_BID
     public Response handleSetAutoBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.SetAutoBidReq req = request.getDataAs(BidRequests.SetAutoBidReq.class);
+        SetAutoBidRequestDTO req = request.getDataAs(SetAutoBidRequestDTO.class);
 
         bidService.setAutoBid(user, req.getAuctionId(), req.getMaxBid(), req.getIncrement());
         return Response.ok("Đã cài đặt Auto-Bid thành công");
@@ -66,7 +68,7 @@ public class BidController {
     // CANCEL_AUTO_BID
     public Response handleCancelAutoBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         bidService.cancelAutoBid(user, req.getAuctionId());
         return Response.ok("Đã hủy Auto-Bid");
@@ -75,7 +77,7 @@ public class BidController {
     // CHECK_AUTO_BID
     public Response handleCheckAutoBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         LiveAuction liveAuction = AuctionManager.getInstance().getAuction(req.getAuctionId());
         if (liveAuction != null) {
@@ -90,7 +92,7 @@ public class BidController {
     // SUBSCRIBE — Đăng ký nhận push notification cho một phiên đấu giá
     public Response handleSubscribe(Request request, ClientHandler clientHandler) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         // Lấy LiveAuction từ AuctionManager và đăng ký ClientHandler làm Observer
         LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
@@ -103,7 +105,7 @@ public class BidController {
     // UNSUBSCRIBE — Hủy đăng ký push
     public Response handleUnsubscribe(Request request, ClientHandler clientHandler) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+        AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
         if (auction != null) {

@@ -1,7 +1,7 @@
 package com.auctionuet.server.domain.service;
 
-import com.auctionuet.protocol.dto.response.LoginResponseDTO;
-import com.auctionuet.protocol.dto.response.UserDTO;
+import com.auctionuet.protocol.dto.response.auth.LoginResponseDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.UserRole;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
