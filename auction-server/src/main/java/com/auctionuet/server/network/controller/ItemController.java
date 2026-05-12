@@ -3,14 +3,10 @@ package com.auctionuet.server.network.controller;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.server.mapper.ItemMapper;
 import com.auctionuet.protocol.dto.request.item.CreateItemRequestDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
-import com.auctionuet.server.persistence.schema.ItemSchema;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +30,7 @@ public class ItemController {
 
         CreateItemRequestDTO req = request.getDataAs(CreateItemRequestDTO.class);
 
-        ItemSchema created = itemService.createItem(
+        ItemDTO responseDTO = itemService.createItem(
             user, 
             req.getName(), 
             req.getDescription(), 
@@ -44,7 +40,6 @@ public class ItemController {
             req.getCondition(), 
             req.getExtraFields()
         );
-        ItemDTO responseDTO = ItemMapper.toDTO(created, user.getUsername());
 
         return Response.ok(responseDTO);
     }
@@ -53,14 +48,7 @@ public class ItemController {
 
     public Response handleGetMyItems(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
-
-        List<ItemSchema> items = itemService.getItemsBySellerId(user.getId());
-
-        List<ItemDTO> dtoList = new ArrayList<>();
-        for (ItemSchema schema : items) {
-            dtoList.add(ItemMapper.toDTO(schema, user.getUsername()));
-        }
-
-        return Response.ok(dtoList);
+        List<ItemDTO> items = itemService.getItemsBySellerId(user.getId());
+        return Response.ok(items);
     }
 }

@@ -16,16 +16,6 @@ public class ItemSchema extends BaseSchema {
     private String condition;
     private int auctionCount;
     private Map<String, Object> extraFields;
-    // Legacy fields for backward compatibility with old stored JSON.
-    private String brand;
-    private Integer warrantyMonths;
-    private String artist;
-    private Integer year;
-    private String medium;
-    private String make;
-    private String model;
-    private Integer mileage;
-    private Integer vehicleYear;
 
     protected ItemSchema() {
     }
@@ -75,22 +65,4 @@ public class ItemSchema extends BaseSchema {
     public void setExtraFields(Map<String, Object> extraFields) {
         this.extraFields = extraFields != null ? new LinkedHashMap<>(extraFields) : new LinkedHashMap<>();
     }
-    public String getBrand() { return brand; }
-    public void setBrand(String brand) { this.brand = brand; }
-    public Integer getWarrantyMonths() { return warrantyMonths; }
-    public void setWarrantyMonths(Integer warrantyMonths) { this.warrantyMonths = warrantyMonths; }
-    public String getArtist() { return artist; }
-    public void setArtist(String artist) { this.artist = artist; }
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
-    public String getMedium() { return medium; }
-    public void setMedium(String medium) { this.medium = medium; }
-    public String getMake() { return make; }
-    public void setMake(String make) { this.make = make; }
-    public String getModel() { return model; }
-    public void setModel(String model) { this.model = model; }
-    public Integer getMileage() { return mileage; }
-    public void setMileage(Integer mileage) { this.mileage = mileage; }
-    public Integer getVehicleYear() { return vehicleYear; }
-    public void setVehicleYear(Integer vehicleYear) { this.vehicleYear = vehicleYear; }
 }

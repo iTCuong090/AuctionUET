@@ -5,7 +5,6 @@ import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.mapper.AuctionMapper;
-import com.auctionuet.server.mapper.ItemMapper;
 import com.auctionuet.protocol.dto.request.auction.AuctionIdRequestDTO;
 import com.auctionuet.protocol.dto.request.auction.CreateAuctionRequestDTO;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
@@ -46,7 +45,7 @@ public class AuctionController {
         ItemSchema itemSchema = itemService.getItemById(auctionSchema.getItemId());
         ItemDTO itemDTO = null;
         if (itemSchema != null) {
-            itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
+            itemDTO = itemService.toItemDTO(itemSchema, user.getUsername());
         }
         AuctionDTO auctionDTO = AuctionMapper.toDTO(auctionSchema, itemDTO, user.getUsername(), null);
 
@@ -78,7 +77,7 @@ public class AuctionController {
                 continue;
             }
             String sellerUsername = itemSchema.getSellerId();
-            ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, sellerUsername);
+            ItemDTO itemDTO = itemService.toItemDTO(itemSchema, sellerUsername);
             AuctionDTO auctionDTO = AuctionMapper.toDTO(auction, itemDTO, sellerUsername, null);
             auctionDTOList.add(auctionDTO);
         }
@@ -106,7 +105,7 @@ public class AuctionController {
             return Response.error("Lỗi: Không tìm thấy vật phẩm của phiên đấu giá này!");
         }
 
-        ItemDTO itemDTO = ItemMapper.toDTO(itemSchema, user.getUsername());
+        ItemDTO itemDTO = itemService.toItemDTO(itemSchema, user.getUsername());
         AuctionDTO auctionDTO = AuctionMapper.toDTO(schema, itemDTO, user.getUsername(), null);
 
         return Response.ok(auctionDTO);

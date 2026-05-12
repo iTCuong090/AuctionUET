@@ -1,19 +1,19 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.enums.ItemType;
+import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
-import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.schema.ItemSchema;
+import com.auctionuet.server.util.IdGenerator;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import com.auctionuet.protocol.enums.ItemType;
-/**
- * Service chuyên xử lý các hành động liên quan tới Item Management.
- * Được tách ra từ AuctionService để tuân thủ Single Responsibility Principle.
- */
+import java.util.stream.Collectors;
+
 public class ItemService {
 
     private final ItemDAO itemDAO;
@@ -22,40 +22,94 @@ public class ItemService {
         this.itemDAO = itemDAO;
     }
 
-    /**
-     * Tạo item mới. Chỉ Seller mới có quyền.
-     */
-    public ItemSchema createItem(User seller, String name, String description, double startingPrice, ItemType type, String imageUrl, String condition, Map<String, Object> extraFields) throws AuctionException, IllegalArgumentException {
-        if (!seller.hasPermission(com.auctionuet.protocol.enums.Permission.CREATE_ITEM)) {
-            throw new AuctionException("Không có quyền CREATE_ITEM");
+    public ItemDTO createItem(
+            User seller,
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            String imageUrl,
+            String condition,
+            Map<String, Object> extraFields) throws AuctionException {
+        if (!seller.hasPermission(Permission.CREATE_ITEM)) {
+            throw new AuctionException("Khong co quyen CREATE_ITEM");
         }
 
-        ItemSchema schema = ItemMapper.toNewSchema(name, description, startingPrice, type, imageUrl, condition, extraFields, seller.getId());
+        ItemSchema schema = toNewSchema(
+                name,
+                description,
+                startingPrice,
+                type,
+                imageUrl,
+                condition,
+                extraFields,
+                seller.getId()
+        );
         itemDAO.save(schema);
-
-        return schema;
+        return toItemDTO(schema, seller.getUsername());
     }
 
-    /**
-     * Lấy danh sách item của chính user đang đăng nhập (dùng cho GET_MY_ITEMS).
-     */
-    public List<ItemSchema> getItemsBySellerId(String sellerId) {
-        List<ItemSchema> items = itemDAO.findBySellerId(sellerId);
-        return items;
+    public List<ItemDTO> getItemsBySellerId(String sellerId) {
+        return itemDAO.findBySellerId(sellerId)
+                .stream()
+                .map(schema -> toItemDTO(schema, schema.getSellerId()))
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm item theo ID.
-     */
     public ItemSchema getItemById(String itemId) {
-        ItemSchema item = itemDAO.findById(itemId);
-        return item;
+        return itemDAO.findById(itemId);
     }
 
-    /**
-     * Cập nhật thông tin item (tăng auctionCount, v.v.)
-     */
     public void updateItem(ItemSchema item) {
         itemDAO.update(item);
+    }
+
+    public ItemDTO toItemDTO(ItemSchema schema, String sellerUsername) {
+        Map<String, Object> normalizedExtra = schema.getType()
+                .normalizeAndValidateExtraFields(schema.getExtraFields());
+
+        return new ItemDTO(
+                schema.getId(),
+                schema.getName(),
+                schema.getDescription(),
+                schema.getStartingPrice(),
+                schema.getType(),
+                sellerUsername,
+                schema.getImageUrl(),
+                schema.getCondition(),
+                normalizedExtra
+        );
+    }
+
+    private ItemSchema toNewSchema(
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            String imageUrl,
+            String condition,
+            Map<String, Object> extraFields,
+            String sellerId) {
+        String id = IdGenerator.generate();
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<String, Object> normalizedExtra = type.normalizeAndValidateExtraFields(
+                extraFields == null ? Map.of() : extraFields
+        );
+
+        return new ItemSchema(
+                id,
+                now,
+                now,
+                name,
+                description,
+                startingPrice,
+                type,
+                sellerId,
+                imageUrl,
+                condition,
+                0,
+                normalizedExtra
+        );
     }
 }
