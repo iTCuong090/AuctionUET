@@ -1,5 +1,5 @@
 package com.auctionuet.client.model;
-import com.auctionuet.client.network.protocol.UserRole;
+import com.auctionuet.protocol.enums.UserRole;
 public class ClientSession {
     // Biến lưu trữ duy nhất (Singleton)
     private static ClientSession instance;

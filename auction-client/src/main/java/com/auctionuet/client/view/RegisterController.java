@@ -4,7 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import com.auctionuet.client.network.ServerConnection;
 import com.auctionuet.client.network.AuthClient;
-import com.auctionuet.client.network.protocol.Response;
+import com.auctionuet.protocol.Response;
 
 public class RegisterController {
     @FXML private TextField usernameField;

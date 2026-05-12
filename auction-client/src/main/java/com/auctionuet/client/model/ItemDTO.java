@@ -1,7 +1,7 @@
 package com.auctionuet.client.model;
 
 // Import đúng đường dẫn
-import com.auctionuet.client.network.protocol.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 import java.util.Map;
 
 public class ItemDTO {

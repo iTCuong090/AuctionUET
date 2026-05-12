@@ -1,12 +1,11 @@
 package com.auctionuet.server.network.controller;
 
-import com.auctionuet.protocol.enums.UserRole;
-import com.auctionuet.server.domain.service.AuthService;
-import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.protocol.dto.response.LoginResponseDTO;
-import com.auctionuet.protocol.dto.request.AuthRequests;
-import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.contract.Dto;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.server.domain.manager.SessionManager;
+import com.auctionuet.server.domain.model.User;
+import com.auctionuet.server.domain.service.AuthService;
 
 public class AuthController {
 
@@ -16,33 +15,25 @@ public class AuthController {
         this.authService = authService;
     }
 
-    public Response handleLogin(Request request) throws Exception {
-        AuthRequests.LoginReq req = request.getDataAs(AuthRequests.LoginReq.class);
-        String username = req.getUsername();
-
-        LoginResponseDTO responseDTO = authService.login(username, req.getPassword());
-
-        return Response.ok(responseDTO);
+    public Response handleLogin(Dto<?> requestData) throws Exception {
+        String username = requestData.getString("username");
+        String password = requestData.getString("password");
+        Dto<?> responseData = authService.login(username, password);
+        return Response.ok(responseData);
     }
 
-    public Response handleRegister(Request request) throws Exception {
-        AuthRequests.RegisterReq req = request.getDataAs(AuthRequests.RegisterReq.class);
-        String username = req.getUsername();
-        String email = req.getEmail();
-        String roleStr = req.getRole();
-        UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
-
-        authService.register(username, req.getPassword(), email, role);
-
-        return Response.ok("Đăng ký thành công");
+    public Response handleRegister(Dto<?> requestData) throws Exception {
+        String username = requestData.getString("username");
+        String password = requestData.getString("password");
+        String email = requestData.getString("email");
+        String roleStr = requestData.getString("role");
+        UserRole role = roleStr != null ? UserRole.valueOf(roleStr) : UserRole.BIDDER;
+        authService.register(username, password, email, role);
+        return Response.ok("Dang ky thanh cong");
     }
 
-    public Response handleLogout(Request request) throws Exception {
-        String token = request.getToken();
-
-        SessionManager.getInstance().validateToken(token);
-        SessionManager.getInstance().removeSession(token);
-
-        return Response.ok("Đã đăng xuất");
+    public Response handleLogout(User user) throws Exception {
+        SessionManager.getInstance().invalidateByUserId(user.getId());
+        return Response.ok("Da dang xuat");
     }
 }

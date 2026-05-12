@@ -17,7 +17,7 @@ import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.model.ItemDTO;
 import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.client.network.AuctionClient;
-import com.auctionuet.client.network.protocol.ItemType;
+import com.auctionuet.protocol.enums.ItemType;
 
 public class CreateAuctionController {
 

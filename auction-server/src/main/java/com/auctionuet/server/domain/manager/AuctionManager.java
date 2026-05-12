@@ -2,7 +2,6 @@ package com.auctionuet.server.domain.manager;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.LiveAuction;
-import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.time.Duration;
@@ -50,7 +49,17 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
     }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
-        LiveAuction auction = AuctionMapper.toDomain(schema);
+        LiveAuction auction = new LiveAuction(
+                schema.getId(),
+                schema.getItemId(),
+                schema.getSellerId(),
+                schema.getEndTime(),
+                schema.getStatus(),
+                schema.getHighestBid(),
+                schema.getWinnerId(),
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds()
+        );
         liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this); // Đăng ký để lắng nghe sự kiện gia hạn
 

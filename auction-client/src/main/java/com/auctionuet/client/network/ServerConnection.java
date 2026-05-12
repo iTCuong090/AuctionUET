@@ -1,8 +1,8 @@
 package com.auctionuet.client.network;
 
-import com.auctionuet.client.network.protocol.PushMessage;
-import com.auctionuet.client.network.protocol.Request;
-import com.auctionuet.client.network.protocol.Response;
+import com.auctionuet.protocol.PushMessage;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
 import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -94,12 +94,23 @@ public class ServerConnection {
     public synchronized Response sendRequest(Request req) throws Exception {
         if (!isConnected()) throw new Exception("Chưa kết nối tới server!");
 
-        String jsonRequest = gson.toJson(req);
+        // --- CHIÊU MỚI: Tự động Validate bằng Hợp đồng ngay tại Client ---
+        if (req.getAction() != null && req.getData() != null) {
+            try {
+                // Thử validate dữ liệu theo định nghĩa trong ActionType
+                req.getAction().validateRequest(req.getDataObject());
+            } catch (IllegalArgumentException e) {
+                // Nếu sai cấu trúc, chặn lại luôn và báo lỗi cho UI
+                return Response.error("Lỗi cấu trúc Request (Client-side): " + e.getMessage());
+            }
+        }
+
+        String jsonRequest = com.auctionuet.protocol.util.NetworkGson.create().toJson(req);
         out.println(jsonRequest);
 
         String jsonResponse = responseQueue.poll(10, TimeUnit.SECONDS);
         if (jsonResponse == null) throw new Exception("Server không phản hồi (timeout)!");
 
-        return gson.fromJson(jsonResponse, Response.class);
+        return com.auctionuet.protocol.util.NetworkGson.create().fromJson(jsonResponse, Response.class);
     }
 }

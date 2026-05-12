@@ -1,19 +1,19 @@
 package com.auctionuet.client.network;
 
-import com.auctionuet.client.network.protocol.ActionType;
-import com.auctionuet.client.network.protocol.Request;
-import com.auctionuet.client.network.protocol.Response;
+import com.auctionuet.protocol.ActionType;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.contract.Dto;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BidClient {
     
     public void subscribe(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
+        Dto<?> data = ActionType.SUBSCRIBE.createRequestDto()
+                .set("auctionId", auctionId);
         
         Request req = new Request(ActionType.SUBSCRIBE, data);
         req.setToken(token);
@@ -25,8 +25,8 @@ public class BidClient {
     }
 
     public List<Map<String, Object>> getBidHistory(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
+        Dto<?> data = ActionType.GET_BID_HISTORY.createRequestDto()
+                .set("auctionId", auctionId);
         
         Request req = new Request(ActionType.GET_BID_HISTORY, data);
         req.setToken(token);
@@ -40,8 +40,8 @@ public class BidClient {
     }
 
     public void unsubscribe(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
+        Dto<?> data = ActionType.UNSUBSCRIBE.createRequestDto()
+                .set("auctionId", auctionId);
         
         Request req = new Request(ActionType.UNSUBSCRIBE, data);
         req.setToken(token);
@@ -55,9 +55,9 @@ public class BidClient {
     }
 
     public void placeBid(String token, String auctionId, double amount) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        data.put("amount", amount);
+        Dto<?> data = ActionType.PLACE_BID.createRequestDto()
+                .set("auctionId", auctionId)
+                .set("amount", amount);
         
         Request req = new Request(ActionType.PLACE_BID, data);
         req.setToken(token);
@@ -69,10 +69,10 @@ public class BidClient {
     }
 
     public void setAutoBid(String token, String auctionId, double maxBid, double increment) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        data.put("maxBid", maxBid);
-        data.put("increment", increment);
+        Dto<?> data = ActionType.SET_AUTO_BID.createRequestDto()
+                .set("auctionId", auctionId)
+                .set("maxBid", maxBid)
+                .set("increment", increment);
         
         Request req = new Request(ActionType.SET_AUTO_BID, data);
         req.setToken(token);
@@ -84,8 +84,8 @@ public class BidClient {
     }
 
     public void cancelAutoBid(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
+        Dto<?> data = ActionType.CANCEL_AUTO_BID.createRequestDto()
+                .set("auctionId", auctionId);
         
         Request req = new Request(ActionType.CANCEL_AUTO_BID, data);
         req.setToken(token);
@@ -97,8 +97,8 @@ public class BidClient {
     }
 
     public Map<String, Object> checkAutoBid(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
+        Dto<?> data = ActionType.CHECK_AUTO_BID.createRequestDto()
+                .set("auctionId", auctionId);
         
         Request req = new Request(ActionType.CHECK_AUTO_BID, data);
         req.setToken(token);

@@ -1,115 +1,118 @@
 package com.auctionuet.server.network.controller;
 
+import com.auctionuet.protocol.ActionType;
+import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.contract.Dto;
 import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.BidRecord;
 import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.BidService;
-import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.server.mapper.BidMapper;
-import com.auctionuet.protocol.dto.response.BidDTO;
-import com.auctionuet.protocol.dto.response.AutoBidConfigDTO;
-import com.auctionuet.protocol.dto.request.BidRequests;
-import com.auctionuet.protocol.Request;
-import com.auctionuet.protocol.Response;
 import com.auctionuet.server.network.server.ClientHandler;
 import com.auctionuet.server.persistence.schema.BidSchema;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class BidController {
     private final BidService bidService;
-    private final SessionManager sessionManager;
-    public BidController(BidService bidService){
-        this.bidService=bidService;
-        this.sessionManager=SessionManager.getInstance();
+
+    public BidController(BidService bidService) {
+        this.bidService = bidService;
     }
-    // PLACE_BID
-    public Response handlePlaceBid(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        // Permission check
+
+    public Response handlePlaceBid(Dto<?> requestData, User user) throws Exception {
         if (!user.hasPermission(Permission.PLACE_BID)) {
-            return Response.error("Bạn không có quyền đặt giá");
+            return Response.error("Ban khong co quyen dat gia");
         }
-        BidRequests.PlaceBidReq req = request.getDataAs(BidRequests.PlaceBidReq.class);
 
-        BidRecord record = bidService.placeBid(user, req.getAuctionId(), req.getAmount());
+        String auctionId = requestData.getString("auctionId");
+        Double amount = requestData.getDouble("amount");
+        BidRecord record = bidService.placeBid(user, auctionId, amount);
 
-        // Chuyển BidRecord → BidDTO để trả về
-        BidDTO dto = BidMapper.toDTO(record, req.getAuctionId());
-        return Response.ok(dto);
+        Map<String, Object> dto = bidRecordToMap(record, auctionId);
+        return Response.ok(Dto.untyped(dto));
     }
 
-    // GET_BID_HISTORY
-    public Response handleGetBidHistory(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
+    public Response handleGetBidHistory(Dto<?> requestData) throws Exception {
+        String auctionId = requestData.getString("auctionId");
+        List<BidSchema> bids = bidService.getBidHistory(auctionId);
 
-        List<BidSchema> bids = bidService.getBidHistory(req.getAuctionId());
-        List<BidDTO> dtos = bids.stream()
-                .map(b -> BidMapper.schemaToDTO(b))
-                .collect(Collectors.toList());
-        return Response.ok(dtos);
+        List<Map<String, Object>> dtos = new ArrayList<>();
+        for (BidSchema bid : bids) {
+            dtos.add(bidSchemaToMap(bid));
+        }
+
+        return Response.ok(ActionType.GET_BID_HISTORY.createResponseDto().set("bids", dtos));
     }
 
-    // SET_AUTO_BID
-    public Response handleSetAutoBid(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.SetAutoBidReq req = request.getDataAs(BidRequests.SetAutoBidReq.class);
-
-        bidService.setAutoBid(user, req.getAuctionId(), req.getMaxBid(), req.getIncrement());
-        return Response.ok("Đã cài đặt Auto-Bid thành công");
+    public Response handleSetAutoBid(Dto<?> requestData, User user) throws Exception {
+        bidService.setAutoBid(
+                user,
+                requestData.getString("auctionId"),
+                requestData.getDouble("maxBid"),
+                requestData.getDouble("increment")
+        );
+        return Response.ok("Da cai dat Auto-Bid thanh cong");
     }
 
-    // CANCEL_AUTO_BID
-    public Response handleCancelAutoBid(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
-
-        bidService.cancelAutoBid(user, req.getAuctionId());
-        return Response.ok("Đã hủy Auto-Bid");
+    public Response handleCancelAutoBid(Dto<?> requestData, User user) throws Exception {
+        bidService.cancelAutoBid(user, requestData.getString("auctionId"));
+        return Response.ok("Da huy Auto-Bid");
     }
 
-    // CHECK_AUTO_BID
-    public Response handleCheckAutoBid(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
-
-        LiveAuction liveAuction = AuctionManager.getInstance().getAuction(req.getAuctionId());
+    public Response handleCheckAutoBid(Dto<?> requestData, User user) throws Exception {
+        String auctionId = requestData.getString("auctionId");
+        LiveAuction liveAuction = AuctionManager.getInstance().getAuction(auctionId);
         if (liveAuction != null) {
             com.auctionuet.server.domain.model.AutoBidConfig config = liveAuction.getAutoBidConfig(user.getId());
             if (config != null) {
-                return Response.ok(new AutoBidConfigDTO(config.getMaxBid(), config.getIncrement()));
+                return Response.ok(ActionType.CHECK_AUTO_BID.createResponseDto()
+                        .set("maxBid", config.getMaxBid())
+                        .set("increment", config.getIncrement()));
             }
         }
-        return Response.ok((Object)null);
+        return Response.ok(ActionType.CHECK_AUTO_BID.createResponseDto());
     }
 
-    // SUBSCRIBE — Đăng ký nhận push notification cho một phiên đấu giá
-    public Response handleSubscribe(Request request, ClientHandler clientHandler) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
-
-        // Lấy LiveAuction từ AuctionManager và đăng ký ClientHandler làm Observer
-        LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
-        if (auction == null) return Response.error("Phiên đấu giá không tồn tại hoặc chưa RUNNING");
+    public Response handleSubscribe(Dto<?> requestData, User user, ClientHandler clientHandler) throws Exception {
+        String auctionId = requestData.getString("auctionId");
+        LiveAuction auction = AuctionManager.getInstance().getAuction(auctionId);
+        if (auction == null) return Response.error("Phien dau gia khong ton tai hoac chua RUNNING");
 
         auction.addObserver(clientHandler);
-        return Response.ok("Đã subscribe phiên " + req.getAuctionId());
+        return Response.ok("Da subscribe phien " + auctionId);
     }
 
-    // UNSUBSCRIBE — Hủy đăng ký push
-    public Response handleUnsubscribe(Request request, ClientHandler clientHandler) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        BidRequests.AuctionIdReq req = request.getDataAs(BidRequests.AuctionIdReq.class);
-
-        LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
+    public Response handleUnsubscribe(Dto<?> requestData, User user, ClientHandler clientHandler) throws Exception {
+        String auctionId = requestData.getString("auctionId");
+        LiveAuction auction = AuctionManager.getInstance().getAuction(auctionId);
         if (auction != null) {
             auction.removeObserver(clientHandler);
         }
-        return Response.ok("Đã hủy Auto-Bid");
+        return Response.ok("Da huy Subscribe");
     }
 
+    public static Map<String, Object> bidRecordToMap(BidRecord record, String auctionId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", record.getBidderId() + "-" + record.getTimestamp());
+        map.put("auctionId", auctionId);
+        map.put("bidderUsername", record.getBidderUsername());
+        map.put("amount", record.getAmount());
+        map.put("time", record.getTimestamp().toString());
+        return map;
+    }
+
+    public static Map<String, Object> bidSchemaToMap(BidSchema schema) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", schema.getId());
+        map.put("auctionId", schema.getAuctionId());
+        map.put("bidderUsername", schema.getBidderId());
+        map.put("amount", schema.getAmount());
+        map.put("time", schema.getTimestamp().toString());
+        return map;
+    }
 }

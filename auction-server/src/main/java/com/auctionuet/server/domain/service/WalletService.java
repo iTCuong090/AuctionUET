@@ -1,8 +1,9 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.ActionType;
+import com.auctionuet.protocol.contract.Dto;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
-import com.auctionuet.protocol.dto.response.WalletResponseDTO;
 
 public class WalletService {
     private final UserDAO userDAO;
@@ -11,7 +12,7 @@ public class WalletService {
         this.userDAO = userDAO;
     }
 
-    public synchronized WalletResponseDTO deposit(String userId, double amount) {
+    public synchronized Dto<?> deposit(String userId, double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
         }
@@ -22,10 +23,12 @@ public class WalletService {
         userSchema.setBalance(userSchema.getBalance() + amount);
         userDAO.update(userSchema);
         
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+        return ActionType.DEPOSIT.createResponseDto()
+                .set("balance", userSchema.getBalance())
+                .set("frozenBalance", userSchema.getFrozenBalance());
     }
 
-    public synchronized WalletResponseDTO withdraw(String userId, double amount) {
+    public synchronized Dto<?> withdraw(String userId, double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
         }
@@ -39,7 +42,9 @@ public class WalletService {
         userSchema.setBalance(userSchema.getBalance() - amount);
         userDAO.update(userSchema);
         
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+        return ActionType.WITHDRAW.createResponseDto()
+                .set("balance", userSchema.getBalance())
+                .set("frozenBalance", userSchema.getFrozenBalance());
     }
 
     public synchronized void freezeDeposit(String userId, double amount) {
@@ -80,12 +85,14 @@ public class WalletService {
         userDAO.update(userSchema);
     }
 
-    public WalletResponseDTO getWallet(String userId) {
+    public Dto<?> getWallet(String userId) {
         UserSchema userSchema = userDAO.findById(userId);
         if (userSchema == null) {
             throw new IllegalArgumentException("Không tìm thấy User");
         }
         
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+        return ActionType.GET_WALLET.createResponseDto()
+                .set("balance", userSchema.getBalance())
+                .set("frozenBalance", userSchema.getFrozenBalance());
     }
 }

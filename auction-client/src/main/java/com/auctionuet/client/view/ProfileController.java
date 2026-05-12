@@ -11,7 +11,7 @@ import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.model.UserDTO;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.WalletClient;
-import com.auctionuet.client.network.protocol.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.layout.HBox;

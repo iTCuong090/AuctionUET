@@ -1,72 +1,67 @@
 package com.auctionuet.protocol;
 
+import com.auctionuet.protocol.contract.Dto;
+import com.auctionuet.protocol.contract.DtoContract;
+
 import java.util.Map;
 
-public class Request {
+public class Request<T extends DtoContract> {
     private ActionType action;
-    private Map<String,Object> data;
+    private Map<String, Object> data;
     private String token;
-    public Request(){}
-    public Request(ActionType action,Map<String,Object> data,String token){
-        this.action=action;
-        this.data=data;
-        this.token=token;
+
+    public Request() {}
+
+    public Request(ActionType action, Map<String, Object> data, String token) {
+        this.action = action;
+        this.data = data;
+        this.token = token;
+    }
+
+    public Request(ActionType action, Map<String, Object> data) {
+        this.action = action;
+        this.data = data;
+    }
+    
+    public Request(ActionType action, Dto<T> dto, String token) {
+        this.action = action;
+        this.data = dto != null ? dto.toMap() : null;
+        this.token = token;
+    }
+
+    public Request(ActionType action, Dto<T> dto) {
+        this.action = action;
+        this.data = dto != null ? dto.toMap() : null;
     }
 
     public ActionType getAction() {
         return action;
     }
 
+    public void setAction(ActionType action) {
+        this.action = action;
+    }
+
     public Map<String, Object> getData() {
         return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Dto<T> getDataObject() {
+        if (action == null) return (Dto<T>) Dto.untyped(data);
+        return (Dto<T>) action.parseRequest(data);
     }
 
     public String getToken() {
         return token;
     }
 
-    public void setAction(ActionType action) {
-        this.action = action;
-    }
-
-    public void setData(Map<String, Object> data) {
-        this.data = data;
-    }
-
     public void setToken(String token) {
         this.token = token;
-    }
-
-    public <T> T getDataAs(Class<T> clazz) {
-        if (data == null) return null;
-        String json = com.auctionuet.protocol.util.NetworkGson.create().toJson(this.data);
-        return com.auctionuet.protocol.util.NetworkGson.create().fromJson(json, clazz);
-    }
-    public String getDataString(String key) {
-        Object value = data.get(key); // Láº¥y giÃ¡ trá»‹ ra dÆ°á»›i dáº¡ng Object
-
-        if (value == null) {
-            return null;
-        }
-        // DÃ¹ giÃ¡ trá»‹ gá»‘c lÃ  sá»‘ (Double), boolean, hay chuá»—i, nÃ³ Ä‘á»u convert vá» dáº¡ng String háº¿t.
-        return String.valueOf(value);
-    }
-    public Integer getDataInt(String key) {
-        Object value = data.get(key);
-
-        if (value == null) {
-            return null;
-        }
-
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
-        }
-        try {
-            return Integer.parseInt(value.toString());
-        } catch (NumberFormatException e) {
-            // Tráº£ vá»  null náº¿u dá»¯ liá»‡u bá»‹ sai Ä‘á»‹nh dáº¡ng (vÃ­ dá»¥ gá»­i lÃªn "TÃ¡m tÃ¡m tÃ¡m tÃ¡m")
-            return null;
-        }
     }
 
     public String toJson() {

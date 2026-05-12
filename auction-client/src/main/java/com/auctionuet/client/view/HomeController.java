@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import com.auctionuet.client.model.AuctionDTO;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
-import com.auctionuet.client.network.protocol.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 
 public class HomeController {
 

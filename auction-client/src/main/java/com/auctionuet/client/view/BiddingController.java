@@ -5,7 +5,7 @@ import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.ServerConnection;
-import com.auctionuet.client.network.protocol.PushMessage;
+import com.auctionuet.protocol.PushMessage;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -116,19 +116,19 @@ public class BiddingController {
     }
 
     private void onPushMessage(PushMessage push) {
-        if (!currentAuctionId.equals(push.getAuctionId())) return;
+        if (!currentAuctionId.equals(push.getDataObject().getString("auctionId"))) return;
 
         Platform.runLater(() -> {
-            switch (push.getPushType()) {
+            switch (push.getPushType().name()) {
                 case "BID_UPDATE":
-                    priceLabel.setText(String.format("💰 %,.0f VNĐ", push.getAmount()));
-                    leaderLabel.setText("👑 " + push.getBidderUsername());
-                    bidHistoryList.getItems().add(0, "Vừa xong - " + push.getBidderUsername() + " - " + String.format("%,.0f VNĐ", push.getAmount()));
+                    priceLabel.setText(String.format("💰 %,.0f VNĐ", push.getDataObject().getDouble("amount")));
+                    leaderLabel.setText("👑 " + push.getDataObject().getString("bidderUsername"));
+                    bidHistoryList.getItems().add(0, "Vừa xong - " + push.getDataObject().getString("bidderUsername") + " - " + String.format("%,.0f VNĐ", push.getDataObject().getDouble("amount")));
                     break;
 
                 case "AUCTION_EXTENDED":
                     try {
-                        endDateTime = java.time.LocalDateTime.parse(push.getNewEndTime());
+                        endDateTime = java.time.LocalDateTime.parse(push.getDataObject().getString("newEndTime"));
                         startCountdown();
                     } catch (Exception e) {}
                     break;
@@ -139,7 +139,7 @@ public class BiddingController {
                     statusBadge.setText("🔴 ĐÃ KẾT THÚC");
                     statusBadge.getStyleClass().remove("status-badge-running");
                     statusBadge.getStyleClass().add("status-badge-finished");
-                    leaderLabel.setText("🏆 Winner: " + push.getWinnerId() + " (Giá: " + String.format("%,.0f VNĐ", push.getFinalPrice()) + ")");
+                    leaderLabel.setText("🏆 Winner: " + push.getDataObject().getString("winnerId") + " (Giá: " + String.format("%,.0f VNĐ", push.getDataObject().getDouble("finalPrice")) + ")");
                     
                     bidAmountField.setDisable(true);
                     placeBidBtn.setDisable(true);

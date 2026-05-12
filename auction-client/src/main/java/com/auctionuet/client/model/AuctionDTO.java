@@ -1,7 +1,7 @@
 package com.auctionuet.client.model;
 
 // Import đúng đường dẫn Enum
-import com.auctionuet.client.network.protocol.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 // Không cần import ItemDTO vì nó nằm chung thư mục model rồi
 
 public class AuctionDTO {

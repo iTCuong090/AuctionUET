@@ -1,42 +1,31 @@
 package com.auctionuet.server.network.controller;
 
-import com.auctionuet.server.domain.model.User;
-import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.server.domain.service.WalletService;
-import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
-import com.auctionuet.protocol.dto.request.WalletRequests;
-import com.auctionuet.protocol.dto.response.WalletResponseDTO;
+import com.auctionuet.protocol.contract.Dto;
+import com.auctionuet.server.domain.model.User;
+import com.auctionuet.server.domain.service.WalletService;
 
 public class WalletController {
     private final WalletService walletService;
-    private final SessionManager sessionManager;
 
     public WalletController(WalletService walletService) {
-        this.walletService=walletService;
-        this.sessionManager=SessionManager.getInstance();
+        this.walletService = walletService;
     }
 
-    public Response handleDeposit(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
-
-        WalletResponseDTO wallet = walletService.deposit(user.getId(), req.getAmount());
+    public Response handleDeposit(Dto<?> requestData, User user) throws Exception {
+        Double amount = requestData.getDouble("amount");
+        Dto<?> wallet = walletService.deposit(user.getId(), amount);
         return Response.ok(wallet);
     }
 
-    public Response handleWithdraw(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        WalletRequests.AmountReq req = request.getDataAs(WalletRequests.AmountReq.class);
-
-        WalletResponseDTO wallet = walletService.withdraw(user.getId(), req.getAmount());
+    public Response handleWithdraw(Dto<?> requestData, User user) throws Exception {
+        Double amount = requestData.getDouble("amount");
+        Dto<?> wallet = walletService.withdraw(user.getId(), amount);
         return Response.ok(wallet);
     }
 
-    public Response handleGetWallet(Request request) throws Exception {
-        User user = sessionManager.validateToken(request.getToken());
-        WalletResponseDTO wallet = walletService.getWallet(user.getId());
+    public Response handleGetWallet(User user) throws Exception {
+        Dto<?> wallet = walletService.getWallet(user.getId());
         return Response.ok(wallet);
     }
 }
-
