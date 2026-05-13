@@ -1,7 +1,8 @@
 package com.auctionuet.client.view;
 
-import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.WalletClient;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -9,19 +10,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
-import java.util.Map;
-
 public class WalletController {
 
     @FXML private Label balanceLabel;
     @FXML private Label frozenLabel;
     @FXML private Label totalLabel;
-    
+
     @FXML private TextField depositAmountField;
     @FXML private Button generateQrBtn;
     @FXML private VBox qrPlaceholder;
     @FXML private Button confirmDepositBtn;
-    
+
     @FXML private TextField withdrawAmountField;
     @FXML private Label statusLabel;
 
@@ -38,20 +37,13 @@ public class WalletController {
 
         new Thread(() -> {
             try {
-                Map<String, Double> walletInfo = walletClient.getWallet(token);
-                
-                double balance = walletInfo.getOrDefault("balance", 0.0);
-                double frozen = walletInfo.getOrDefault("frozenBalance", 0.0);
-                double total = balance + frozen;
-
+                WalletResponseDTO walletInfo = walletClient.getWallet(token);
                 Platform.runLater(() -> {
-                    balanceLabel.setText(String.format("%,.0f VNĐ", balance));
-                    frozenLabel.setText(String.format("%,.0f VNĐ", frozen));
-                    totalLabel.setText(String.format("%,.0f VNĐ", total));
+                    renderWallet(walletInfo);
                     statusLabel.setText("");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("❌ Lỗi tải ví: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Loi tai vi: " + e.getMessage()));
             }
         }).start();
     }
@@ -60,30 +52,28 @@ public class WalletController {
     private void handleGenerateQr() {
         String amountText = depositAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("❌ Vui lòng nhập số tiền cần nạp.");
+            statusLabel.setText("Vui long nhap so tien can nap.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("❌ Số tiền phải lớn hơn 0.");
+                statusLabel.setText("So tien phai lon hon 0.");
                 return;
             }
 
-            // Hiện mã QR và nút xác nhận, ẩn nút tạo QR
             qrPlaceholder.setVisible(true);
             qrPlaceholder.setManaged(true);
             confirmDepositBtn.setVisible(true);
             confirmDepositBtn.setManaged(true);
             generateQrBtn.setVisible(false);
             generateQrBtn.setManaged(false);
-            
-            statusLabel.setText("✅ Vui lòng quét mã QR để thanh toán, sau đó nhấn Xác nhận.");
-            statusLabel.setStyle("-fx-text-fill: #22c55e;"); // Green color for success tip
 
+            statusLabel.setText("Vui long quet ma QR, sau do nhan Xac nhan.");
+            statusLabel.setStyle("-fx-text-fill: #22c55e;");
         } catch (NumberFormatException ex) {
-            statusLabel.setText("❌ Số tiền không hợp lệ.");
+            statusLabel.setText("So tien khong hop le.");
         }
     }
 
@@ -96,20 +86,12 @@ public class WalletController {
 
             new Thread(() -> {
                 try {
-                    Map<String, Double> newWallet = walletClient.deposit(token, amount);
-                    
-                    double balance = newWallet.getOrDefault("balance", 0.0);
-                    double frozen = newWallet.getOrDefault("frozenBalance", 0.0);
-                    double total = balance + frozen;
-
+                    WalletResponseDTO newWallet = walletClient.deposit(token, amount);
                     Platform.runLater(() -> {
-                        balanceLabel.setText(String.format("%,.0f VNĐ", balance));
-                        frozenLabel.setText(String.format("%,.0f VNĐ", frozen));
-                        totalLabel.setText(String.format("%,.0f VNĐ", total));
-                        statusLabel.setText("✅ Nạp tiền thành công!");
+                        renderWallet(newWallet);
+                        statusLabel.setText("Nap tien thanh cong!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
-                        
-                        // Reset UI nạp tiền
+
                         depositAmountField.clear();
                         qrPlaceholder.setVisible(false);
                         qrPlaceholder.setManaged(false);
@@ -120,14 +102,13 @@ public class WalletController {
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("❌ Lỗi nạp tiền: " + e.getMessage());
+                        statusLabel.setText("Loi nap tien: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
-
         } catch (NumberFormatException ex) {
-            statusLabel.setText("❌ Số tiền không hợp lệ.");
+            statusLabel.setText("So tien khong hop le.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -136,14 +117,14 @@ public class WalletController {
     private void handleWithdraw() {
         String amountText = withdrawAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("❌ Vui lòng nhập số tiền cần rút.");
+            statusLabel.setText("Vui long nhap so tien can rut.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("❌ Số tiền phải lớn hơn 0.");
+                statusLabel.setText("So tien phai lon hon 0.");
                 return;
             }
 
@@ -151,31 +132,33 @@ public class WalletController {
 
             new Thread(() -> {
                 try {
-                    Map<String, Double> newWallet = walletClient.withdraw(token, amount);
-                    
-                    double balance = newWallet.getOrDefault("balance", 0.0);
-                    double frozen = newWallet.getOrDefault("frozenBalance", 0.0);
-                    double total = balance + frozen;
-
+                    WalletResponseDTO newWallet = walletClient.withdraw(token, amount);
                     Platform.runLater(() -> {
-                        balanceLabel.setText(String.format("%,.0f VNĐ", balance));
-                        frozenLabel.setText(String.format("%,.0f VNĐ", frozen));
-                        totalLabel.setText(String.format("%,.0f VNĐ", total));
-                        statusLabel.setText("✅ Rút tiền thành công!");
+                        renderWallet(newWallet);
+                        statusLabel.setText("Rut tien thanh cong!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
                         withdrawAmountField.clear();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("❌ Lỗi rút tiền: " + e.getMessage());
+                        statusLabel.setText("Loi rut tien: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
-
         } catch (NumberFormatException ex) {
-            statusLabel.setText("❌ Số tiền không hợp lệ.");
+            statusLabel.setText("So tien khong hop le.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
+    }
+
+    private void renderWallet(WalletResponseDTO wallet) {
+        double balance = wallet != null ? wallet.getBalance() : 0.0;
+        double frozen = wallet != null ? wallet.getFrozenBalance() : 0.0;
+        double total = balance + frozen;
+
+        balanceLabel.setText(String.format("%,.0f VND", balance));
+        frozenLabel.setText(String.format("%,.0f VND", frozen));
+        totalLabel.setText(String.format("%,.0f VND", total));
     }
 }

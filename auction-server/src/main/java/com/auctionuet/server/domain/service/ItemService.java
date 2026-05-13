@@ -10,6 +10,8 @@ import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,8 +79,7 @@ public class ItemService {
     }
 
     private ItemDTO toItemDTO(ItemSchema schema, String sellerUsername) {
-        Map<String, Object> normalizedExtra = schema.getType()
-                .normalizeAndValidateExtraFields(schema.getExtraFields());
+        Map<String, Object> normalizedExtra = normalizeExtraFieldsForResponse(schema);
 
         return new ItemDTO(
                 schema.getId(),
@@ -91,6 +92,36 @@ public class ItemService {
                 schema.getCondition(),
                 normalizedExtra
         );
+    }
+
+    private Map<String, Object> normalizeExtraFieldsForResponse(ItemSchema schema) {
+        try {
+            return schema.getType().normalizeAndValidateExtraFields(schema.getExtraFields());
+        } catch (IllegalArgumentException ex) {
+            return defaultExtraFields(schema.getType());
+        }
+    }
+
+    private Map<String, Object> defaultExtraFields(ItemType type) {
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        switch (type) {
+            case ELECTRONICS -> {
+                defaults.put("brand", "Unknown");
+                defaults.put("warrantyMonths", 0);
+            }
+            case ART -> {
+                defaults.put("artist", "Unknown");
+                defaults.put("year", Year.now().getValue());
+                defaults.put("medium", "Unknown");
+            }
+            case VEHICLE -> {
+                defaults.put("make", "Unknown");
+                defaults.put("model", "Unknown");
+                defaults.put("mileage", 0);
+                defaults.put("vehicleYear", 1886);
+            }
+        }
+        return defaults;
     }
 
     private ItemSchema toNewSchema(

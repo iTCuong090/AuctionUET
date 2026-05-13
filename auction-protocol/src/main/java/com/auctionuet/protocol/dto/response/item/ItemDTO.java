@@ -74,4 +74,9 @@ public class ItemDTO implements ValidatableDTO {
     public String getImageUrl() { return imageUrl; }
     public String getCondition() { return condition; }
     public Map<String, Object> getExtraFields() { return extraFields; }
+
+    @Override
+    public String toString() {
+        return name + " (" + startingPrice + ")";
+    }
 }

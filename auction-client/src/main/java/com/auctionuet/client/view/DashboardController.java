@@ -7,7 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.model.UserDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 
 import java.io.IOException;
 

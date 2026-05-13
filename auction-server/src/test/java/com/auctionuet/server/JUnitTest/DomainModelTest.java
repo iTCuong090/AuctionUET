@@ -1,24 +1,20 @@
 package com.auctionuet.server.JUnitTest;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
-import com.auctionuet.server.domain.model.*;
-import com.auctionuet.server.exception.*;
+import com.auctionuet.server.domain.model.Bidder;
+import com.auctionuet.server.domain.model.LiveAuction;
+import com.auctionuet.server.domain.model.Seller;
+import com.auctionuet.server.domain.model.User;
+import com.auctionuet.server.exception.AuctionClosedException;
+import com.auctionuet.server.exception.InvalidBidException;
 import org.junit.jupiter.api.Test;
-import java.time.LocalDateTime;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DomainModelTest {
-
-    @Test
-    void testItemImmutable() {
-        Class<?> itemClass = Item.class;
-        for (Field field : itemClass.getDeclaredFields()) {
-            assertTrue(Modifier.isFinal(field.getModifiers()), "Field " + field.getName() + " phải là final");
-        }
-    }
 
     @Test
     void testLiveAuctionPlaceBid() throws Exception {

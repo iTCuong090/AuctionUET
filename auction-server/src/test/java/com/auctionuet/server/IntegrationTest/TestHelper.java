@@ -1,17 +1,19 @@
 package com.auctionuet.server.IntegrationTest;
 
-import java.io.*;
-import java.net.Socket;
 import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.util.NetworkGson;
 import com.auctionuet.server.network.server.AuctionServer;
-import com.google.gson.Gson;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class TestHelper {
     private static AuctionServer runningServer;
 
     public static void startTestServer(int port) {
-        new Thread(() -> {  // Thread(runable)
+        new Thread(() -> {
             try {
                 runningServer = new AuctionServer(port);
                 runningServer.start();
@@ -20,7 +22,6 @@ public class TestHelper {
             }
         }).start();
 
-        // Cho sever có thời gian khởi động, nếu không sẽ gây lỗi mất kết nối
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
@@ -38,30 +39,18 @@ public class TestHelper {
     public static Response sendRawRequest(int port, String json) throws Exception {
         try (Socket socket = new Socket("localhost", port)) {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            out.println(json);          // gửi request
+            out.println(json);
             String response = in.readLine();
-            return new Gson().fromJson(response, Response.class);
+            return NetworkGson.create().fromJson(response, Response.class);
         }
     }
 
     public static void cleanTestData() {
-        // 1. Chỉ định đường dẫn đến file JSON test
         java.io.File file = new java.io.File("data/users.json");
-
-        // 2. Kiểm tra xem file có tồn tại không trước khi xóa
-        if (file.exists()) {
-            boolean deleted = file.delete(); // Lệnh xóa file
-
-            if (deleted) {
-                System.out.println("Đã xóa file dữ liệu test thành công.");
-            } else {
-                System.err.println("Không thể xóa file test. Có thể file đang được mở bởi một chương trình khác.");
-            }
-        } else {
-            System.out.println("Không tìm thấy file test để xóa.");
+        if (file.exists() && !file.delete()) {
+            System.err.println("Khong the xoa file test users.json.");
         }
     }
 }

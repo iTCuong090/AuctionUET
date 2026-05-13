@@ -1,27 +1,26 @@
 package com.auctionuet.client.view;
 
+import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.model.ItemDTO;
-import com.auctionuet.client.network.ItemClient;
-import com.auctionuet.client.network.AuctionClient;
-import com.auctionuet.client.network.protocol.ItemType;
 
 public class CreateAuctionController {
 
-    // ĐÃ SỬA: Đổi sang nhận ItemDTO thật
     @FXML private ComboBox<ItemDTO> itemComboBox;
     @FXML private Label previewName, previewPrice, previewType, durationLabel, statusLabel;
     @FXML private TextField titleField, antiSnipingWindowField, antiSnipingExtensionField;
@@ -38,12 +37,12 @@ public class CreateAuctionController {
 
         itemComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                previewName.setText("Tên: " + newVal.getName());
-                previewPrice.setText(String.format("Giá khởi điểm: %,.0f VNĐ", newVal.getStartingPrice()));
-                previewType.setText("Loại: " + newVal.getType());
+                previewName.setText("Ten: " + newVal.getName());
+                previewPrice.setText(String.format("Gia khoi diem: %,.0f VND", newVal.getStartingPrice()));
+                previewType.setText("Loai: " + newVal.getType());
 
                 if (titleField.getText().isEmpty()) {
-                    titleField.setText("Đấu giá: " + newVal.getName());
+                    titleField.setText("Dau gia: " + newVal.getName());
                 }
             }
         });
@@ -52,7 +51,7 @@ public class CreateAuctionController {
         for (int i = 0; i < 24; i++) hours.add(String.format("%02d", i));
 
         ObservableList<String> minutes = FXCollections.observableArrayList();
-        for (int i = 0; i < 60; i+=5) minutes.add(String.format("%02d", i));
+        for (int i = 0; i < 60; i += 5) minutes.add(String.format("%02d", i));
 
         startHourCombo.setItems(hours); endHourCombo.setItems(hours);
         startMinuteCombo.setItems(minutes); endMinuteCombo.setItems(minutes);
@@ -70,23 +69,23 @@ public class CreateAuctionController {
         LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
 
         if (start == null || end == null) {
-            durationLabel.setText("⏱️ Thời lượng: Vui lòng chọn đầy đủ ngày giờ!");
+            durationLabel.setText("Thoi luong: Vui long chon du ngay gio.");
             durationLabel.setStyle("-fx-text-fill: #f39c12;");
             return;
         }
 
-        if (end.isBefore(start) || end.isEqual(start)) {
-            durationLabel.setText("❌ Lỗi: Thời gian kết thúc phải lớn hơn thời gian bắt đầu!");
+        if (!end.isAfter(start)) {
+            durationLabel.setText("Loi: Thoi gian ket thuc phai sau thoi gian bat dau.");
             durationLabel.setStyle("-fx-text-fill: #e94560;");
             return;
         }
 
         Duration duration = Duration.between(start, end);
-        long days = duration.toDays();
-        long hours = duration.toHoursPart();
-        long minutes = duration.toMinutesPart();
-
-        durationLabel.setText(String.format("⏱️ Thời lượng dự kiến: %d ngày, %d giờ, %d phút", days, hours, minutes));
+        durationLabel.setText(String.format(
+                "Thoi luong du kien: %d ngay, %d gio, %d phut",
+                duration.toDays(),
+                duration.toHoursPart(),
+                duration.toMinutesPart()));
         durationLabel.setStyle("-fx-text-fill: #2ecc71;");
     }
 
@@ -104,10 +103,12 @@ public class CreateAuctionController {
         LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
 
         if (selectedItem == null || title.isBlank() || start == null || end == null) {
-            showError("Vui lòng điền đầy đủ thông tin bắt buộc!"); return;
+            showError("Vui long dien day du thong tin bat buoc.");
+            return;
         }
-        if (end.isBefore(start) || end.isEqual(start)) {
-            showError("Thời gian kết thúc không hợp lệ!"); return;
+        if (!end.isAfter(start)) {
+            showError("Thoi gian ket thuc khong hop le.");
+            return;
         }
 
         int windowSec = 60;
@@ -120,29 +121,17 @@ public class CreateAuctionController {
                 extensionSec = Integer.parseInt(antiSnipingExtensionField.getText().trim());
             }
         } catch (NumberFormatException ex) {
-            showError("Cửa sổ Anti-Sniping phải là số nguyên!");
+            showError("Anti-Sniping phai la so nguyen.");
             return;
         }
-
-        Map<String, Object> requestData = new HashMap<>();
-        requestData.put("itemId", selectedItem.getId());
-        requestData.put("title", title);
-        requestData.put("description", descArea.getText());
-        requestData.put("startTime", start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        requestData.put("endTime", end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        requestData.put("antiSnipingWindowSeconds", windowSec);
-        requestData.put("antiSnipingExtensionSeconds", extensionSec);
-
-        System.out.println("=== CHUẨN BỊ GỬI REQUEST TẠO AUCTION LÊN SERVER ===");
-        requestData.forEach((k, v) -> System.out.println(k + ": " + v));
 
         String token = ClientSession.getInstance().getToken();
         if (token == null || token.isEmpty()) {
-            showError("Vui lòng đăng nhập lại!");
+            showError("Vui long dang nhap lai.");
             return;
         }
 
-        statusLabel.setText("Đang xử lý...");
+        statusLabel.setText("Dang xu ly...");
         statusLabel.setStyle("-fx-text-fill: #f39c12;");
 
         final int finalWindowSec = windowSec;
@@ -153,60 +142,48 @@ public class CreateAuctionController {
                 auctionClient.createAuction(
                         token,
                         selectedItem.getId(),
-                        start.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                        end.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                        start,
+                        end,
                         title,
                         descArea.getText(),
                         finalWindowSec,
-                        finalExtSec
-                );
-                
+                        finalExtSec);
+
                 Platform.runLater(() -> {
-                    statusLabel.setText("✅ Tạo phiên đấu giá thành công! Đang chuyển trang...");
+                    statusLabel.setText("Tao phien dau gia thanh cong.");
                     statusLabel.setStyle("-fx-text-fill: #2ecc71;");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> {
-                    showError("Lỗi từ server: " + e.getMessage());
-                });
+                Platform.runLater(() -> showError("Loi tu server: " + e.getMessage()));
             }
         }).start();
     }
 
     private void showError(String msg) {
-        statusLabel.setText("❌ " + msg);
+        statusLabel.setText("Loi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
-    /**
-     * Gọi server lấy danh sách item thật của user đang đăng nhập.
-     * Không dùng mock data nữa.
-     */
     private void loadMyItems() {
         String token = ClientSession.getInstance().getToken();
         if (token == null || token.isEmpty()) {
-            System.err.println("[CreateAuction] Chưa đăng nhập, không thể tải danh sách item.");
+            System.err.println("[CreateAuction] Chua dang nhap, khong the tai item.");
             return;
         }
 
-        // Chạy trên thread riêng để không block UI
         new Thread(() -> {
             try {
                 List<ItemDTO> items = itemClient.getMyItems(token);
                 Platform.runLater(() -> {
-                    ObservableList<ItemDTO> observableItems = FXCollections.observableArrayList(items);
-                    itemComboBox.setItems(observableItems);
+                    itemComboBox.setItems(FXCollections.observableArrayList(items));
                     if (items.isEmpty()) {
-                        statusLabel.setText("⚠️ Bạn chưa có sản phẩm nào. Hãy tạo sản phẩm trước!");
+                        statusLabel.setText("Ban chua co san pham nao. Hay tao san pham truoc.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     }
-                    System.out.println("[CreateAuction] Đã tải " + items.size() + " item từ server.");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> {
-                    showError("Không thể tải danh sách sản phẩm: " + e.getMessage());
-                });
-                System.err.println("[CreateAuction] Lỗi tải item: " + e.getMessage());
+                Platform.runLater(() -> showError("Khong the tai danh sach san pham: " + e.getMessage()));
+                System.err.println("[CreateAuction] Loi tai item: " + e.getMessage());
             }
         }).start();
     }

@@ -1,5 +1,9 @@
 package com.auctionuet.client.view;
 
+import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -7,55 +11,42 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.auctionuet.client.model.AuctionDTO;
-import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.network.AuctionClient;
-import com.auctionuet.client.network.protocol.AuctionStatus;
-
 public class HomeController {
+    private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    // === CÁC Ô THỐNG KÊ TRÊN BANNER ===
-    @FXML private Label statAuctionCount;   // Tổng số phiên đấu giá
-    @FXML private Label statRunningCount;   // Số phiên đang diễn ra (RUNNING)
-    @FXML private Label statFinishedCount;  // Số phiên đã kết thúc (FINISHED)
+    @FXML private Label statAuctionCount;
+    @FXML private Label statRunningCount;
+    @FXML private Label statFinishedCount;
 
-    // === KHU VỰC "SẮP KẾT THÚC" ===
-    @FXML private HBox endingSoonBox;              // Cái hộp chứa các Card sản phẩm sắp hết giờ
-    @FXML private Label endingSoonPlaceholder;      // Dòng chữ placeholder "Đang tải..."
+    @FXML private HBox endingSoonBox;
+    @FXML private Label endingSoonPlaceholder;
 
     @FXML
     public void initialize() {
-        System.out.println("Đã tải màn hình Trang chủ (Home)!");
-
-        // Gọi API lấy dữ liệu thật từ Server
         loadHomeData();
     }
 
-    /**
-     * Gọi API GET_AUCTIONS để lấy toàn bộ danh sách phiên đấu giá,
-     * sau đó tính thống kê và chọn 3 phiên sắp kết thúc nhất.
-     */
     private void loadHomeData() {
         String token = ClientSession.getInstance().getToken();
         if (token == null) {
             statAuctionCount.setText("0");
             statRunningCount.setText("0");
             statFinishedCount.setText("0");
-            endingSoonPlaceholder.setText("Vui lòng đăng nhập để xem dữ liệu.");
+            endingSoonPlaceholder.setText("Vui long dang nhap de xem du lieu.");
             return;
         }
 
-        // Chạy trên luồng nền để không đơ giao diện
         new Thread(() -> {
             try {
                 AuctionClient client = new AuctionClient();
                 List<AuctionDTO> allAuctions = client.getAuctions(token);
 
-                // ── TÍNH THỐNG KÊ ──
                 int total = allAuctions.size();
                 long running = allAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
@@ -64,7 +55,6 @@ public class HomeController {
                         .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
                         .count();
 
-                // ── LỌC 3 PHIÊN SẮP KẾT THÚC (đang RUNNING, sắp xếp theo endTime tăng dần) ──
                 List<AuctionDTO> endingSoon = allAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
                         .filter(a -> a.getEndTime() != null)
@@ -72,39 +62,29 @@ public class HomeController {
                         .limit(3)
                         .collect(Collectors.toList());
 
-                // ── CẬP NHẬT GIAO DIỆN (phải dùng Platform.runLater) ──
                 Platform.runLater(() -> {
-                    // 1. Đắp số thống kê vào 3 ô vuông
                     statAuctionCount.setText(String.valueOf(total));
                     statRunningCount.setText(String.valueOf(running));
                     statFinishedCount.setText(String.valueOf(finished));
-
-                    // 2. Render các card "Sắp kết thúc"
                     renderEndingSoon(endingSoon);
                 });
-
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    System.out.println("❌ Lỗi tải trang chủ: " + e.getMessage());
-                    statAuctionCount.setText("–");
-                    statRunningCount.setText("–");
-                    statFinishedCount.setText("–");
-                    endingSoonPlaceholder.setText("Không thể tải dữ liệu. Server có thể đang tắt.");
+                    System.out.println("Loi tai trang chu: " + e.getMessage());
+                    statAuctionCount.setText("-");
+                    statRunningCount.setText("-");
+                    statFinishedCount.setText("-");
+                    endingSoonPlaceholder.setText("Khong the tai du lieu.");
                 });
             }
         }).start();
     }
 
-    /**
-     * Render danh sách các Card sản phẩm sắp kết thúc vào HBox.
-     * Tạo giao diện giống y hệt AuctionListController.createAuctionCard()
-     */
     private void renderEndingSoon(List<AuctionDTO> endingSoon) {
-        // Xóa placeholder
         endingSoonBox.getChildren().clear();
 
         if (endingSoon.isEmpty()) {
-            Label empty = new Label("Hiện chưa có phiên đấu giá nào đang diễn ra.");
+            Label empty = new Label("Hien chua co phien dau gia nao dang dien ra.");
             empty.setStyle("-fx-font-style: italic; -fx-font-size: 16px;");
             empty.getStyleClass().add("text-secondary");
             endingSoonBox.getChildren().add(empty);
@@ -116,9 +96,6 @@ public class HomeController {
         }
     }
 
-    /**
-     * Tạo một thẻ Card nhỏ gọn cho mục "Sắp kết thúc", giống style của AuctionList.
-     */
     private VBox createMiniCard(AuctionDTO auction) {
         VBox card = new VBox(10);
         card.setPrefWidth(220);
@@ -131,31 +108,25 @@ public class HomeController {
             "-fx-border-width: 1;"
         );
 
-        // Tiêu đề
-        Label title = new Label(auction.getTitle() != null ? auction.getTitle() : "Không có tiêu đề");
+        Label title = new Label(auction.getTitle() != null ? auction.getTitle() : "Khong co tieu de");
         title.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        // Giá cao nhất
-        Label price = new Label(String.format("💰 %,.0f VNĐ", auction.getCurrentHighestBid()));
+        Label price = new Label(String.format("%,.0f VND", auction.getCurrentHighestBid()));
         price.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 
-        // Thời gian kết thúc
-        String endTime = auction.getEndTime() != null ? auction.getEndTime() : "Chưa rõ";
-        Label timeLabel = new Label("⏰ " + endTime);
+        Label timeLabel = new Label("Ket thuc: " + formatTime(auction.getEndTime()));
         timeLabel.setStyle("-fx-font-size: 13px;");
         timeLabel.getStyleClass().add("text-detail");
 
-        // Seller
-        String seller = auction.getSellerUsername() != null ? auction.getSellerUsername() : "Chưa rõ";
-        Label sellerLabel = new Label("👤 " + seller);
+        String seller = auction.getSellerUsername() != null ? auction.getSellerUsername() : "Chua ro";
+        Label sellerLabel = new Label("Seller: " + seller);
         sellerLabel.setStyle("-fx-font-size: 13px;");
         sellerLabel.getStyleClass().add("text-secondary");
 
-        // Nút xem chi tiết
-        Button btnDetail = new Button("Xem chi tiết");
+        Button btnDetail = new Button("Xem chi tiet");
         btnDetail.setMaxWidth(Double.MAX_VALUE);
         btnDetail.setStyle(
             "-fx-background-color: #4ecdc4; " +
@@ -175,18 +146,21 @@ public class HomeController {
                 AuctionDetailController detailCtrl = loader.getController();
                 detailCtrl.setAuctionData(auction.getId());
 
-                // Tìm contentArea (StackPane) trong Dashboard để nhét vào
                 javafx.scene.Parent currentRoot = btnDetail.getScene().getRoot();
                 if (currentRoot instanceof javafx.scene.layout.BorderPane) {
                     ((javafx.scene.layout.BorderPane) currentRoot).setCenter(detailRoot);
                 }
             } catch (Exception ex) {
-                System.out.println("❌ Lỗi chuyển trang chi tiết: " + ex.getMessage());
+                System.out.println("Loi chuyen trang chi tiet: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
 
         card.getChildren().addAll(title, price, timeLabel, sellerLabel, btnDetail);
         return card;
+    }
+
+    private String formatTime(LocalDateTime time) {
+        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
     }
 }

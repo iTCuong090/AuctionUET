@@ -1,17 +1,13 @@
 package com.auctionuet.client.view;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import com.auctionuet.client.network.ServerConnection;
-import com.auctionuet.client.network.AuthClient;
-import com.auctionuet.client.network.protocol.Response;
 import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.model.UserDTO;
-
-// Import thư viện bóc tách JSON
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.auctionuet.client.network.AuthClient;
+import com.auctionuet.client.network.ServerConnection;
+import com.auctionuet.protocol.dto.response.auth.LoginResponseDTO;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 
 public class LoginController {
     @FXML private TextField usernameField;
@@ -19,13 +15,8 @@ public class LoginController {
     @FXML private Label errorLabel;
     @FXML private javafx.scene.control.Button loginButton;
 
-    // Reference tới MainController cha để chuyển panel
     private MainController mainController;
 
-    /**
-     * Được gọi bởi MainController sau khi load FXML,
-     * để LoginController có thể yêu cầu chuyển panel.
-     */
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
     }
@@ -36,12 +27,12 @@ public class LoginController {
         String password = passwordField.getText();
 
         if (username.isBlank() || password.isBlank()) {
-            errorLabel.setText("Lỗi: Không được để trống!");
+            errorLabel.setText("Loi: Khong duoc de trong!");
             errorLabel.setVisible(true);
             return;
         }
 
-        errorLabel.setText("Đang kết nối Server...");
+        errorLabel.setText("Dang ket noi Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         loginButton.setDisable(true);
@@ -50,54 +41,16 @@ public class LoginController {
             try {
                 ServerConnection.getInstance().connect("localhost", 8888);
                 AuthClient client = new AuthClient();
-                Response res = client.login(username, password);
+                LoginResponseDTO loginResponse = client.login(username, password);
 
                 javafx.application.Platform.runLater(() -> {
-                    if ("OK".equals(res.getStatus())) {
-                        try {
-                            Gson gson = new Gson();
-                            String dataStr = gson.toJson(res.getData());
-
-                            // NẾU DÙNG MOCK DATA (Server chưa code xong)
-                            if (!dataStr.trim().startsWith("{")) {
-                                // Tự nặn ra một cái JSON ảo có role SELLER để qua cửa
-                                String mockJson = "{\"username\":\"" + username + "\", \"role\":\"SELLER\"}";
-                                UserDTO mockUser = gson.fromJson(mockJson, UserDTO.class);
-
-                                ClientSession.getInstance().login(dataStr, mockUser);
-                                System.out.println("⚠️ CẢNH BÁO: Đang dùng FakeServer. Tự động mock data!");
-                            }
-                            // NẾU LÀ SERVER THẬT
-                            else {
-                                // Server trả về object LoginResponseDTO (có chứa token và UserDTO)
-                                com.auctionuet.client.model.LoginResponseDTO loginResponse = gson.fromJson(dataStr, com.auctionuet.client.model.LoginResponseDTO.class);
-                                String exactToken = loginResponse.getToken();
-                                UserDTO loggedInUser = loginResponse.getUser();
-
-                                ClientSession.getInstance().login(exactToken, loggedInUser);
-                                System.out.println("✅ Server Thật - Đăng nhập thành công! Role: " + loggedInUser.getRole());
-                            }
-
-                            // CHUYỂN TOÀN BỘ SCENE SANG DASHBOARD
-                            SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
-
-                        } catch (Exception ex) {
-                            System.out.println("❌ Lỗi trong quá trình bóc tách JSON hoặc chuyển trang!");
-                            ex.printStackTrace();
-                            errorLabel.setText("❌ Lỗi xử lý dữ liệu từ Server!");
-                            errorLabel.setStyle("-fx-text-fill: red;");
-                        }
-
-                    } else {
-                        errorLabel.setText("❌ " + res.getMessage());
-                        errorLabel.setStyle("-fx-text-fill: red;");
-                    }
+                    ClientSession.getInstance().login(loginResponse.getToken(), loginResponse.getUser());
+                    SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
                     loginButton.setDisable(false);
                 });
-
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> {
-                    errorLabel.setText("❌ Không tìm thấy Server. Hãy kiểm tra lại kết nối!");
+                    errorLabel.setText("Loi dang nhap: " + e.getMessage());
                     errorLabel.setStyle("-fx-text-fill: red;");
                     loginButton.setDisable(false);
                     e.printStackTrace();
@@ -106,9 +59,6 @@ public class LoginController {
         }).start();
     }
 
-    /**
-     * Chuyển panel phải sang RegisterView (không đổi Scene).
-     */
     @FXML
     public void handleSwitchToRegister() {
         if (mainController != null) {

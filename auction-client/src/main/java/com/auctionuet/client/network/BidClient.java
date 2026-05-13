@@ -1,116 +1,105 @@
 package com.auctionuet.client.network;
 
-import com.auctionuet.client.network.protocol.ActionType;
-import com.auctionuet.client.network.protocol.Request;
-import com.auctionuet.client.network.protocol.Response;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.util.HashMap;
+import com.auctionuet.protocol.ActionType;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.dto.request.bid.AuctionIdRequestDTO;
+import com.auctionuet.protocol.dto.request.bid.PlaceBidRequestDTO;
+import com.auctionuet.protocol.dto.request.bid.SetAutoBidRequestDTO;
+import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
+
 import java.util.List;
-import java.util.Map;
 
 public class BidClient {
-    
+
     public void subscribe(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        
-        Request req = new Request(ActionType.SUBSCRIBE, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if (!"OK".equals(res.getStatus())) {
-            throw new Exception(res.getMessage());
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.SUBSCRIBE, data, token));
+
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
         }
     }
 
-    public List<Map<String, Object>> getBidHistory(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        
-        Request req = new Request(ActionType.GET_BID_HISTORY, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if ("OK".equals(res.getStatus())) {
-            Gson gson = new Gson();
-            return gson.fromJson(gson.toJson(res.getData()), new TypeToken<List<Map<String, Object>>>(){}.getType());
+    public List<BidDTO> getBidHistory(String token, String auctionId) throws Exception {
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.GET_BID_HISTORY, data, token));
+
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataListAs(BidDTO.class);
         }
-        throw new Exception(res.getMessage());
+        throw new Exception(response.getMessage());
     }
 
-    public void unsubscribe(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        
-        Request req = new Request(ActionType.UNSUBSCRIBE, data);
-        req.setToken(token);
-        
-        // Use a background call or ignore failure to not block UI thread
+    public void unsubscribe(String token, String auctionId) {
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
         try {
-            ServerConnection.getInstance().sendRequest(req);
-        } catch (Exception e) {
-            // Ignore for unsubscribe
+            ServerConnection.getInstance()
+                    .sendRequest(Request.fromDto(ActionType.UNSUBSCRIBE, data, token));
+        } catch (Exception ignored) {
+            // Ignore unsubscribe failures so navigation is not blocked.
         }
     }
 
-    public void placeBid(String token, String auctionId, double amount) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        data.put("amount", amount);
-        
-        Request req = new Request(ActionType.PLACE_BID, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if (!"OK".equals(res.getStatus())) {
-            throw new Exception(res.getMessage());
+    public BidDTO placeBid(String token, String auctionId, double amount) throws Exception {
+        PlaceBidRequestDTO data = new PlaceBidRequestDTO();
+        data.setAuctionId(auctionId);
+        data.setAmount(amount);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.PLACE_BID, data, token));
+
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataAs(BidDTO.class);
         }
+        throw new Exception(response.getMessage());
     }
 
     public void setAutoBid(String token, String auctionId, double maxBid, double increment) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        data.put("maxBid", maxBid);
-        data.put("increment", increment);
-        
-        Request req = new Request(ActionType.SET_AUTO_BID, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if (!"OK".equals(res.getStatus())) {
-            throw new Exception(res.getMessage());
+        SetAutoBidRequestDTO data = new SetAutoBidRequestDTO();
+        data.setAuctionId(auctionId);
+        data.setMaxBid(maxBid);
+        data.setIncrement(increment);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.SET_AUTO_BID, data, token));
+
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
         }
     }
 
     public void cancelAutoBid(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        
-        Request req = new Request(ActionType.CANCEL_AUTO_BID, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if (!"OK".equals(res.getStatus())) {
-            throw new Exception(res.getMessage());
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.CANCEL_AUTO_BID, data, token));
+
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
         }
     }
 
-    public Map<String, Object> checkAutoBid(String token, String auctionId) throws Exception {
-        Map<String, Object> data = new HashMap<>();
-        data.put("auctionId", auctionId);
-        
-        Request req = new Request(ActionType.CHECK_AUTO_BID, data);
-        req.setToken(token);
-        
-        Response res = ServerConnection.getInstance().sendRequest(req);
-        if ("OK".equals(res.getStatus())) {
-            if (res.getData() != null) {
-                Gson gson = new Gson();
-                return gson.fromJson(gson.toJson(res.getData()), new TypeToken<Map<String, Object>>(){}.getType());
-            }
-            return null;
+    public AutoBidConfigDTO checkAutoBid(String token, String auctionId) throws Exception {
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.CHECK_AUTO_BID, data, token));
+
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataAs(AutoBidConfigDTO.class);
         }
-        throw new Exception(res.getMessage());
+        throw new Exception(response.getMessage());
     }
 }
