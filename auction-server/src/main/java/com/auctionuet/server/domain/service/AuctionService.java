@@ -1,14 +1,17 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
-import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.manager.AuctionManager;
+import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
-import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
+import com.auctionuet.server.persistence.schema.ItemSchema;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -16,8 +19,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Service chuyên xử lý các hành động liên quan tới Auction Management.
- * Logic về Item đã được tách sang ItemService.
+ * Service chuyen xu ly cac hanh dong lien quan toi Auction Management.
+ * Logic ve Item da duoc tach sang ItemService.
  */
 public class AuctionService {
 
@@ -35,68 +38,44 @@ public class AuctionService {
         this.auctionManager.setEndAuctionCallback(this::endAuction);
     }
 
-    public AuctionSchema createAuction(User seller, String itemId, LocalDateTime startTime,
+    public AuctionDTO createAuction(User seller, String itemId, LocalDateTime startTime,
             LocalDateTime endTime, String title, String description,
             int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) throws AuctionException {
-        if (!seller.hasPermission(com.auctionuet.protocol.enums.Permission.CREATE_AUCTION)) {
-            throw new AuctionException("Không có quyền CREATE_AUCTION");
-        }
-
-        ItemSchema item = itemService.getItemById(itemId);
-        if (item == null) {
-            throw new AuctionException("Item không tồn tại");
-        }
-
-        if (!seller.getId().equals(item.getSellerId())) {
-            throw new AuctionException("Bạn không phải chủ sở hữu của item này");
-        }
-
-        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
-            throw new AuctionException("Thời gian kết thúc phải sau thời gian bắt đầu");
-        }
-
-        if (startTime.isBefore(LocalDateTime.now())) {
-            throw new AuctionException("Thời gian bắt đầu phải ở trong tương lai");
-        }
+        requireCreateAuctionPermission(seller);
+        ItemSchema item = requireItem(itemId);
+        requireItemOwner(seller, item);
+        validateAuctionTimeRange(startTime, endTime);
+        requireFutureStartTime(startTime);
 
         AuctionSchema schema = new AuctionSchema(
-            UUID.randomUUID().toString(),
-            LocalDateTime.now(),
-            LocalDateTime.now(),
-            itemId,
-            seller.getId(),
-            title,
-            description,
-            startTime,
-            endTime,
-            AuctionStatus.OPEN,
-            0,
-            null,
-            antiSnipingWindowSeconds,
-            antiSnipingExtensionSeconds
-        );
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                itemId,
+                seller.getId(),
+                title,
+                description,
+                startTime,
+                endTime,
+                AuctionStatus.OPEN,
+                0,
+                null,
+                antiSnipingWindowSeconds,
+                antiSnipingExtensionSeconds);
 
         auctionDAO.save(schema);
 
         item.setAuctionCount(item.getAuctionCount() + 1);
         itemService.updateItem(item);
 
-        return schema;
+        ItemDTO itemDTO = itemService.getItemById(itemId);
+        return toAuctionDTO(schema, itemDTO, seller.getUsername(), null);
     }
 
     public void startAuction(User seller, String auctionId) throws AuctionException {
-        AuctionSchema schema = auctionDAO.findById(auctionId);
-        if (schema == null) {
-            throw new AuctionException("Auction không tồn tại");
-        }
-
-        if (!schema.getSellerId().equals(seller.getId())) {
-            throw new AuctionException("Bạn không phải chủ sở hữu của auction này");
-        }
-
-        if (schema.getStatus() != AuctionStatus.OPEN) {
-            throw new AuctionException("Auction hiện không ở trạng thái OPEN");
-        }
+        AuctionSchema schema = requireAuction(auctionId);
+        requireAuctionOwner(seller, schema);
+        requireAuctionStatus(schema, AuctionStatus.OPEN, "Auction hien khong o trang thai OPEN");
 
         schema.setStatus(AuctionStatus.RUNNING);
         auctionDAO.update(schema);
@@ -109,10 +88,10 @@ public class AuctionService {
             if (schema.getWinnerId() != null) {
                 schema.setStatus(AuctionStatus.WAITING_PAYMENT);
                 auctionDAO.update(schema);
-                
-                ItemSchema item = itemService.getItemById(schema.getItemId());
+
+                ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
                 double depositAmount = item != null ? item.getStartingPrice() * 0.10 : 0;
-                
+
                 scheduler.schedule(() -> {
                     AuctionSchema currentSchema = auctionDAO.findById(auctionId);
                     if (currentSchema != null && currentSchema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
@@ -121,7 +100,7 @@ public class AuctionService {
                             currentSchema.setStatus(AuctionStatus.CANCELED);
                             auctionDAO.update(currentSchema);
                         } catch (Exception e) {
-                            // Do nothing or handle
+                            // Ignore scheduler payment-forfeit errors
                         }
                     }
                 }, 24, TimeUnit.HOURS);
@@ -134,56 +113,142 @@ public class AuctionService {
     }
 
     public void payAuction(User winner, String auctionId) throws AuctionException {
-        AuctionSchema schema = auctionDAO.findById(auctionId);
-        if (schema == null) {
-            throw new AuctionException("Auction không tồn tại");
-        }
-        if (schema.getStatus() != AuctionStatus.WAITING_PAYMENT) {
-            throw new AuctionException("Auction không ở trạng thái chờ thanh toán");
-        }
-        if (!winner.getId().equals(schema.getWinnerId())) {
-            throw new AuctionException("Bạn không phải người chiến thắng");
-        }
-        
-        ItemSchema itemSchema = itemService.getItemById(schema.getItemId());
-        if (itemSchema == null) {
-            throw new AuctionException("Item không tồn tại");
-        }
-        
+        AuctionSchema schema = requireAuction(auctionId);
+        requireAuctionStatus(schema, AuctionStatus.WAITING_PAYMENT, "Auction khong o trang thai cho thanh toan");
+        requireWinner(winner, schema);
+        ItemSchema itemSchema = requireItem(schema.getItemId());
+
         double totalPrice = schema.getHighestBid();
         double depositAmount = itemSchema.getStartingPrice() * 0.10;
         double remaining = totalPrice - depositAmount;
-        
-        // This relies on withdraw throwing exception if insufficient balance
+
         try {
             walletService.withdraw(winner.getId(), remaining);
-            walletService.forfeitDeposit(winner.getId(), depositAmount); // Chuyển cọc thành thanh toán (hoặc trừ vào admin, nhưng theo spec là biến mất hoặc trừ)
+            walletService.forfeitDeposit(winner.getId(), depositAmount);
             walletService.deposit(schema.getSellerId(), totalPrice);
-            
+
             schema.setStatus(AuctionStatus.PAID);
             auctionDAO.update(schema);
         } catch (IllegalArgumentException e) {
-            throw new AuctionException("Thanh toán thất bại: " + e.getMessage());
+            throw new AuctionException("Thanh toan that bai: " + e.getMessage());
         }
     }
 
-    public List<AuctionSchema> getAuctions() {
-        List<AuctionSchema> list = auctionDAO.findAll();
-        return list;
+    public List<AuctionDTO> getAuctions() {
+        return toAuctionDTOList(auctionDAO.findAll());
     }
 
-    public List<AuctionSchema> getAuctionsByStatus(AuctionStatus status) {
-        List<AuctionSchema> list = auctionDAO.findByStatus(status);
-        return list;
+    public List<AuctionDTO> getAuctionsByStatus(AuctionStatus status) {
+        return toAuctionDTOList(auctionDAO.findByStatus(status));
     }
 
-    public AuctionSchema getAuctionById(String id) {
+    public AuctionDTO getAuctionById(String id) {
         AuctionSchema schema = auctionDAO.findById(id);
+        if (schema == null) {
+            throw new AuctionException("Auction khong ton tai");
+        }
+        return toAuctionDTO(schema);
+    }
+
+    public List<AuctionDTO> getAuctionsBySeller(String sellerId) {
+        return toAuctionDTOList(auctionDAO.findBySellerId(sellerId));
+    }
+
+    private List<AuctionDTO> toAuctionDTOList(List<AuctionSchema> schemas) {
+        List<AuctionDTO> auctionDTOList = new ArrayList<>();
+        for (AuctionSchema schema : schemas) {
+            AuctionDTO dto = toAuctionDTO(schema);
+            if (dto != null) {
+                auctionDTOList.add(dto);
+            }
+        }
+        return auctionDTOList;
+    }
+
+    private AuctionDTO toAuctionDTO(AuctionSchema schema) {
+        ItemDTO itemDTO = itemService.getItemById(schema.getItemId());
+        if (itemDTO == null) {
+            return null;
+        }
+        return toAuctionDTO(schema, itemDTO, schema.getSellerId(), schema.getWinnerId());
+    }
+
+    private AuctionDTO toAuctionDTO(
+            AuctionSchema schema,
+            ItemDTO itemDTO,
+            String sellerUsername,
+            String winnerUsername) {
+        return new AuctionDTO(
+                schema.getId(),
+                itemDTO,
+                sellerUsername,
+                schema.getTitle(),
+                schema.getDescription(),
+                schema.getStartTime(),
+                schema.getEndTime(),
+                schema.getStatus(),
+                schema.getHighestBid(),
+                winnerUsername);
+    }
+
+    private void requireCreateAuctionPermission(User seller) throws AuctionException {
+        if (!seller.hasPermission(com.auctionuet.protocol.enums.Permission.CREATE_AUCTION)) {
+            throw new AuctionException("Khong co quyen CREATE_AUCTION");
+        }
+    }
+
+    private ItemSchema requireItem(String itemId) throws AuctionException {
+        ItemSchema item = itemService.getItemSchemaById(itemId);
+        if (item == null) {
+            throw new AuctionException("Item khong ton tai");
+        }
+        return item;
+    }
+
+    private AuctionSchema requireAuction(String auctionId) throws AuctionException {
+        AuctionSchema schema = auctionDAO.findById(auctionId);
+        if (schema == null) {
+            throw new AuctionException("Auction khong ton tai");
+        }
         return schema;
     }
 
-    public List<AuctionSchema> getAuctionsBySeller(String sellerId) {
-        List<AuctionSchema> list = auctionDAO.findBySellerId(sellerId);
-        return list;
+    private void requireItemOwner(User seller, ItemSchema item) throws AuctionException {
+        if (!seller.getId().equals(item.getSellerId())) {
+            throw new AuctionException("Ban khong phai chu so huu cua item nay");
+        }
+    }
+
+    private void requireAuctionOwner(User seller, AuctionSchema auction) throws AuctionException {
+        if (!auction.getSellerId().equals(seller.getId())) {
+            throw new AuctionException("Ban khong phai chu so huu cua auction nay");
+        }
+    }
+
+    private void requireWinner(User winner, AuctionSchema auction) throws AuctionException {
+        if (!winner.getId().equals(auction.getWinnerId())) {
+            throw new AuctionException("Ban khong phai nguoi chien thang");
+        }
+    }
+
+    private void requireAuctionStatus(
+            AuctionSchema auction,
+            AuctionStatus expectedStatus,
+            String message) throws AuctionException {
+        if (auction.getStatus() != expectedStatus) {
+            throw new AuctionException(message);
+        }
+    }
+
+    private void validateAuctionTimeRange(LocalDateTime startTime, LocalDateTime endTime) throws AuctionException {
+        if (!endTime.isAfter(startTime)) {
+            throw new AuctionException("Thoi gian ket thuc phai sau thoi gian bat dau");
+        }
+    }
+
+    private void requireFutureStartTime(LocalDateTime startTime) throws AuctionException {
+        if (startTime.isBefore(LocalDateTime.now())) {
+            throw new AuctionException("Thoi gian bat dau phai o trong tuong lai");
+        }
     }
 }

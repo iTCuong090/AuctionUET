@@ -10,8 +10,8 @@ public class CreateAuctionRequestDTO implements ValidatableDTO {
     private String description;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer antiSnipingWindowSeconds;
-    private Integer antiSnipingExtensionSeconds;
+    private Integer antiSnipingWindowSeconds = 60;
+    private Integer antiSnipingExtensionSeconds = 120;
 
     public String getItemId() { return itemId; }
     public void setItemId(String itemId) { this.itemId = itemId; }
@@ -45,10 +45,14 @@ public class CreateAuctionRequestDTO implements ValidatableDTO {
         if (!endTime.isAfter(startTime)) {
             throw new IllegalArgumentException("endTime must be after startTime");
         }
-        if (antiSnipingWindowSeconds != null && antiSnipingWindowSeconds <= 0) {
+        if (antiSnipingWindowSeconds == null) {
+            antiSnipingWindowSeconds = 60;
+        } else if (antiSnipingWindowSeconds <= 0) {
             throw new IllegalArgumentException("antiSnipingWindowSeconds must be greater than 0 when provided");
         }
-        if (antiSnipingExtensionSeconds != null && antiSnipingExtensionSeconds <= 0) {
+        if (antiSnipingExtensionSeconds == null) {
+            antiSnipingExtensionSeconds = 120;
+        } else if (antiSnipingExtensionSeconds <= 0) {
             throw new IllegalArgumentException("antiSnipingExtensionSeconds must be greater than 0 when provided");
         }
     }

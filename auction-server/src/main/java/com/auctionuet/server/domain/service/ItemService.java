@@ -52,11 +52,19 @@ public class ItemService {
     public List<ItemDTO> getItemsBySellerId(String sellerId) {
         return itemDAO.findBySellerId(sellerId)
                 .stream()
-                .map(schema -> toItemDTO(schema, schema.getSellerId()))
+                .map(this::toItemDTO)
                 .collect(Collectors.toList());
     }
 
-    public ItemSchema getItemById(String itemId) {
+    public ItemDTO getItemById(String itemId) {
+        ItemSchema schema = getItemSchemaById(itemId);
+        if (schema == null) {
+            return null;
+        }
+        return toItemDTO(schema);
+    }
+
+    public ItemSchema getItemSchemaById(String itemId) {
         return itemDAO.findById(itemId);
     }
 
@@ -64,7 +72,11 @@ public class ItemService {
         itemDAO.update(item);
     }
 
-    public ItemDTO toItemDTO(ItemSchema schema, String sellerUsername) {
+    private ItemDTO toItemDTO(ItemSchema schema) {
+        return toItemDTO(schema, schema.getSellerId());
+    }
+
+    private ItemDTO toItemDTO(ItemSchema schema, String sellerUsername) {
         Map<String, Object> normalizedExtra = schema.getType()
                 .normalizeAndValidateExtraFields(schema.getExtraFields());
 
