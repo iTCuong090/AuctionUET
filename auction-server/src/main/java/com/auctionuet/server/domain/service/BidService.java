@@ -209,6 +209,9 @@ public class BidService {
         auctionSchema.setWinnerId(liveAuction.getCurrentWinnerId());
         auctionSchema.setUpdatedAt(LocalDateTime.now());
         auctionSchema.setEndTime(liveAuction.getEndTime());
+        for (String bidderId : liveAuction.getDepositedBidderIds()) {
+            auctionSchema.addDepositedBidder(bidderId);
+        }
         auctionDAO.update(auctionSchema);
     }
 

@@ -249,12 +249,22 @@ public class AuctionService {
             return true;
         }
 
+        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
+        if (liveAuction != null && liveAuction.hasDeposited(userId)) {
+            persistDepositParticipation(schema, liveAuction, userId);
+            return true;
+        }
+
         if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT && userId.equals(schema.getWinnerId())) {
             return true;
         }
 
-        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
-        return liveAuction != null && liveAuction.hasDeposited(userId);
+        if (canBackfillDepositForBidder(schema, userId)) {
+            persistDepositParticipation(schema, liveAuction, userId);
+            return true;
+        }
+
+        return false;
     }
 
     private void refundDepositsExcept(
@@ -283,6 +293,39 @@ public class AuctionService {
         }
         if (liveAuction != null) {
             liveAuction.unmarkDeposited(bidderId);
+        }
+    }
+
+    private void persistDepositParticipation(AuctionSchema schema, LiveAuction liveAuction, String bidderId) {
+        if (schema != null && schema.addDepositedBidder(bidderId)) {
+            auctionDAO.update(schema);
+        }
+        if (liveAuction != null) {
+            liveAuction.markDeposited(bidderId);
+        }
+    }
+
+    private boolean canBackfillDepositForBidder(AuctionSchema schema, String bidderId) {
+        if (schema.getStatus() != AuctionStatus.RUNNING) {
+            return false;
+        }
+
+        boolean hasBidHistory = bidService.getBidHistory(schema.getId()).stream()
+                .anyMatch(bid -> bidderId.equals(bid.getBidderId()));
+        if (!hasBidHistory) {
+            return false;
+        }
+
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        if (item == null) {
+            return false;
+        }
+
+        try {
+            UserSchema bidder = userService.getUserSchemaById(bidderId);
+            return bidder.getFrozenBalance() >= calculateDepositAmount(item);
+        } catch (RuntimeException e) {
+            return false;
         }
     }
 

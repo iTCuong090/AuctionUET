@@ -420,6 +420,70 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testAuctionDetailRepairsPersistedDepositFromLiveAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 550.0);
+        AuctionSchema schema = auctionDAO.findById(auction.getId());
+        schema.clearDepositedBidders();
+        auctionDAO.update(schema);
+
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), "bidder1");
+
+        assertTrue(detail.isCurrentUserDeposited());
+        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+    }
+
+    @Test
+    public void testAuctionDetailBackfillsPersistedDepositFromBidHistoryAndFrozenBalance() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 550.0);
+        AuctionSchema schema = auctionDAO.findById(auction.getId());
+        schema.clearDepositedBidders();
+        auctionDAO.update(schema);
+        AuctionManager.getInstance().endAuction(auction.getId());
+
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), "bidder1");
+
+        assertTrue(detail.isCurrentUserDeposited());
+        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+    }
+
+    @Test
+    public void testAuctionDetailDoesNotBackfillDepositWithoutFrozenBalance() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+        AuctionManager.getInstance().endAuction(auction.getId());
+
+        LocalDateTime now = LocalDateTime.now();
+        bidDAO.save(new BidSchema(
+                "legacy-unfrozen-bid",
+                now,
+                now,
+                auction.getId(),
+                "bidder1",
+                550.0,
+                now,
+                BidType.MANUAL));
+
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), "bidder1");
+
+        assertFalse(detail.isCurrentUserDeposited());
+        assertFalse(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+    }
+
+    @Test
     public void testLoadRunningAuctionsBackfillsAndHydratesDeposits() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
