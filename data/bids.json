@@ -528,5 +528,35 @@
     "id": "43cb3cb8-42e3-475c-91c8-af3e2a8a7502",
     "createdAt": "2026-05-16T21:36:40.2570317",
     "updatedAt": "2026-05-16T21:36:40.2570317"
+  },
+  {
+    "auctionId": "53eff0c5-ffeb-4bd8-863b-37463f7bbe99",
+    "bidderId": "49e3c73c-e9da-4067-8c37-8bf82613fe3b",
+    "amount": 1.55E8,
+    "timestamp": "2026-05-16T22:13:43.7472263",
+    "bidType": "MANUAL",
+    "id": "3b231512-8c41-45d1-af05-cd620f7d986c",
+    "createdAt": "2026-05-16T22:13:43.7526192",
+    "updatedAt": "2026-05-16T22:13:43.7526192"
+  },
+  {
+    "auctionId": "53eff0c5-ffeb-4bd8-863b-37463f7bbe99",
+    "bidderId": "0b3ca531-c5fa-4c18-beb8-8ba5306bf2c7",
+    "amount": 1.6E8,
+    "timestamp": "2026-05-16T22:15:28.7660867",
+    "bidType": "MANUAL",
+    "id": "a979dfca-6ffd-4944-897c-14e9e07abedd",
+    "createdAt": "2026-05-16T22:15:28.7722453",
+    "updatedAt": "2026-05-16T22:15:28.7722453"
+  },
+  {
+    "auctionId": "53eff0c5-ffeb-4bd8-863b-37463f7bbe99",
+    "bidderId": "0b3ca531-c5fa-4c18-beb8-8ba5306bf2c7",
+    "amount": 2.0E8,
+    "timestamp": "2026-05-16T22:16:00.3911959",
+    "bidType": "MANUAL",
+    "id": "d240cf84-8cbf-4e98-93ef-d2e024948f30",
+    "createdAt": "2026-05-16T22:16:00.3992502",
+    "updatedAt": "2026-05-16T22:16:00.3992502"
   }
 ]

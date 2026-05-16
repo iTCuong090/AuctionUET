@@ -55,6 +55,7 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
 
     public LiveAuction loadAuction(AuctionSchema schema, double startingPrice) {
         LiveAuction auction = toDomain(schema, startingPrice);
+        auction.markDeposited(schema.getDepositedBidderIds());
         liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this);
 
@@ -69,6 +70,10 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
     }
 
     public void endAuction(String auctionId) {
+        ScheduledFuture<?> task = scheduledTasks.remove(auctionId);
+        if (task != null) {
+            task.cancel(false);
+        }
         LiveAuction auction = liveAuctions.remove(auctionId);
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);

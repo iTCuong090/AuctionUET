@@ -11,11 +11,15 @@ import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
+import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
+import com.auctionuet.server.persistence.schema.UserSchema;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -87,15 +91,30 @@ public class AuctionService {
         auctionManager.loadAuction(schema, item.getStartingPrice());
     }
 
+    public void loadRunningAuctions() {
+        for (AuctionSchema schema : auctionDAO.findByStatus(AuctionStatus.RUNNING)) {
+            ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+            if (item == null) {
+                continue;
+            }
+
+            double depositAmount = calculateDepositAmount(item);
+            if (backfillDepositsFromBidHistory(schema, depositAmount)) {
+                auctionDAO.update(schema);
+            }
+            auctionManager.loadAuction(schema, item.getStartingPrice());
+        }
+    }
+
     public void endAuction(String auctionId) throws AuctionException {
         AuctionSchema schema = auctionDAO.findById(auctionId);
         if (schema != null) {
             LiveAuction liveAuction = auctionManager.getAuction(auctionId);
             ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
-            double depositAmount = item != null ? item.getStartingPrice() * 0.10 : 0;
+            double depositAmount = item != null ? calculateDepositAmount(item) : 0;
 
             if (schema.getWinnerId() != null) {
-                refundDepositsExcept(liveAuction, schema.getWinnerId(), depositAmount);
+                refundDepositsExcept(schema, liveAuction, schema.getWinnerId(), depositAmount);
                 schema.setStatus(AuctionStatus.WAITING_PAYMENT);
                 auctionDAO.update(schema);
 
@@ -104,6 +123,7 @@ public class AuctionService {
                     if (currentSchema != null && currentSchema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
                         try {
                             walletService.forfeitDeposit(currentSchema.getWinnerId(), depositAmount);
+                            clearDepositParticipation(currentSchema, null, currentSchema.getWinnerId());
                             currentSchema.setStatus(AuctionStatus.CANCELED);
                             auctionDAO.update(currentSchema);
                         } catch (Exception e) {
@@ -112,7 +132,7 @@ public class AuctionService {
                     }
                 }, 24, TimeUnit.HOURS);
             } else {
-                refundDepositsExcept(liveAuction, null, depositAmount);
+                refundDepositsExcept(schema, liveAuction, null, depositAmount);
                 schema.setStatus(AuctionStatus.CANCELED);
                 auctionDAO.update(schema);
             }
@@ -127,13 +147,14 @@ public class AuctionService {
         ItemSchema itemSchema = requireItem(schema.getItemId());
 
         double totalPrice = schema.getHighestBid();
-        double depositAmount = itemSchema.getStartingPrice() * 0.10;
+        double depositAmount = calculateDepositAmount(itemSchema);
         double remaining = totalPrice - depositAmount;
 
         try {
             walletService.withdraw(winner.getId(), remaining);
             walletService.forfeitDeposit(winner.getId(), depositAmount);
             walletService.deposit(schema.getSellerId(), totalPrice);
+            clearDepositParticipation(schema, null, winner.getId());
 
             schema.setStatus(AuctionStatus.PAID);
             auctionDAO.update(schema);
@@ -224,32 +245,77 @@ public class AuctionService {
             return false;
         }
 
-        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
-        if (liveAuction != null) {
-            return liveAuction.hasDeposited(userId);
+        if (schema.hasDepositedBidder(userId)) {
+            return true;
         }
 
         if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT && userId.equals(schema.getWinnerId())) {
             return true;
         }
 
-        return bidService.getBidHistory(schema.getId()).stream()
-                .anyMatch(bid -> userId.equals(bid.getBidderId()))
-                && schema.getStatus() == AuctionStatus.RUNNING;
+        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
+        return liveAuction != null && liveAuction.hasDeposited(userId);
     }
 
-    private void refundDepositsExcept(LiveAuction liveAuction, String retainedBidderId, double depositAmount) {
-        if (liveAuction == null || depositAmount <= 0) {
+    private void refundDepositsExcept(
+            AuctionSchema schema,
+            LiveAuction liveAuction,
+            String retainedBidderId,
+            double depositAmount) {
+        if (schema == null) {
             return;
         }
 
-        for (String bidderId : liveAuction.getDepositedBidderIds()) {
+        for (String bidderId : schema.getDepositedBidderIds()) {
             if (retainedBidderId != null && retainedBidderId.equals(bidderId)) {
                 continue;
             }
-            walletService.unfreezeDeposit(bidderId, depositAmount);
+            if (depositAmount > 0) {
+                walletService.unfreezeDeposit(bidderId, depositAmount);
+            }
+            clearDepositParticipation(schema, liveAuction, bidderId);
+        }
+    }
+
+    private void clearDepositParticipation(AuctionSchema schema, LiveAuction liveAuction, String bidderId) {
+        if (schema != null) {
+            schema.removeDepositedBidder(bidderId);
+        }
+        if (liveAuction != null) {
             liveAuction.unmarkDeposited(bidderId);
         }
+    }
+
+    private boolean backfillDepositsFromBidHistory(AuctionSchema schema, double depositAmount) {
+        if (schema == null || depositAmount <= 0) {
+            return false;
+        }
+
+        boolean changed = false;
+        Set<String> bidderIds = new HashSet<>();
+        for (BidSchema bid : bidService.getBidHistory(schema.getId())) {
+            bidderIds.add(bid.getBidderId());
+        }
+
+        for (String bidderId : bidderIds) {
+            if (schema.hasDepositedBidder(bidderId)) {
+                continue;
+            }
+
+            try {
+                UserSchema bidder = userService.getUserSchemaById(bidderId);
+                if (bidder.getFrozenBalance() >= depositAmount) {
+                    changed |= schema.addDepositedBidder(bidderId);
+                }
+            } catch (RuntimeException e) {
+                // Ignore stale bid history entries during startup backfill.
+            }
+        }
+        return changed;
+    }
+
+    private double calculateDepositAmount(ItemSchema itemSchema) {
+        return itemSchema.getStartingPrice() * 0.10;
     }
 
     private void requireCreateAuctionPermission(User seller) throws AuctionException {

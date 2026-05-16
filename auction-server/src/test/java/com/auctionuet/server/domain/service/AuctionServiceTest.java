@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuctionServiceTest {
 
@@ -280,6 +281,7 @@ public class AuctionServiceTest {
         AuctionSchema updated = auctionDAO.findById(auction.getId());
         assertEquals(550.0, updated.getHighestBid());
         assertEquals("bidder1", updated.getWinnerId());
+        assertTrue(updated.hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
         assertEquals(950.0, bidderSchema.getBalance());
@@ -303,6 +305,7 @@ public class AuctionServiceTest {
 
         assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
         assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+        assertFalse(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
         assertEquals(40.0, bidderSchema.getBalance());
@@ -323,6 +326,25 @@ public class AuctionServiceTest {
         assertEquals(1000.0, bidderSchema.getBalance());
         assertEquals(0.0, bidderSchema.getFrozenBalance());
         assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+        assertFalse(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+    }
+
+    @Test
+    public void testSetAutoBidPersistsDepositEvenWithoutAutoBidRecord() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0);
+
+        assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
+        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
     }
 
     @Test
@@ -344,6 +366,9 @@ public class AuctionServiceTest {
         assertEquals(50.0, bidder1Schema.getFrozenBalance());
         assertEquals(950.0, bidder2Schema.getBalance());
         assertEquals(50.0, bidder2Schema.getFrozenBalance());
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertTrue(updated.hasDepositedBidder("bidder1"));
+        assertTrue(updated.hasDepositedBidder("bidder2"));
     }
 
     @Test
@@ -366,7 +391,101 @@ public class AuctionServiceTest {
         assertEquals(0.0, bidder1Schema.getFrozenBalance());
         assertEquals(950.0, bidder2Schema.getBalance());
         assertEquals(50.0, bidder2Schema.getFrozenBalance());
-        assertEquals(AuctionStatus.WAITING_PAYMENT, auctionDAO.findById(auction.getId()).getStatus());
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.WAITING_PAYMENT, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertTrue(updated.hasDepositedBidder("bidder2"));
+    }
+
+    @Test
+    public void testAuctionDepositSurvivesLiveAuctionReloadAndDoesNotDoubleFreeze() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 550.0);
+        AuctionManager.getInstance().endAuction(auction.getId());
+        AuctionManager.getInstance().loadAuction(auctionDAO.findById(auction.getId()), 500.0);
+
+        assertTrue(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+        assertTrue(auctionService.getAuctionById(auction.getId(), "bidder1").isCurrentUserDeposited());
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
+    }
+
+    @Test
+    public void testLoadRunningAuctionsBackfillsAndHydratesDeposits() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 950.0);
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        bidderSchema.setFrozenBalance(50.0);
+        userDAO.update(bidderSchema);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+        AuctionSchema schema = auctionDAO.findById(auction.getId());
+        schema.setHighestBid(550.0);
+        schema.setWinnerId("bidder1");
+        schema.clearDepositedBidders();
+        auctionDAO.update(schema);
+
+        LocalDateTime now = LocalDateTime.now();
+        bidDAO.save(new BidSchema(
+                "legacy-bid",
+                now,
+                now,
+                auction.getId(),
+                "bidder1",
+                550.0,
+                now,
+                BidType.MANUAL));
+        AuctionManager.getInstance().endAuction(auction.getId());
+
+        auctionService.loadRunningAuctions();
+
+        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+        assertTrue(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+
+        bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
+    }
+
+    @Test
+    public void testEndAuctionRefundsPersistedDepositsWithoutLiveAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
+        bidService.placeBid(bidder2, auction.getId(), 600.0);
+        AuctionManager.getInstance().endAuction(auction.getId());
+
+        auctionService.endAuction(auction.getId());
+
+        UserSchema bidder1Schema = userDAO.findById("bidder1");
+        UserSchema bidder2Schema = userDAO.findById("bidder2");
+        assertEquals(1000.0, bidder1Schema.getBalance());
+        assertEquals(0.0, bidder1Schema.getFrozenBalance());
+        assertEquals(950.0, bidder2Schema.getBalance());
+        assertEquals(50.0, bidder2Schema.getFrozenBalance());
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.WAITING_PAYMENT, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertTrue(updated.hasDepositedBidder("bidder2"));
     }
 
     @Test
@@ -386,7 +505,9 @@ public class AuctionServiceTest {
         assertEquals(400.0, bidderSchema.getBalance());
         assertEquals(0.0, bidderSchema.getFrozenBalance());
         assertEquals(600.0, sellerSchema.getBalance());
-        assertEquals(AuctionStatus.PAID, auctionDAO.findById(auction.getId()).getStatus());
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.PAID, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
     }
 
     private void saveUser(String id, String username, UserRole role) {

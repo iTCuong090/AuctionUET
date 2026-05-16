@@ -78,6 +78,8 @@ public class AuctionServer {
                     auctionDAO,
                     walletService);
             AppLogger.logInit("AuctionService", null);
+            auctionService.loadRunningAuctions();
+            AppLogger.logInit("RunningAuctions", "Loaded");
 
             AuthController authController = new AuthController(authService);
             AppLogger.logInit("AuthController", null);

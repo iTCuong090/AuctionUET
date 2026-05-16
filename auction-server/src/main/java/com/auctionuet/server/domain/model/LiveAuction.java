@@ -6,6 +6,7 @@ import com.auctionuet.server.exception.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -235,7 +236,17 @@ public class LiveAuction {
         return depositedBidders.contains(bidderId);
     }
     public void markDeposited(String bidderId) {
-        depositedBidders.add(bidderId);
+        if (bidderId != null && !bidderId.isBlank()) {
+            depositedBidders.add(bidderId);
+        }
+    }
+    public void markDeposited(Collection<String> bidderIds) {
+        if (bidderIds == null) {
+            return;
+        }
+        for (String bidderId : bidderIds) {
+            markDeposited(bidderId);
+        }
     }
     public void unmarkDeposited(String bidderId) {
         depositedBidders.remove(bidderId);

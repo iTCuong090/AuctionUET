@@ -43,13 +43,13 @@ public class BidService {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found or not running");
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        boolean depositedNow = ensureDepositFrozen(liveAuction, bidder, depositAmount);
+        boolean depositedNow = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
         try {
             record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
         } catch (Exception e) {
-            rollbackDepositIfNeeded(liveAuction, bidder, depositAmount, depositedNow);
+            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, depositedNow);
             throw e;
         }
 
@@ -94,7 +94,7 @@ public class BidService {
         validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        boolean depositedNow = ensureDepositFrozen(liveAuction, bidder, depositAmount);
+        boolean depositedNow = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
         try {
@@ -102,7 +102,7 @@ public class BidService {
             syncAuctionState(auctionId, liveAuction);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
-            rollbackDepositIfNeeded(liveAuction, bidder, depositAmount, depositedNow);
+            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, depositedNow);
             throw e;
         }
     }
@@ -174,13 +174,30 @@ public class BidService {
         return itemSchema.getStartingPrice() * ESCROW_DEPOSIT_RATE;
     }
 
-    private boolean ensureDepositFrozen(LiveAuction liveAuction, User bidder, double depositAmount) {
-        if (!liveAuction.hasDeposited(bidder.getId())) {
-            walletService.freezeDeposit(bidder.getId(), depositAmount);
-            liveAuction.markDeposited(bidder.getId());
-            return true;
+    private boolean ensureDepositFrozen(String auctionId, LiveAuction liveAuction, User bidder, double depositAmount) {
+        AuctionSchema auctionSchema = auctionDAO.findById(auctionId);
+        String bidderId = bidder.getId();
+
+        if (auctionSchema != null && auctionSchema.hasDepositedBidder(bidderId)) {
+            liveAuction.markDeposited(bidderId);
+            return false;
         }
-        return false;
+
+        if (liveAuction.hasDeposited(bidderId)) {
+            persistDepositParticipation(auctionSchema, bidderId);
+            return false;
+        }
+
+        walletService.freezeDeposit(bidderId, depositAmount);
+        liveAuction.markDeposited(bidderId);
+        persistDepositParticipation(auctionSchema, bidderId);
+        return true;
+    }
+
+    private void persistDepositParticipation(AuctionSchema auctionSchema, String bidderId) {
+        if (auctionSchema != null && auctionSchema.addDepositedBidder(bidderId)) {
+            auctionDAO.update(auctionSchema);
+        }
     }
 
     private void syncAuctionState(String auctionId, LiveAuction liveAuction) {
@@ -196,6 +213,7 @@ public class BidService {
     }
 
     private void rollbackDepositIfNeeded(
+            String auctionId,
             LiveAuction liveAuction,
             User bidder,
             double depositAmount,
@@ -203,6 +221,14 @@ public class BidService {
         if (depositedNow) {
             walletService.unfreezeDeposit(bidder.getId(), depositAmount);
             liveAuction.unmarkDeposited(bidder.getId());
+            removeDepositParticipation(auctionId, bidder.getId());
+        }
+    }
+
+    private void removeDepositParticipation(String auctionId, String bidderId) {
+        AuctionSchema auctionSchema = auctionDAO.findById(auctionId);
+        if (auctionSchema != null && auctionSchema.removeDepositedBidder(bidderId)) {
+            auctionDAO.update(auctionSchema);
         }
     }
 
