@@ -15,6 +15,15 @@
             <VBox.margin><Insets bottom="5.0" /></VBox.margin>
         </Label>
 
+        <!-- Server Configuration -->
+        <VBox spacing="5.0">
+            <Label styleClass="text-secondary" text="Cấu hình Server" />
+            <HBox spacing="10.0">
+                <TextField fx:id="serverHostField" promptText="Host (VD: localhost)" text="localhost" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="serverPortField" promptText="Port" text="8888" prefWidth="80.0" />
+            </HBox>
+        </VBox>
+
         <!-- Form fields -->
         <VBox spacing="5.0">
             <Label styleClass="text-secondary" text="Tên đăng nhập" />

@@ -13,6 +13,8 @@ public class RegisterController {
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmField;
+    @FXML private TextField serverHostField;
+    @FXML private TextField serverPortField;
     @FXML private ComboBox<String> roleComboBox;
     @FXML private Label errorLabel;
     @FXML private javafx.scene.control.Button registerButton;
@@ -51,15 +53,25 @@ public class RegisterController {
             return;
         }
 
+        String host = serverHostField.getText().isBlank() ? "localhost" : serverHostField.getText().trim();
+        int port;
+        try {
+            port = Integer.parseInt(serverPortField.getText().trim());
+        } catch (NumberFormatException e) {
+            showError("Loi: Port phai la so!");
+            return;
+        }
+
         String role = selectedRole.toUpperCase();
-        errorLabel.setText("Dang gui thong tin dang ky...");
+        errorLabel.setText("Dang ket noi Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         registerButton.setDisable(true);
 
+        int finalPort = port;
         new Thread(() -> {
             try {
-                ServerConnection.getInstance().connect("localhost", 8888);
+                ServerConnection.getInstance().connect(host, finalPort);
                 AuthClient client = new AuthClient();
                 client.register(username, password, email, role);
 

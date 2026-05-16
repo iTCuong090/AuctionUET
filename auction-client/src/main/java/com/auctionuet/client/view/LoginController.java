@@ -12,6 +12,8 @@ import javafx.scene.control.TextField;
 public class LoginController {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private TextField serverHostField;
+    @FXML private TextField serverPortField;
     @FXML private Label errorLabel;
     @FXML private javafx.scene.control.Button loginButton;
 
@@ -32,14 +34,25 @@ public class LoginController {
             return;
         }
 
+        String host = serverHostField.getText().isBlank() ? "localhost" : serverHostField.getText().trim();
+        int port;
+        try {
+            port = Integer.parseInt(serverPortField.getText().trim());
+        } catch (NumberFormatException e) {
+            errorLabel.setText("Loi: Port phai la so!");
+            errorLabel.setVisible(true);
+            return;
+        }
+
         errorLabel.setText("Dang ket noi Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         loginButton.setDisable(true);
 
+        int finalPort = port;
         new Thread(() -> {
             try {
-                ServerConnection.getInstance().connect("localhost", 8888);
+                ServerConnection.getInstance().connect(host, finalPort);
                 AuthClient client = new AuthClient();
                 LoginResponseDTO loginResponse = client.login(username, password);
 
