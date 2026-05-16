@@ -47,6 +47,9 @@ public class BidController {
 
     public Response handleSetAutoBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
+        if (!user.hasPermission(Permission.SET_AUTO_BID)) {
+            return Response.error("Ban khong co quyen cai dat Auto-Bid");
+        }
         SetAutoBidRequestDTO req = request.getDataAs(SetAutoBidRequestDTO.class);
 
         bidService.setAutoBid(user, req.getAuctionId(), req.getMaxBid(), req.getIncrement());
@@ -55,6 +58,9 @@ public class BidController {
 
     public Response handleCancelAutoBid(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
+        if (!user.hasPermission(Permission.CANCEL_AUTO_BID)) {
+            return Response.error("Ban khong co quyen huy Auto-Bid");
+        }
         AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         bidService.cancelAutoBid(user, req.getAuctionId());

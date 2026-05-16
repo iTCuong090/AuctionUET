@@ -69,11 +69,12 @@
     "startTime": "2026-05-16T22:00:00",
     "endTime": "2026-05-16T23:00:00",
     "status": "RUNNING",
-    "highestBid": 0.0,
+    "highestBid": 1.5E8,
+    "winnerId": "49e3c73c-e9da-4067-8c37-8bf82613fe3b",
     "antiSnipingWindowSeconds": 60,
     "antiSnipingExtensionSeconds": 120,
     "id": "53eff0c5-ffeb-4bd8-863b-37463f7bbe99",
     "createdAt": "2026-05-16T20:48:56.9385855",
-    "updatedAt": "2026-05-16T20:49:08.4236893"
+    "updatedAt": "2026-05-16T21:36:40.2554187"
   }
 ]

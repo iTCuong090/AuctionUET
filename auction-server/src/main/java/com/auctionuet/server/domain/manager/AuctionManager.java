@@ -50,7 +50,11 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
     }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
-        LiveAuction auction = toDomain(schema);
+        return loadAuction(schema, schema.getHighestBid());
+    }
+
+    public LiveAuction loadAuction(AuctionSchema schema, double startingPrice) {
+        LiveAuction auction = toDomain(schema, startingPrice);
         liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this);
 
@@ -96,7 +100,7 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         extendAuction(auctionId, newEndTime);
     }
 
-    private LiveAuction toDomain(AuctionSchema schema) {
+    private LiveAuction toDomain(AuctionSchema schema, double startingPrice) {
         return new LiveAuction(
                 schema.getId(),
                 schema.getItemId(),
@@ -106,7 +110,8 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
                 schema.getHighestBid(),
                 schema.getWinnerId(),
                 schema.getAntiSnipingWindowSeconds(),
-                schema.getAntiSnipingExtensionSeconds()
+                schema.getAntiSnipingExtensionSeconds(),
+                startingPrice
         );
     }
 }

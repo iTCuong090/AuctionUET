@@ -43,17 +43,17 @@ public class BidService {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found or not running");
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        ensureDepositFrozen(liveAuction, bidder, depositAmount);
+        boolean depositedNow = ensureDepositFrozen(liveAuction, bidder, depositAmount);
 
-        String previousWinnerId = liveAuction.getCurrentWinnerId();
-
-        BidRecord record = liveAuction.placeBid(bidder, amount, autoRecord -> {
-            BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
-            bidDAO.save(autoBidSchema);
-        });
+        BidRecord record;
+        try {
+            record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+        } catch (Exception e) {
+            rollbackDepositIfNeeded(liveAuction, bidder, depositAmount, depositedNow);
+            throw e;
+        }
 
         syncAuctionState(auctionId, liveAuction);
-        unfreezePreviousWinnerDeposit(previousWinnerId, bidder.getId(), depositAmount);
 
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
@@ -91,13 +91,20 @@ public class BidService {
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
-        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentHighestBid());
+        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        ensureDepositFrozen(liveAuction, bidder, depositAmount);
+        boolean depositedNow = ensureDepositFrozen(liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
-        liveAuction.addAutoBid(config);
+        try {
+            liveAuction.addAutoBid(config, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+            syncAuctionState(auctionId, liveAuction);
+        } catch (RuntimeException e) {
+            liveAuction.removeAutoBid(bidder.getId());
+            rollbackDepositIfNeeded(liveAuction, bidder, depositAmount, depositedNow);
+            throw e;
+        }
     }
 
     public void cancelAutoBid(User bidder, String auctionId) {
@@ -167,11 +174,13 @@ public class BidService {
         return itemSchema.getStartingPrice() * ESCROW_DEPOSIT_RATE;
     }
 
-    private void ensureDepositFrozen(LiveAuction liveAuction, User bidder, double depositAmount) {
+    private boolean ensureDepositFrozen(LiveAuction liveAuction, User bidder, double depositAmount) {
         if (!liveAuction.hasDeposited(bidder.getId())) {
             walletService.freezeDeposit(bidder.getId(), depositAmount);
             liveAuction.markDeposited(bidder.getId());
+            return true;
         }
+        return false;
     }
 
     private void syncAuctionState(String auctionId, LiveAuction liveAuction) {
@@ -186,10 +195,20 @@ public class BidService {
         auctionDAO.update(auctionSchema);
     }
 
-    private void unfreezePreviousWinnerDeposit(String previousWinnerId, String currentBidderId, double depositAmount) {
-        if (previousWinnerId != null && !previousWinnerId.equals(currentBidderId)) {
-            walletService.unfreezeDeposit(previousWinnerId, depositAmount);
+    private void rollbackDepositIfNeeded(
+            LiveAuction liveAuction,
+            User bidder,
+            double depositAmount,
+            boolean depositedNow) {
+        if (depositedNow) {
+            walletService.unfreezeDeposit(bidder.getId(), depositAmount);
+            liveAuction.unmarkDeposited(bidder.getId());
         }
+    }
+
+    private void saveAutoBidRecord(String auctionId, BidRecord autoRecord) {
+        BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
+        bidDAO.save(autoBidSchema);
     }
 
     private BidSchema toBidSchema(String auctionId, BidRecord record) {

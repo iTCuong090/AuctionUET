@@ -4,6 +4,7 @@ import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.protocol.enums.Permission;
@@ -16,6 +17,7 @@ import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
+import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.persistence.schema.UserSchema;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -40,6 +43,8 @@ public class AuctionServiceTest {
     private BidDAO bidDAO;
     private ItemService itemService;
     private AuctionService auctionService;
+    private BidService bidService;
+    private WalletService walletService;
 
     private final String itemFile = "data/test_items_service.json";
     private final String auctionFile = "data/test_auctions_service.json";
@@ -57,8 +62,8 @@ public class AuctionServiceTest {
 
         UserService userService = new UserService(userDAO);
         itemService = new ItemService(itemDAO, userService);
-        WalletService walletService = new WalletService(userDAO, userService);
-        BidService bidService = new BidService(
+        walletService = new WalletService(userDAO, userService);
+        bidService = new BidService(
                 AuctionManager.getInstance(),
                 walletService,
                 bidDAO,
@@ -262,9 +267,166 @@ public class AuctionServiceTest {
         assertEquals(AuctionStatus.CANCELED, updated.getStatus());
     }
 
+    @Test
+    public void testSetAutoBidFreezesDepositAndBidsImmediately() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0);
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(550.0, updated.getHighestBid());
+        assertEquals("bidder1", updated.getWinnerId());
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
+
+        List<BidSchema> bids = bidDAO.findByAuctionId(auction.getId());
+        assertEquals(1, bids.size());
+        assertEquals(BidType.AUTO, bids.get(0).getBidType());
+    }
+
+    @Test
+    public void testSetAutoBidWithoutDepositBalanceDoesNotCreateConfigOrBid() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 40.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0));
+
+        assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
+        assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(40.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+    }
+
+    @Test
+    public void testInvalidManualBidRollsBackDeposit() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        assertThrows(Exception.class, () -> bidService.placeBid(bidder, auction.getId(), 500.0));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(1000.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+        assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+    }
+
+    @Test
+    public void testOutbidKeepsBothDepositsUntilAuctionEnds() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
+        bidService.placeBid(bidder2, auction.getId(), 600.0);
+
+        UserSchema bidder1Schema = userDAO.findById("bidder1");
+        UserSchema bidder2Schema = userDAO.findById("bidder2");
+        assertEquals(950.0, bidder1Schema.getBalance());
+        assertEquals(50.0, bidder1Schema.getFrozenBalance());
+        assertEquals(950.0, bidder2Schema.getBalance());
+        assertEquals(50.0, bidder2Schema.getFrozenBalance());
+    }
+
+    @Test
+    public void testEndAuctionRefundsOnlyNonWinners() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
+        bidService.placeBid(bidder2, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+
+        UserSchema bidder1Schema = userDAO.findById("bidder1");
+        UserSchema bidder2Schema = userDAO.findById("bidder2");
+        assertEquals(1000.0, bidder1Schema.getBalance());
+        assertEquals(0.0, bidder1Schema.getFrozenBalance());
+        assertEquals(950.0, bidder2Schema.getBalance());
+        assertEquals(50.0, bidder2Schema.getFrozenBalance());
+        assertEquals(AuctionStatus.WAITING_PAYMENT, auctionDAO.findById(auction.getId()).getStatus());
+    }
+
+    @Test
+    public void testWinnerPaymentUsesFrozenDeposit() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+        auctionService.payAuction(bidder, auction.getId());
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        UserSchema sellerSchema = userDAO.findById("seller1");
+        assertEquals(400.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+        assertEquals(600.0, sellerSchema.getBalance());
+        assertEquals(AuctionStatus.PAID, auctionDAO.findById(auction.getId()).getStatus());
+    }
+
     private void saveUser(String id, String username, UserRole role) {
+        saveUser(id, username, role, 0.0);
+    }
+
+    private void saveUser(String id, String username, UserRole role, double balance) {
         LocalDateTime now = LocalDateTime.now();
-        userDAO.save(new UserSchema(id, now, now, username, "hash", "salt", username + "@uet.vn", role));
+        UserSchema user = new UserSchema(id, now, now, username, "hash", "salt", username + "@uet.vn", role);
+        user.setBalance(balance);
+        userDAO.save(user);
+    }
+
+    private void setBalance(String userId, double balance) {
+        UserSchema user = userDAO.findById(userId);
+        user.setBalance(balance);
+        userDAO.update(user);
+    }
+
+    private AuctionDTO createRunningAuction(User seller, double startingPrice) throws Exception {
+        ItemDTO item = itemService.createItem(
+                seller,
+                "Test item",
+                "Desc",
+                startingPrice,
+                ItemType.ELECTRONICS,
+                null,
+                ItemCondition.NEW,
+                Map.of("brand", "Test", "warrantyMonths", 12));
+        AuctionDTO auction = auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1),
+                "Auction " + startingPrice,
+                "Desc",
+                60,
+                120);
+        auctionService.startAuction(seller, auction.getId());
+        return auction;
     }
 
     private void deleteTestFiles() {

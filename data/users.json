@@ -70,5 +70,29 @@
     "id": "ad188e8e-fb5b-41a6-bb2b-eb9f4ae82bf8",
     "createdAt": "2026-05-10T17:20:52.5046717",
     "updatedAt": "2026-05-10T17:30:33.8123149"
+  },
+  {
+    "username": "DuyAnh",
+    "hashedPassword": "326df382a1b05a4b3118973cbbff90bef0bb546caea624b05e42d82a6cb5a035",
+    "passwordSalt": "38fe77ac49aefab0e7eaa816017a7e8a",
+    "email": "anhduy@gmail.com",
+    "role": "BIDDER",
+    "balance": 9.999999999999902E19,
+    "frozenBalance": 0.0,
+    "id": "0b3ca531-c5fa-4c18-beb8-8ba5306bf2c7",
+    "createdAt": "2026-05-16T21:17:03.2907746",
+    "updatedAt": "2026-05-16T21:36:40.2570317"
+  },
+  {
+    "username": "iTCuong",
+    "hashedPassword": "5db1ee91503dde6554e4159e66c1e9c3aec8edcfaef78f44addfaeef5f0a97d4",
+    "passwordSalt": "7fc0078ef4ee3a5495d870f5f8fd4e7b",
+    "email": "cuong@gmail.com",
+    "role": "BIDDER",
+    "balance": 1.0E11,
+    "frozenBalance": 0.0,
+    "id": "49e3c73c-e9da-4067-8c37-8bf82613fe3b",
+    "createdAt": "2026-05-16T21:19:04.2341887",
+    "updatedAt": "2026-05-16T21:30:47.8435954"
   }
 ]

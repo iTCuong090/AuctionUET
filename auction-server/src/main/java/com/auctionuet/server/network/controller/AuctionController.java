@@ -59,14 +59,14 @@ public class AuctionController {
     }
 
     public Response handleGetAuctionDetail(Request request) throws Exception {
-        sessionManager.validateToken(request.getToken());
+        User user = sessionManager.validateToken(request.getToken());
         AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         if (req.getAuctionId() == null || req.getAuctionId().isEmpty()) {
             return Response.error("Thieu auctionId");
         }
 
-        AuctionDTO auctionDTO = auctionService.getAuctionById(req.getAuctionId());
+        AuctionDTO auctionDTO = auctionService.getAuctionById(req.getAuctionId(), user.getId());
         if (auctionDTO == null) {
             return Response.error("Khong tim thay phien dau gia");
         }

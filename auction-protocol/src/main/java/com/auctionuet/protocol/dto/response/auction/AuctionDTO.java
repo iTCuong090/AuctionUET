@@ -22,6 +22,8 @@ public class AuctionDTO implements ValidatableDTO {
     private final AuctionStatus status;
     private final int antiSnipingWindowSeconds;
     private final int antiSnipingExtensionSeconds;
+    private final double depositAmount;
+    private final boolean currentUserDeposited;
 
     public AuctionDTO(
             String id,
@@ -37,6 +39,28 @@ public class AuctionDTO implements ValidatableDTO {
             AuctionStatus status,
             int antiSnipingWindowSeconds,
             int antiSnipingExtensionSeconds) {
+        this(id, item, seller, winner, currentHighestBid, currentPrice, title, description,
+                startTime, endTime, status, antiSnipingWindowSeconds, antiSnipingExtensionSeconds,
+                item != null ? item.getStartingPrice() * 0.10 : 0,
+                false);
+    }
+
+    public AuctionDTO(
+            String id,
+            ItemDTO item,
+            UserDTO seller,
+            UserDTO winner,
+            BidDTO currentHighestBid,
+            double currentPrice,
+            String title,
+            String description,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            AuctionStatus status,
+            int antiSnipingWindowSeconds,
+            int antiSnipingExtensionSeconds,
+            double depositAmount,
+            boolean currentUserDeposited) {
         this.id = id;
         this.item = item;
         this.seller = seller;
@@ -50,6 +74,8 @@ public class AuctionDTO implements ValidatableDTO {
         this.status = status;
         this.antiSnipingWindowSeconds = antiSnipingWindowSeconds;
         this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
+        this.depositAmount = depositAmount;
+        this.currentUserDeposited = currentUserDeposited;
         validate();
     }
 
@@ -85,6 +111,9 @@ public class AuctionDTO implements ValidatableDTO {
         if (antiSnipingExtensionSeconds <= 0) {
             throw new IllegalArgumentException("antiSnipingExtensionSeconds must be greater than 0");
         }
+        if (depositAmount < 0) {
+            throw new IllegalArgumentException("depositAmount must be greater than or equal to 0");
+        }
     }
 
     public String getId() { return id; }
@@ -100,4 +129,6 @@ public class AuctionDTO implements ValidatableDTO {
     public AuctionStatus getStatus() { return status; }
     public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
     public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
+    public double getDepositAmount() { return depositAmount; }
+    public boolean isCurrentUserDeposited() { return currentUserDeposited; }
 }

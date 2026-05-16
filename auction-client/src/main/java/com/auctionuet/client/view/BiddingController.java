@@ -4,6 +4,7 @@ import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.ServerConnection;
+import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.PushActionType;
 import com.auctionuet.protocol.PushMessage;
 import com.auctionuet.protocol.dto.push.PushEvents;
@@ -11,6 +12,7 @@ import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -54,14 +56,18 @@ public class BiddingController {
     private String currentAuctionId;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
+    private final WalletClient walletClient = new WalletClient();
 
     private javafx.animation.Timeline countdownTimeline;
     private LocalDateTime endDateTime;
+    private double auctionDepositAmount;
+    private boolean currentUserDeposited;
 
     public void setAuctionId(String auctionId) {
         this.currentAuctionId = auctionId;
 
         loadAuctionDetail();
+        loadWalletInfo();
         loadBidHistory();
         subscribeToAuction(auctionId);
         ServerConnection.getInstance().setPushListener(this::onPushMessage);
@@ -77,6 +83,11 @@ public class BiddingController {
                     titleLabel.setText(auction.getTitle());
                     sellerLabel.setText("Seller: " + usernameOf(auction.getSeller()));
                     priceLabel.setText(String.format("%,.0f VND", auction.getCurrentPrice()));
+                    auctionDepositAmount = auction.getDepositAmount() > 0
+                            ? auction.getDepositAmount()
+                            : auction.getItem() != null ? auction.getItem().getStartingPrice() * 0.10 : 0;
+                    currentUserDeposited = auction.isCurrentUserDeposited();
+                    renderAuctionDeposit();
 
                     if (auction.getCurrentHighestBid() != null) {
                         leaderLabel.setText("Leader: " + usernameOf(auction.getCurrentHighestBid().getBidder()));
@@ -89,6 +100,20 @@ public class BiddingController {
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> titleLabel.setText("Loi tai chi tiet: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    private void loadWalletInfo() {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) return;
+
+        new Thread(() -> {
+            try {
+                WalletResponseDTO wallet = walletClient.getWallet(token);
+                Platform.runLater(() -> renderWallet(wallet));
+            } catch (Exception e) {
+                Platform.runLater(() -> balanceLabel.setText("Loi tai vi"));
             }
         }).start();
     }
@@ -128,6 +153,11 @@ public class BiddingController {
                 priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
                 leaderLabel.setText("Leader: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vua xong - " + formatBid(bid));
+                if (isCurrentUser(bid.getBidder())) {
+                    currentUserDeposited = true;
+                    renderAuctionDeposit();
+                    loadWalletInfo();
+                }
                 return;
             }
 
@@ -153,6 +183,9 @@ public class BiddingController {
                 statusBadge.getStyleClass().add("status-badge-finished");
                 leaderLabel.setText("Winner: " + usernameOf(data.getWinner())
                         + " (Gia: " + String.format("%,.0f VND", data.getFinalPrice()) + ")");
+                currentUserDeposited = currentUserDeposited && isCurrentUser(data.getWinner());
+                renderAuctionDeposit();
+                loadWalletInfo();
 
                 bidAmountField.setDisable(true);
                 placeBidBtn.setDisable(true);
@@ -242,6 +275,9 @@ public class BiddingController {
                         bidStatusLabel.setText("Dat gia thanh cong!");
                         bidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
                         bidAmountField.clear();
+                        currentUserDeposited = true;
+                        renderAuctionDeposit();
+                        loadWalletInfo();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -281,6 +317,9 @@ public class BiddingController {
                         autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
                         enableAutoBidBtn.setDisable(true);
                         cancelAutoBidBtn.setDisable(false);
+                        currentUserDeposited = true;
+                        renderAuctionDeposit();
+                        loadWalletInfo();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -338,6 +377,21 @@ public class BiddingController {
         String time = bid.getTimestamp() != null ? bid.getTimestamp().format(DISPLAY_TIME) : "";
         String type = bid.getBidType() != null ? " - " + bid.getBidType().name() : "";
         return time + " - " + usernameOf(bid.getBidder()) + " - " + String.format("%,.0f VND", bid.getAmount()) + type;
+    }
+
+    private void renderWallet(WalletResponseDTO wallet) {
+        double balance = wallet != null ? wallet.getBalance() : 0.0;
+        balanceLabel.setText(String.format("%,.0f VND", balance));
+    }
+
+    private void renderAuctionDeposit() {
+        double deposit = currentUserDeposited ? auctionDepositAmount : 0.0;
+        depositLabel.setText(String.format("%,.0f VND", deposit));
+    }
+
+    private boolean isCurrentUser(UserDTO user) {
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+        return user != null && currentUser != null && user.getId().equals(currentUser.getId());
     }
 
     private String usernameOf(UserDTO user) {
