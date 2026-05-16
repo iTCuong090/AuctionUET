@@ -64,7 +64,7 @@ public class AuctionListController {
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        Label price = new Label(String.format("%,.0f VND", item.getCurrentHighestBid()));
+        Label price = new Label(String.format("%,.0f VND", item.getCurrentPrice()));
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 
@@ -82,7 +82,7 @@ public class AuctionListController {
 
         VBox infoBox = new VBox(5);
         Label timeLabel = new Label("Ket thuc: " + formatTime(item.getEndTime()));
-        Label sellerLabel = new Label("Seller: " + valueOrUnknown(item.getSellerUsername()));
+        Label sellerLabel = new Label("Seller: " + valueOrUnknown(item.getSeller() != null ? item.getSeller().getUsername() : null));
 
         String subStyle = "-fx-font-size: 13px;";
         timeLabel.setStyle(subStyle);

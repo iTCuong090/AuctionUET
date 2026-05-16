@@ -100,7 +100,7 @@ public class ProfileController {
             return;
         }
 
-        String myUsername = currentUser.getUsername();
+        String myUserId = currentUser.getId();
 
         new Thread(() -> {
             try {
@@ -109,12 +109,12 @@ public class ProfileController {
 
                 long wonCount = allAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
-                        .filter(a -> myUsername.equals(a.getCurrentWinnerUsername()))
+                        .filter(a -> a.getWinner() != null && myUserId.equals(a.getWinner().getId()))
                         .count();
 
                 long soldCount = allAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
-                        .filter(a -> myUsername.equals(a.getSellerUsername()))
+                        .filter(a -> a.getSeller() != null && myUserId.equals(a.getSeller().getId()))
                         .count();
 
                 long activeCount = allAuctions.stream()

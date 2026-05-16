@@ -71,28 +71,28 @@ public class AuctionDetailController {
 
     private void updateUI(AuctionDTO dto) {
         nameLabel.setText(dto.getTitle());
-        sellerLabel.setText("Seller: " + dto.getSellerUsername());
-        currentPriceLabel.setText(String.format("Gia hien tai: %,.0f VND", dto.getCurrentHighestBid()));
+        sellerLabel.setText("Seller: " + usernameOf(dto.getSeller()));
+        currentPriceLabel.setText(String.format("Gia hien tai: %,.0f VND", dto.getCurrentPrice()));
 
         AuctionStatus status = dto.getStatus();
         String currentStatus = status != null ? status.name() : "UNKNOWN";
         statusLabel.setText("Trang thai: " + currentStatus);
         timeLeftLabel.setText("Ket thuc: " + formatTime(dto.getEndTime()));
 
-        if (dto.getCurrentWinnerUsername() != null) {
-            leaderLabel.setText("Nguoi dan dau: " + dto.getCurrentWinnerUsername());
+        if (dto.getWinner() != null) {
+            leaderLabel.setText("Nguoi dan dau: " + usernameOf(dto.getWinner()));
         }
 
         if (dto.getItem() != null) {
             typeLabel.setText("Loai: " + dto.getItem().getType());
-            conditionLabel.setText("Tinh trang: " + nullToEmpty(dto.getItem().getCondition()));
+            conditionLabel.setText("Tinh trang: " + valueOrEmpty(dto.getItem().getCondition()));
             descriptionLabel.setText(nullToEmpty(dto.getItem().getDescription()));
             specLabel.setText(dto.getItem().getExtraFields() != null ? dto.getItem().getExtraFields().toString() : "");
         }
 
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
-        String currentUsername = currentUser != null ? currentUser.getUsername() : "";
-        boolean isMyItem = currentUsername.equals(dto.getSellerUsername());
+        String currentUserId = currentUser != null ? currentUser.getId() : "";
+        boolean isMyItem = dto.getSeller() != null && currentUserId.equals(dto.getSeller().getId());
 
         if (isMyItem) {
             if (status == AuctionStatus.OPEN) {
@@ -176,5 +176,13 @@ public class AuctionDetailController {
 
     private String nullToEmpty(String value) {
         return value != null ? value : "";
+    }
+
+    private String usernameOf(UserDTO user) {
+        return user != null ? user.getUsername() : "Chua ro";
+    }
+
+    private String valueOrEmpty(Object value) {
+        return value != null ? value.toString() : "";
     }
 }

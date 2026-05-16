@@ -21,10 +21,12 @@ import com.auctionuet.server.util.ValidationUtils;
 public class AuthService {
 
     private final UserDAO userDAO;
+    private final UserService userService;
     private final SessionManager sessionManager;
 
-    public AuthService(UserDAO userDAO) {
+    public AuthService(UserDAO userDAO, UserService userService) {
         this.userDAO = userDAO;
+        this.userService = userService;
         this.sessionManager = SessionManager.getInstance();
     }
     // Tại sao constructor lại phải nhận 1 đối tượng loại UserDAO? Vì các đối tượng userDao có thể custom
@@ -54,7 +56,7 @@ public class AuthService {
         };
         String token = sessionManager.createSession(user);
 
-        UserDTO dto = new UserDTO(user.getId(), user.getUsername(), user.getRole());
+        UserDTO dto = userService.toDTO(user);
         LoginResponseDTO response = new LoginResponseDTO(token, dto);
 
         return response;

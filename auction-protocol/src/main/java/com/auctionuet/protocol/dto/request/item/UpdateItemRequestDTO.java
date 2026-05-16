@@ -1,6 +1,7 @@
 package com.auctionuet.protocol.dto.request.item;
 
 import com.auctionuet.protocol.dto.ValidatableDTO;
+import com.auctionuet.protocol.enums.ItemCondition;
 
 import java.util.Map;
 
@@ -10,7 +11,7 @@ public class UpdateItemRequestDTO implements ValidatableDTO {
     private String description;
     private double startingPrice;
     private String imageUrl;
-    private String condition;
+    private ItemCondition condition;
     private Map<String, Object> extraFields;
 
     public String getId() { return id; }
@@ -23,8 +24,8 @@ public class UpdateItemRequestDTO implements ValidatableDTO {
     public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public String getCondition() { return condition; }
-    public void setCondition(String condition) { this.condition = condition; }
+    public ItemCondition getCondition() { return condition; }
+    public void setCondition(ItemCondition condition) { this.condition = condition; }
     public Map<String, Object> getExtraFields() { return extraFields; }
     public void setExtraFields(Map<String, Object> extraFields) { this.extraFields = extraFields; }
 
@@ -38,9 +39,6 @@ public class UpdateItemRequestDTO implements ValidatableDTO {
         }
         if (name != null && name.isBlank()) {
             throw new IllegalArgumentException("name must not be blank when provided");
-        }
-        if (condition != null && condition.isBlank()) {
-            throw new IllegalArgumentException("condition must not be blank when provided");
         }
     }
 }

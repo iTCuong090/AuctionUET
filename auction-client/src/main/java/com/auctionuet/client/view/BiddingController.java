@@ -10,6 +10,7 @@ import com.auctionuet.protocol.dto.push.PushEvents;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -74,8 +75,12 @@ public class BiddingController {
                 AuctionDTO auction = auctionClient.getAuctionDetail(token, currentAuctionId);
                 Platform.runLater(() -> {
                     titleLabel.setText(auction.getTitle());
-                    sellerLabel.setText("Seller: " + auction.getSellerUsername());
-                    priceLabel.setText(String.format("%,.0f VND", auction.getCurrentHighestBid()));
+                    sellerLabel.setText("Seller: " + usernameOf(auction.getSeller()));
+                    priceLabel.setText(String.format("%,.0f VND", auction.getCurrentPrice()));
+
+                    if (auction.getCurrentHighestBid() != null) {
+                        leaderLabel.setText("Leader: " + usernameOf(auction.getCurrentHighestBid().getBidder()));
+                    }
 
                     if (auction.getEndTime() != null) {
                         endDateTime = auction.getEndTime();
@@ -100,8 +105,8 @@ public class BiddingController {
                             bidHistoryList.getItems().add(formatBid(entry));
                         }
 
-                        BidDTO latest = history.get(0);
-                        leaderLabel.setText("Leader: " + latest.getBidderUsername());
+                        BidDTO latest = history.get(history.size() - 1);
+                        leaderLabel.setText("Leader: " + usernameOf(latest.getBidder()));
                     }
                 });
             } catch (Exception e) {
@@ -117,11 +122,12 @@ public class BiddingController {
             if (push.getPushType() == PushActionType.BID_UPDATE) {
                 PushEvents.BidUpdatePush data = push.getDataAs(PushEvents.BidUpdatePush.class);
                 if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+                BidDTO bid = data.getBid();
+                if (bid == null) return;
 
-                priceLabel.setText(String.format("%,.0f VND", data.getAmount()));
-                leaderLabel.setText("Leader: " + data.getBidderUsername());
-                bidHistoryList.getItems().add(0, "Vua xong - " + data.getBidderUsername()
-                        + " - " + String.format("%,.0f VND", data.getAmount()));
+                priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
+                leaderLabel.setText("Leader: " + usernameOf(bid.getBidder()));
+                bidHistoryList.getItems().add(0, "Vua xong - " + formatBid(bid));
                 return;
             }
 
@@ -130,7 +136,7 @@ public class BiddingController {
                 if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
 
                 try {
-                    endDateTime = LocalDateTime.parse(data.getNewEndTime());
+                    endDateTime = data.getNewEndTime();
                     startCountdown();
                 } catch (Exception ignored) {}
                 return;
@@ -145,7 +151,7 @@ public class BiddingController {
                 statusBadge.setText("DA KET THUC");
                 statusBadge.getStyleClass().remove("status-badge-running");
                 statusBadge.getStyleClass().add("status-badge-finished");
-                leaderLabel.setText("Winner: " + data.getWinner()
+                leaderLabel.setText("Winner: " + usernameOf(data.getWinner())
                         + " (Gia: " + String.format("%,.0f VND", data.getFinalPrice()) + ")");
 
                 bidAmountField.setDisable(true);
@@ -330,6 +336,11 @@ public class BiddingController {
 
     private String formatBid(BidDTO bid) {
         String time = bid.getTimestamp() != null ? bid.getTimestamp().format(DISPLAY_TIME) : "";
-        return time + " - " + bid.getBidderUsername() + " - " + String.format("%,.0f VND", bid.getAmount());
+        String type = bid.getBidType() != null ? " - " + bid.getBidType().name() : "";
+        return time + " - " + usernameOf(bid.getBidder()) + " - " + String.format("%,.0f VND", bid.getAmount()) + type;
+    }
+
+    private String usernameOf(UserDTO user) {
+        return user != null ? user.getUsername() : "Chua ro";
     }
 }

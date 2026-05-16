@@ -1,58 +1,53 @@
 package com.auctionuet.protocol.dto.push;
 
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
+
 import java.time.LocalDateTime;
 
 public class PushEvents {
     public static class BidUpdatePush {
         private String auctionId;
-        private String bidderUsername;
-        private double amount;
-        private String timestamp;
+        private BidDTO bid;
 
-        public BidUpdatePush(String auctionId, String bidderUsername, double amount, LocalDateTime timestamp) {
+        public BidUpdatePush(String auctionId, BidDTO bid) {
             this.auctionId = auctionId;
-            this.bidderUsername = bidderUsername;
-            this.amount = amount;
-            this.timestamp = timestamp != null ? timestamp.toString() : null;
+            this.bid = bid;
         }
 
-        // Getters
         public String getAuctionId() { return auctionId; }
-        public String getBidderUsername() { return bidderUsername; }
-        public double getAmount() { return amount; }
-        public String getTimestamp() { return timestamp; }
+        public BidDTO getBid() { return bid; }
     }
 
     public static class AuctionEndedPush {
         private String auctionId;
-        private String winner;
+        private UserDTO winner;
         private double finalPrice;
         private String message;
 
-        public AuctionEndedPush(String auctionId, String winner, double finalPrice, String message) {
+        public AuctionEndedPush(String auctionId, UserDTO winner, double finalPrice, String message) {
             this.auctionId = auctionId;
             this.winner = winner;
             this.finalPrice = finalPrice;
             this.message = message;
         }
 
-        // Getters
         public String getAuctionId() { return auctionId; }
-        public String getWinner() { return winner; }
+        public UserDTO getWinner() { return winner; }
         public double getFinalPrice() { return finalPrice; }
         public String getMessage() { return message; }
     }
 
     public static class AuctionExtendedPush {
         private String auctionId;
-        private String newEndTime;
+        private LocalDateTime newEndTime;
 
         public AuctionExtendedPush(String auctionId, LocalDateTime newEndTime) {
             this.auctionId = auctionId;
-            this.newEndTime = newEndTime != null ? newEndTime.toString() : null;
+            this.newEndTime = newEndTime;
         }
 
         public String getAuctionId() { return auctionId; }
-        public String getNewEndTime() { return newEndTime; }
+        public LocalDateTime getNewEndTime() { return newEndTime; }
     }
 }

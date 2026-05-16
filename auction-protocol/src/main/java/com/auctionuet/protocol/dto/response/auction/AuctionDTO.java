@@ -1,7 +1,9 @@
 package com.auctionuet.protocol.dto.response.auction;
 
 import com.auctionuet.protocol.dto.ValidatableDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
 
 import java.time.LocalDateTime;
@@ -9,36 +11,45 @@ import java.time.LocalDateTime;
 public class AuctionDTO implements ValidatableDTO {
     private final String id;
     private final ItemDTO item;
-    private final String sellerUsername;
+    private final UserDTO seller;
+    private final UserDTO winner;
+    private final BidDTO currentHighestBid;
+    private final double currentPrice;
     private final String title;
     private final String description;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
     private final AuctionStatus status;
-    private final double currentHighestBid;
-    private final String currentWinnerUsername;
+    private final int antiSnipingWindowSeconds;
+    private final int antiSnipingExtensionSeconds;
 
     public AuctionDTO(
             String id,
             ItemDTO item,
-            String sellerUsername,
+            UserDTO seller,
+            UserDTO winner,
+            BidDTO currentHighestBid,
+            double currentPrice,
             String title,
             String description,
             LocalDateTime startTime,
             LocalDateTime endTime,
             AuctionStatus status,
-            double currentHighestBid,
-            String currentWinnerUsername) {
+            int antiSnipingWindowSeconds,
+            int antiSnipingExtensionSeconds) {
         this.id = id;
         this.item = item;
-        this.sellerUsername = sellerUsername;
+        this.seller = seller;
+        this.winner = winner;
+        this.currentHighestBid = currentHighestBid;
+        this.currentPrice = currentPrice;
         this.title = title;
         this.description = description;
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
-        this.currentHighestBid = currentHighestBid;
-        this.currentWinnerUsername = currentWinnerUsername;
+        this.antiSnipingWindowSeconds = antiSnipingWindowSeconds;
+        this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
         validate();
     }
 
@@ -50,8 +61,8 @@ public class AuctionDTO implements ValidatableDTO {
         if (item == null) {
             throw new IllegalArgumentException("item must not be null");
         }
-        if (sellerUsername == null || sellerUsername.isBlank()) {
-            throw new IllegalArgumentException("sellerUsername must not be blank");
+        if (seller == null) {
+            throw new IllegalArgumentException("seller must not be null");
         }
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("title must not be blank");
@@ -65,19 +76,28 @@ public class AuctionDTO implements ValidatableDTO {
         if (status == null) {
             throw new IllegalArgumentException("status must not be null");
         }
-        if (currentHighestBid < 0) {
-            throw new IllegalArgumentException("currentHighestBid must be greater than or equal to 0");
+        if (currentPrice < 0) {
+            throw new IllegalArgumentException("currentPrice must be greater than or equal to 0");
+        }
+        if (antiSnipingWindowSeconds <= 0) {
+            throw new IllegalArgumentException("antiSnipingWindowSeconds must be greater than 0");
+        }
+        if (antiSnipingExtensionSeconds <= 0) {
+            throw new IllegalArgumentException("antiSnipingExtensionSeconds must be greater than 0");
         }
     }
 
     public String getId() { return id; }
     public ItemDTO getItem() { return item; }
-    public String getSellerUsername() { return sellerUsername; }
+    public UserDTO getSeller() { return seller; }
+    public UserDTO getWinner() { return winner; }
+    public BidDTO getCurrentHighestBid() { return currentHighestBid; }
+    public double getCurrentPrice() { return currentPrice; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
     public AuctionStatus getStatus() { return status; }
-    public double getCurrentHighestBid() { return currentHighestBid; }
-    public String getCurrentWinnerUsername() { return currentWinnerUsername; }
+    public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
+    public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
 }

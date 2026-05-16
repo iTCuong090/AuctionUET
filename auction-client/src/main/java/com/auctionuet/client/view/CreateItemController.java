@@ -4,6 +4,7 @@ import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.protocol.dto.request.item.CreateItemRequestDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class CreateItemController {
 
     @FXML private ComboBox<String> typeComboBox;
-    @FXML private ComboBox<String> conditionComboBox;
+    @FXML private ComboBox<ItemCondition> conditionComboBox;
     @FXML private TextField nameField, priceField, imageUrlField;
     @FXML private TextArea descArea;
     @FXML private Label statusLabel;
@@ -37,7 +38,7 @@ public class CreateItemController {
         for (ItemType type : ItemType.values()) {
             typeComboBox.getItems().add(type.name());
         }
-        conditionComboBox.getItems().addAll("NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR");
+        conditionComboBox.getItems().addAll(ItemCondition.values());
 
         typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             switchDynamicForm(newValue);

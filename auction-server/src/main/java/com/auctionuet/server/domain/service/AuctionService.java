@@ -1,7 +1,9 @@
 package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.User;
@@ -18,20 +20,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Service chuyen xu ly cac hanh dong lien quan toi Auction Management.
- * Logic ve Item da duoc tach sang ItemService.
- */
 public class AuctionService {
 
     private final ItemService itemService;
+    private final BidService bidService;
+    private final UserService userService;
     private final AuctionDAO auctionDAO;
     private final AuctionManager auctionManager;
     private final WalletService walletService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
-    public AuctionService(ItemService itemService, AuctionDAO auctionDAO, WalletService walletService) {
+    public AuctionService(ItemService itemService, BidService bidService, UserService userService,
+            AuctionDAO auctionDAO, WalletService walletService) {
         this.itemService = itemService;
+        this.bidService = bidService;
+        this.userService = userService;
         this.auctionDAO = auctionDAO;
         this.walletService = walletService;
         this.auctionManager = AuctionManager.getInstance();
@@ -69,7 +72,7 @@ public class AuctionService {
         itemService.updateItem(item);
 
         ItemDTO itemDTO = itemService.getItemById(itemId);
-        return toAuctionDTO(schema, itemDTO, seller.getUsername(), null);
+        return toAuctionDTO(schema, itemDTO);
     }
 
     public void startAuction(User seller, String auctionId) throws AuctionException {
@@ -100,7 +103,7 @@ public class AuctionService {
                             currentSchema.setStatus(AuctionStatus.CANCELED);
                             auctionDAO.update(currentSchema);
                         } catch (Exception e) {
-                            // Ignore scheduler payment-forfeit errors
+                            // Ignore scheduler payment-forfeit errors.
                         }
                     }
                 }, 24, TimeUnit.HOURS);
@@ -170,25 +173,29 @@ public class AuctionService {
         if (itemDTO == null) {
             return null;
         }
-        return toAuctionDTO(schema, itemDTO, schema.getSellerId(), schema.getWinnerId());
+        return toAuctionDTO(schema, itemDTO);
     }
 
-    private AuctionDTO toAuctionDTO(
-            AuctionSchema schema,
-            ItemDTO itemDTO,
-            String sellerUsername,
-            String winnerUsername) {
+    private AuctionDTO toAuctionDTO(AuctionSchema schema, ItemDTO itemDTO) {
+        UserDTO seller = userService.getUserDTOById(schema.getSellerId());
+        UserDTO winner = schema.getWinnerId() != null ? userService.getUserDTOById(schema.getWinnerId()) : null;
+        BidDTO currentHighestBid = bidService.getCurrentHighestBidDTO(schema);
+        double currentPrice = currentHighestBid != null ? currentHighestBid.getAmount() : itemDTO.getStartingPrice();
+
         return new AuctionDTO(
                 schema.getId(),
                 itemDTO,
-                sellerUsername,
+                seller,
+                winner,
+                currentHighestBid,
+                currentPrice,
                 schema.getTitle(),
                 schema.getDescription(),
                 schema.getStartTime(),
                 schema.getEndTime(),
                 schema.getStatus(),
-                schema.getHighestBid(),
-                winnerUsername);
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds());
     }
 
     private void requireCreateAuctionPermission(User seller) throws AuctionException {

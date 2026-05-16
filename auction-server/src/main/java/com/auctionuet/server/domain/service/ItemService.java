@@ -1,6 +1,8 @@
 package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.model.User;
@@ -19,9 +21,11 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     private final ItemDAO itemDAO;
+    private final UserService userService;
 
-    public ItemService(ItemDAO itemDAO) {
+    public ItemService(ItemDAO itemDAO, UserService userService) {
         this.itemDAO = itemDAO;
+        this.userService = userService;
     }
 
     public ItemDTO createItem(
@@ -31,7 +35,7 @@ public class ItemService {
             double startingPrice,
             ItemType type,
             String imageUrl,
-            String condition,
+            ItemCondition condition,
             Map<String, Object> extraFields) throws AuctionException {
         if (!seller.hasPermission(Permission.CREATE_ITEM)) {
             throw new AuctionException("Khong co quyen CREATE_ITEM");
@@ -48,7 +52,7 @@ public class ItemService {
                 seller.getId()
         );
         itemDAO.save(schema);
-        return toItemDTO(schema, seller.getUsername());
+        return toItemDTO(schema, userService.toDTO(seller));
     }
 
     public List<ItemDTO> getItemsBySellerId(String sellerId) {
@@ -75,10 +79,10 @@ public class ItemService {
     }
 
     private ItemDTO toItemDTO(ItemSchema schema) {
-        return toItemDTO(schema, schema.getSellerId());
+        return toItemDTO(schema, userService.getUserDTOById(schema.getSellerId()));
     }
 
-    private ItemDTO toItemDTO(ItemSchema schema, String sellerUsername) {
+    private ItemDTO toItemDTO(ItemSchema schema, UserDTO seller) {
         Map<String, Object> normalizedExtra = normalizeExtraFieldsForResponse(schema);
 
         return new ItemDTO(
@@ -87,7 +91,7 @@ public class ItemService {
                 schema.getDescription(),
                 schema.getStartingPrice(),
                 schema.getType(),
-                sellerUsername,
+                seller,
                 schema.getImageUrl(),
                 schema.getCondition(),
                 normalizedExtra
@@ -130,7 +134,7 @@ public class ItemService {
             double startingPrice,
             ItemType type,
             String imageUrl,
-            String condition,
+            ItemCondition condition,
             Map<String, Object> extraFields,
             String sellerId) {
         String id = IdGenerator.generate();

@@ -8,11 +8,25 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class TestHelper {
+    private static final String[] DATA_FILES = {
+            "data/users.json",
+            "data/items.json",
+            "data/auctions.json",
+            "data/bids.json"
+    };
+
+    private static final Map<String, String> ORIGINAL_DATA = new LinkedHashMap<>();
+    private static boolean originalDataCaptured;
     private static AuctionServer runningServer;
 
     public static void startTestServer(int port) {
+        captureOriginalData();
         new Thread(() -> {
             try {
                 runningServer = new AuctionServer(port);
@@ -48,9 +62,58 @@ public class TestHelper {
     }
 
     public static void cleanTestData() {
-        java.io.File file = new java.io.File("data/users.json");
-        if (file.exists() && !file.delete()) {
-            System.err.println("Khong the xoa file test users.json.");
+        if (runningServer == null && originalDataCaptured) {
+            restoreOriginalData();
+            return;
+        }
+
+        for (String path : DATA_FILES) {
+            writeDataFile(path, "[]");
+        }
+    }
+
+    private static void captureOriginalData() {
+        if (originalDataCaptured) {
+            return;
+        }
+
+        for (String path : DATA_FILES) {
+            try {
+                Path file = Path.of(path);
+                ORIGINAL_DATA.put(path, Files.exists(file) ? Files.readString(file) : null);
+            } catch (Exception e) {
+                ORIGINAL_DATA.put(path, null);
+            }
+        }
+        originalDataCaptured = true;
+    }
+
+    private static void restoreOriginalData() {
+        for (String path : DATA_FILES) {
+            String content = ORIGINAL_DATA.get(path);
+            try {
+                Path file = Path.of(path);
+                if (content == null) {
+                    Files.deleteIfExists(file);
+                } else {
+                    writeDataFile(path, content);
+                }
+            } catch (Exception e) {
+                System.err.println("Khong the khoi phuc test data: " + path);
+            }
+        }
+    }
+
+    private static void writeDataFile(String path, String content) {
+        try {
+            Path file = Path.of(path);
+            Path parent = file.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.writeString(file, content);
+        } catch (Exception e) {
+            System.err.println("Khong the ghi test data: " + path);
         }
     }
 }

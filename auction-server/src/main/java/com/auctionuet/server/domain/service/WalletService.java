@@ -1,54 +1,47 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.UserSchema;
-import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 
 public class WalletService {
     private final UserDAO userDAO;
+    private final UserService userService;
 
-    public WalletService(UserDAO userDAO) {
+    public WalletService(UserDAO userDAO, UserService userService) {
         this.userDAO = userDAO;
+        this.userService = userService;
     }
 
     public synchronized WalletResponseDTO deposit(String userId, double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
+            throw new IllegalArgumentException("So tien nhap vao phai lon hon 0");
         }
-        UserSchema userSchema = userDAO.findById(userId);
-        if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
-        }
+        UserSchema userSchema = requireUser(userId);
         userSchema.setBalance(userSchema.getBalance() + amount);
         userDAO.update(userSchema);
-        
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+
+        return toWalletResponseDTO(userSchema);
     }
 
     public synchronized WalletResponseDTO withdraw(String userId, double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Số tiền nhập vào phải lớn hơn 0");
+            throw new IllegalArgumentException("So tien nhap vao phai lon hon 0");
         }
-        UserSchema userSchema = userDAO.findById(userId);
-        if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
-        }
+        UserSchema userSchema = requireUser(userId);
         if (userSchema.getBalance() < amount) {
-            throw new IllegalArgumentException("Số dư không đủ");
+            throw new IllegalArgumentException("So du khong du");
         }
         userSchema.setBalance(userSchema.getBalance() - amount);
         userDAO.update(userSchema);
-        
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+
+        return toWalletResponseDTO(userSchema);
     }
 
     public synchronized void freezeDeposit(String userId, double amount) {
-        UserSchema userSchema = userDAO.findById(userId);
-        if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
-        }
+        UserSchema userSchema = requireUser(userId);
         if (userSchema.getBalance() < amount) {
-            throw new IllegalArgumentException("Số dư không đủ");
+            throw new IllegalArgumentException("So du khong du");
         }
         userSchema.setBalance(userSchema.getBalance() - amount);
         userSchema.setFrozenBalance(userSchema.getFrozenBalance() + amount);
@@ -56,10 +49,7 @@ public class WalletService {
     }
 
     public synchronized void unfreezeDeposit(String userId, double amount) {
-        UserSchema userSchema = userDAO.findById(userId);
-        if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
-        }
+        UserSchema userSchema = requireUser(userId);
         if (userSchema.getFrozenBalance() < amount) {
             amount = Math.min(amount, userSchema.getFrozenBalance());
         }
@@ -69,10 +59,7 @@ public class WalletService {
     }
 
     public synchronized void forfeitDeposit(String userId, double amount) {
-        UserSchema userSchema = userDAO.findById(userId);
-        if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
-        }
+        UserSchema userSchema = requireUser(userId);
         if (userSchema.getFrozenBalance() < amount) {
             amount = Math.min(amount, userSchema.getFrozenBalance());
         }
@@ -81,11 +68,21 @@ public class WalletService {
     }
 
     public WalletResponseDTO getWallet(String userId) {
+        return toWalletResponseDTO(requireUser(userId));
+    }
+
+    private UserSchema requireUser(String userId) {
         UserSchema userSchema = userDAO.findById(userId);
         if (userSchema == null) {
-            throw new IllegalArgumentException("Không tìm thấy User");
+            throw new IllegalArgumentException("Khong tim thay User");
         }
-        
-        return new WalletResponseDTO(userSchema.getBalance(), userSchema.getFrozenBalance());
+        return userSchema;
+    }
+
+    private WalletResponseDTO toWalletResponseDTO(UserSchema userSchema) {
+        return new WalletResponseDTO(
+                userService.toDTO(userSchema),
+                userSchema.getBalance(),
+                userSchema.getFrozenBalance());
     }
 }

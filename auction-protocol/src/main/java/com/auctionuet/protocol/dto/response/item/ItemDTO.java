@@ -1,6 +1,8 @@
 package com.auctionuet.protocol.dto.response.item;
 
 import com.auctionuet.protocol.dto.ValidatableDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 
 import java.util.Collections;
@@ -12,9 +14,9 @@ public class ItemDTO implements ValidatableDTO {
     private final String description;
     private final double startingPrice;
     private final ItemType type;
-    private final String sellerUsername;
+    private final UserDTO seller;
     private final String imageUrl;
-    private final String condition;
+    private final ItemCondition condition;
     private final Map<String, Object> extraFields;
 
     public ItemDTO(
@@ -23,16 +25,16 @@ public class ItemDTO implements ValidatableDTO {
             String description,
             double startingPrice,
             ItemType type,
-            String sellerUsername,
+            UserDTO seller,
             String imageUrl,
-            String condition,
+            ItemCondition condition,
             Map<String, Object> extraFields) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
         this.type = type;
-        this.sellerUsername = sellerUsername;
+        this.seller = seller;
         this.imageUrl = imageUrl;
         this.condition = condition;
         this.extraFields = extraFields != null ? Collections.unmodifiableMap(extraFields) : null;
@@ -57,11 +59,8 @@ public class ItemDTO implements ValidatableDTO {
             throw new IllegalArgumentException("extraFields must not be null");
         }
         type.normalizeAndValidateExtraFields(extraFields);
-        if (sellerUsername == null || sellerUsername.isBlank()) {
-            throw new IllegalArgumentException("sellerUsername must not be blank");
-        }
-        if (condition != null && condition.isBlank()) {
-            throw new IllegalArgumentException("condition must not be blank when provided");
+        if (seller == null) {
+            throw new IllegalArgumentException("seller must not be null");
         }
     }
 
@@ -70,9 +69,9 @@ public class ItemDTO implements ValidatableDTO {
     public String getDescription() { return description; }
     public double getStartingPrice() { return startingPrice; }
     public ItemType getType() { return type; }
-    public String getSellerUsername() { return sellerUsername; }
+    public UserDTO getSeller() { return seller; }
     public String getImageUrl() { return imageUrl; }
-    public String getCondition() { return condition; }
+    public ItemCondition getCondition() { return condition; }
     public Map<String, Object> getExtraFields() { return extraFields; }
 
     @Override

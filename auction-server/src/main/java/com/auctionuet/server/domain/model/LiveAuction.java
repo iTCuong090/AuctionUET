@@ -1,6 +1,7 @@
 package com.auctionuet.server.domain.model;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.exception.*;
 
 import java.time.LocalDateTime;
@@ -82,7 +83,7 @@ public class LiveAuction {
 
             // 2. Update state
             BidRecord record = new BidRecord(
-                    bidder.getId(), bidder.getUsername(), amount, LocalDateTime.now());
+                    bidder.getId(), bidder.getUsername(), amount, LocalDateTime.now(), BidType.MANUAL);
             this.currentHighestBid = amount;
             this.currentWinnerId = bidder.getId();
             this.bidHistory.add(record);
@@ -185,9 +186,10 @@ public class LiveAuction {
                 // Auto-bid!
                 BidRecord autoRecord = new BidRecord(
                         bestConfig.getBidderId(),
-                        bestConfig.getBidderUsername() + " [AUTO]",
+                        bestConfig.getBidderName(),
                         newBidAmount,
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        BidType.AUTO
                 );
                 this.currentHighestBid = newBidAmount;
                 this.currentWinnerId = bestConfig.getBidderId();

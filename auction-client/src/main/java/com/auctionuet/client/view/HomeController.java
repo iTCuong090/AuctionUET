@@ -113,7 +113,7 @@ public class HomeController {
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        Label price = new Label(String.format("%,.0f VND", auction.getCurrentHighestBid()));
+        Label price = new Label(String.format("%,.0f VND", auction.getCurrentPrice()));
         price.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 
@@ -121,7 +121,7 @@ public class HomeController {
         timeLabel.setStyle("-fx-font-size: 13px;");
         timeLabel.getStyleClass().add("text-detail");
 
-        String seller = auction.getSellerUsername() != null ? auction.getSellerUsername() : "Chua ro";
+        String seller = auction.getSeller() != null ? auction.getSeller().getUsername() : "Chua ro";
         Label sellerLabel = new Label("Seller: " + seller);
         sellerLabel.setStyle("-fx-font-size: 13px;");
         sellerLabel.getStyleClass().add("text-secondary");

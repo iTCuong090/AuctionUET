@@ -1,5 +1,6 @@
 package com.auctionuet.server.persistence.schema;
 
+import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ public class ItemSchema extends BaseSchema {
     private ItemType type;
     private String sellerId;
     private String imageUrl;
-    private String condition;
+    private ItemCondition condition;
     private int auctionCount;
     private Map<String, Object> extraFields;
 
@@ -30,7 +31,7 @@ public class ItemSchema extends BaseSchema {
             ItemType type,
             String sellerId,
             String imageUrl,
-            String condition,
+            ItemCondition condition,
             int auctionCount,
             Map<String, Object> extraFields) {
         super(id, createdAt, updatedAt);
@@ -57,8 +58,8 @@ public class ItemSchema extends BaseSchema {
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public String getCondition() { return condition; }
-    public void setCondition(String condition) { this.condition = condition; }
+    public ItemCondition getCondition() { return condition; }
+    public void setCondition(ItemCondition condition) { this.condition = condition; }
     public int getAuctionCount() { return auctionCount; }
     public void setAuctionCount(int auctionCount) { this.auctionCount = auctionCount; }
     public Map<String, Object> getExtraFields() { return extraFields; }

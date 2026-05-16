@@ -1,5 +1,6 @@
 package com.auctionuet.server.persistence.dao;
 
+import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.json.GsonFactory;
@@ -45,7 +46,7 @@ public class ItemDAOTest {
                 ItemType.ELECTRONICS,
                 "seller1",
                 "url",
-                "NEW",
+                ItemCondition.NEW,
                 0,
                 new LinkedHashMap<>(Map.of("brand", "Apple", "warrantyMonths", 12))
         );
@@ -71,7 +72,7 @@ public class ItemDAOTest {
                 ItemType.ELECTRONICS,
                 "A",
                 "url",
-                "NEW",
+                ItemCondition.NEW,
                 0,
                 new LinkedHashMap<>(Map.of("brand", "Apple", "warrantyMonths", 12))
         );
@@ -85,7 +86,7 @@ public class ItemDAOTest {
                 ItemType.ART,
                 "B",
                 "url",
-                "GOOD",
+                ItemCondition.GOOD,
                 0,
                 new LinkedHashMap<>(Map.of("artist", "Da Vinci", "year", 1500, "medium", "Oil"))
         );
@@ -99,7 +100,7 @@ public class ItemDAOTest {
                 ItemType.ELECTRONICS,
                 "A",
                 "url",
-                "NEW",
+                ItemCondition.NEW,
                 0,
                 new LinkedHashMap<>(Map.of("brand", "Samsung", "warrantyMonths", 24))
         );
@@ -124,7 +125,7 @@ public class ItemDAOTest {
                 ItemType.VEHICLE,
                 "seller1",
                 "url",
-                "USED",
+                ItemCondition.FAIR,
                 0,
                 new LinkedHashMap<>(Map.of("make", "Toyota", "model", "Camry", "mileage", 10000, "vehicleYear", 2020))
         );

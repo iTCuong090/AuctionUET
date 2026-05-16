@@ -2,7 +2,6 @@ package com.auctionuet.server.domain.manager;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.LiveAuction;
-import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.time.Duration;
@@ -16,9 +15,10 @@ import java.util.concurrent.TimeUnit;
 
 public class AuctionManager implements com.auctionuet.server.domain.model.AuctionObserver {
 
-    // Singleton
     private AuctionManager() {}
+
     private static final AuctionManager INSTANCE = new AuctionManager();
+
     public static AuctionManager getInstance() {
         return INSTANCE;
     }
@@ -34,7 +34,9 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
 
     private void scheduleAuctionEnd(String auctionId, long delayMs) {
         ScheduledFuture<?> task = scheduledTasks.get(auctionId);
-        if (task != null) task.cancel(false);
+        if (task != null) {
+            task.cancel(false);
+        }
 
         if (delayMs > 0) {
             scheduledTasks.put(auctionId, scheduler.schedule(() -> {
@@ -42,19 +44,16 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
                     endAuctionCallback.accept(auctionId);
                 }
             }, delayMs, TimeUnit.MILLISECONDS));
-        } else {
-            if (endAuctionCallback != null) {
-                endAuctionCallback.accept(auctionId);
-            }
+        } else if (endAuctionCallback != null) {
+            endAuctionCallback.accept(auctionId);
         }
     }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
-        LiveAuction auction = AuctionMapper.toDomain(schema);
+        LiveAuction auction = toDomain(schema);
         liveAuctions.put(auction.getId(), auction);
-        auction.addObserver(this); // Đăng ký để lắng nghe sự kiện gia hạn
+        auction.addObserver(this);
 
-        // Schedule auto-end
         long delayMs = Duration.between(LocalDateTime.now(), schema.getEndTime()).toMillis();
         scheduleAuctionEnd(auction.getId(), delayMs);
 
@@ -70,7 +69,6 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);
             auction.notifyAuctionEnded();
-            // Cường's AuctionService sẽ ghi kết quả vào DB
         }
     }
 
@@ -83,19 +81,32 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         }
     }
 
-    // --- AuctionObserver methods ---
     @Override
     public void onBidPlaced(String auctionId, com.auctionuet.server.domain.model.BidRecord record) {
-        // Do nothing here
+        // AuctionManager only reacts to lifecycle events.
     }
 
     @Override
     public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
-        // Do nothing here
+        // AuctionService owns persistence and payment state transitions.
     }
 
     @Override
     public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
         extendAuction(auctionId, newEndTime);
+    }
+
+    private LiveAuction toDomain(AuctionSchema schema) {
+        return new LiveAuction(
+                schema.getId(),
+                schema.getItemId(),
+                schema.getSellerId(),
+                schema.getEndTime(),
+                schema.getStatus(),
+                schema.getHighestBid(),
+                schema.getWinnerId(),
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds()
+        );
     }
 }

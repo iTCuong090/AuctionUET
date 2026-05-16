@@ -4,15 +4,15 @@ import java.time.LocalDateTime;
 
 public class AutoBidConfig implements Comparable<AutoBidConfig> {
     private final String bidderId;
-    private final String bidderUsername;
+    private final String bidderName;
     private double maxBid;
     private final double increment;
     private final LocalDateTime registeredAt;
 
-    public AutoBidConfig(String bidderId, String bidderUsername,
+    public AutoBidConfig(String bidderId, String bidderName,
                          double maxBid, double increment) {
         this.bidderId = bidderId;
-        this.bidderUsername = bidderUsername;
+        this.bidderName = bidderName;
         this.maxBid = maxBid;
         this.increment = increment;
         this.registeredAt = LocalDateTime.now();
@@ -31,8 +31,8 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
     public String getBidderId() {
         return bidderId;
     }
-    public String getBidderUsername() {
-        return bidderUsername;
+    public String getBidderName() {
+        return bidderName;
     }
     public double getMaxBid() {
         return maxBid;

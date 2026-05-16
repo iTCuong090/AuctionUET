@@ -1,5 +1,8 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.AutoBidConfig;
 import com.auctionuet.server.domain.model.BidRecord;
@@ -13,29 +16,30 @@ import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 public class BidService {
-    /**
-     * Tỉ lệ tiền cọc bắt buộc (10% giá khởi điểm) để đảm bảo trách nhiệm tham gia đấu giá.
-     */
     private static final double ESCROW_DEPOSIT_RATE = 0.10;
+
     private final AuctionManager auctionManager;
     private final WalletService walletService;
     private final BidDAO bidDAO;
     private final ItemService itemService;
     private final AuctionDAO auctionDAO;
+    private final UserService userService;
 
     public BidService(AuctionManager auctionManager, WalletService walletService,
-            BidDAO bidDAO, ItemService itemService, AuctionDAO auctionDAO) {
+            BidDAO bidDAO, ItemService itemService, AuctionDAO auctionDAO, UserService userService) {
         this.auctionManager = auctionManager;
         this.walletService = walletService;
         this.bidDAO = bidDAO;
         this.itemService = itemService;
         this.auctionDAO = auctionDAO;
+        this.userService = userService;
     }
 
-    public synchronized BidRecord placeBid(User bidder, String auctionId, double amount) throws Exception {
+    public synchronized BidDTO placeBid(User bidder, String auctionId, double amount) throws Exception {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found or not running");
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
@@ -44,25 +48,45 @@ public class BidService {
         String previousWinnerId = liveAuction.getCurrentWinnerId();
 
         BidRecord record = liveAuction.placeBid(bidder, amount, autoRecord -> {
-            BidSchema autoBidSchema = toBidSchema(
-                    auctionId,
-                    autoRecord.getBidderId(),
-                    autoRecord.getAmount(),
-                    autoRecord.getTimestamp());
+            BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
             bidDAO.save(autoBidSchema);
         });
 
         syncAuctionState(auctionId, liveAuction);
         unfreezePreviousWinnerDeposit(previousWinnerId, bidder.getId(), depositAmount);
 
-        BidSchema bidSchema = toBidSchema(auctionId, bidder.getId(), amount, LocalDateTime.now());
+        BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
 
-        return record;
+        return toBidDTO(record, auctionId);
     }
 
     public List<BidSchema> getBidHistory(String auctionId) {
         return bidDAO.findByAuctionId(auctionId);
+    }
+
+    public List<BidDTO> getBidHistoryDTO(String auctionId) {
+        return getBidHistory(auctionId).stream()
+                .map(this::toBidDTO)
+                .toList();
+    }
+
+    public BidDTO getCurrentHighestBidDTO(AuctionSchema auction) {
+        if (auction == null || auction.getWinnerId() == null || auction.getHighestBid() <= 0) {
+            return null;
+        }
+
+        return getBidHistory(auction.getId()).stream()
+                .filter(bid -> auction.getWinnerId().equals(bid.getBidderId()))
+                .filter(bid -> Double.compare(auction.getHighestBid(), bid.getAmount()) == 0)
+                .max(Comparator.comparing(BidSchema::getTimestamp))
+                .map(this::toBidDTO)
+                .orElseGet(() -> new BidDTO(
+                        auction.getId(),
+                        userService.getUserDTOById(auction.getWinnerId()),
+                        auction.getHighestBid(),
+                        auction.getUpdatedAt() != null ? auction.getUpdatedAt() : LocalDateTime.now(),
+                        BidType.MANUAL));
     }
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
@@ -79,6 +103,42 @@ public class BidService {
     public void cancelAutoBid(User bidder, String auctionId) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
         liveAuction.removeAutoBid(bidder.getId());
+    }
+
+    public AutoBidConfigDTO getAutoBidConfigDTO(User bidder, String auctionId) {
+        LiveAuction liveAuction = auctionManager.getAuction(auctionId);
+        if (liveAuction == null) {
+            return null;
+        }
+
+        AutoBidConfig config = liveAuction.getAutoBidConfig(bidder.getId());
+        if (config == null) {
+            return null;
+        }
+
+        return new AutoBidConfigDTO(
+                auctionId,
+                userService.toDTO(bidder),
+                config.getMaxBid(),
+                config.getIncrement());
+    }
+
+    public BidDTO toBidDTO(BidRecord record, String auctionId) {
+        return new BidDTO(
+                auctionId,
+                userService.getUserDTOById(record.getBidderId()),
+                record.getAmount(),
+                record.getTimestamp(),
+                record.getBidType());
+    }
+
+    public BidDTO toBidDTO(BidSchema schema) {
+        return new BidDTO(
+                schema.getAuctionId(),
+                userService.getUserDTOById(schema.getBidderId()),
+                schema.getAmount(),
+                schema.getTimestamp(),
+                schema.getBidType());
     }
 
     private LiveAuction requireLiveAuction(String auctionId, String errorMessage) {
@@ -132,15 +192,16 @@ public class BidService {
         }
     }
 
-    private BidSchema toBidSchema(String auctionId, String bidderId, double amount, LocalDateTime bidTime) {
+    private BidSchema toBidSchema(String auctionId, BidRecord record) {
         LocalDateTime now = LocalDateTime.now();
         return new BidSchema(
                 IdGenerator.generate(),
                 now,
                 now,
                 auctionId,
-                bidderId,
-                amount,
-                bidTime);
+                record.getBidderId(),
+                record.getAmount(),
+                record.getTimestamp(),
+                record.getBidType());
     }
 }

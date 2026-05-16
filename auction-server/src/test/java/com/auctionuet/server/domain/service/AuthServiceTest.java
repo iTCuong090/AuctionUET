@@ -30,7 +30,8 @@ public class AuthServiceTest {
         Files.createDirectories(Path.of("data"));
         Files.deleteIfExists(Path.of(TEST_DB_PATH));
         userDAO = new UserDAO(TEST_DB_PATH);
-        authService = new AuthService(userDAO);
+        UserService userService = new UserService(userDAO);
+        authService = new AuthService(userDAO, userService);
         sessionManager = SessionManager.getInstance();
     }
 

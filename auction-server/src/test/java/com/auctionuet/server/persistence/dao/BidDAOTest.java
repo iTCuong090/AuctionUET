@@ -1,5 +1,6 @@
 package com.auctionuet.server.persistence.dao;
 
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.persistence.schema.BidSchema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +31,11 @@ public class BidDAOTest {
     @Test
     public void testBidSaveAndFindByAuction() {
         BidSchema b1 = new BidSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
-                "A", "bidder1", 100.0, LocalDateTime.now());
+                "A", "bidder1", 100.0, LocalDateTime.now(), BidType.MANUAL);
         BidSchema b2 = new BidSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
-                "A", "bidder2", 200.0, LocalDateTime.now());
+                "A", "bidder2", 200.0, LocalDateTime.now(), BidType.MANUAL);
         BidSchema b3 = new BidSchema(UUID.randomUUID().toString(), LocalDateTime.now(), LocalDateTime.now(),
-                "B", "bidder1", 150.0, LocalDateTime.now());
+                "B", "bidder1", 150.0, LocalDateTime.now(), BidType.MANUAL);
 
         bidDAO.save(b1);
         bidDAO.save(b2);

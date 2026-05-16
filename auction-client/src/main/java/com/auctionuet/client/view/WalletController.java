@@ -155,7 +155,7 @@ public class WalletController {
     private void renderWallet(WalletResponseDTO wallet) {
         double balance = wallet != null ? wallet.getBalance() : 0.0;
         double frozen = wallet != null ? wallet.getFrozenBalance() : 0.0;
-        double total = balance + frozen;
+        double total = wallet != null ? wallet.getTotalBalance() : 0.0;
 
         balanceLabel.setText(String.format("%,.0f VND", balance));
         frozenLabel.setText(String.format("%,.0f VND", frozen));
