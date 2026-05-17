@@ -939,3 +939,113 @@ Nhìn tổng thể, nhánh này là một bước trưởng thành đáng kể c
 Phần làm tốt nhất là refactor giảm trùng lặp giữa client/server và gom network contract về `auction-protocol`. Phần cần hoàn thiện nhất là kiểm chứng các feature nâng cao bằng test sâu hơn, đặc biệt là auto-bid, deposit rollback, concurrent bidding và payment flow.
 
 Nếu dùng tài liệu này để review nội bộ, nên coi đây là một bản "nhìn lại thật": nhánh đã clean hơn rõ rệt, nhưng vẫn còn vài cạnh sắc cần mài trước khi nộp/demo.
+
+## 23. Cập nhật bổ sung ngày 17/05/2026: auto-bid, cọc và reload correctness
+
+Sau phần báo cáo gốc, nhóm đã tiếp tục refactor sâu thêm quanh luồng `AutoBid`, cọc đấu giá, ví tiền và trạng thái reload. Các thay đổi này xử lý trực tiếp một số rủi ro đã được ghi ở mục 18.
+
+### 23.1 Auto-bid được resolve ngay sau khi bật
+
+Trước đó, user bật auto-bid nhưng hệ thống chỉ phản ứng sau khi có manual bid tiếp theo. Luồng mới đã sửa theo hướng:
+
+- `LiveAuction.addAutoBid(...)` sau khi thêm config sẽ gọi `resolveAutoBids(...)` ngay.
+- `BidService.setAutoBid(...)` freeze cọc trước khi bật auto-bid, lưu các bid tự động được sinh ra qua callback, rồi sync lại trạng thái auction.
+- Nếu cấu hình auto-bid hợp lệ với giá hiện tại, ví dụ current price 10k, max bid 100k, increment 5k, hệ thống có thể tạo bid AUTO 15k ngay sau khi bật.
+- Nếu user không đủ tiền để freeze cọc, `setAutoBid(...)` fail và không lưu config, không sinh bid AUTO.
+
+Điều này đóng lại rủi ro ở mục 18.2 của bản báo cáo gốc.
+
+### 23.2 Chính sách cọc chuyển sang giữ đến cuối phiên
+
+Policy cọc đã được chuẩn hóa lại:
+
+- User tham gia auction bằng manual bid hoặc bật auto-bid đều phải freeze cọc bằng 10% giá khởi điểm.
+- Cọc là cố định theo `startingPrice * 10%`, không tăng theo giá bid.
+- Khi bị outbid, user không được hoàn cọc ngay; cọc được giữ đến cuối phiên.
+- Khi auction kết thúc:
+  - Không có winner hoặc auction bị hủy: hoàn cọc cho toàn bộ bidder đã tham gia.
+  - Có winner: hoàn cọc cho tất cả non-winner.
+  - Winner giữ cọc ở trạng thái `WAITING_PAYMENT`.
+- Khi winner thanh toán, ví chỉ withdraw thêm `finalPrice - deposit`; cọc được tính vào tổng thanh toán và seller nhận đủ `finalPrice`.
+- Nếu winner timeout thanh toán, cọc bị forfeit.
+
+Điều này thay thế logic cũ "đổi leader thì hoàn cọc cho leader trước" và làm rõ rủi ro ở mục 18.4: đây không còn là bug mà là rule nghiệp vụ mới, mọi participant giữ cọc đến khi phiên kết thúc.
+
+### 23.3 Rollback cọc khi bid invalid
+
+`BidService.placeBid(...)` vẫn cần freeze cọc trước khi gọi vào live auction để đảm bảo user đủ điều kiện tham gia, nhưng đã có rollback rõ ràng:
+
+- Nếu manual bid invalid sau khi freeze, hệ thống gọi `unfreezeDeposit(...)`.
+- Đồng thời xóa dấu user đã cọc khỏi `LiveAuction` và khỏi persisted schema.
+- Test đã cover case bid invalid không làm mất tiền cọc.
+
+Điều này đóng rủi ro ở mục 18.3 của bản báo cáo gốc.
+
+### 23.4 Persist danh sách bidder đã cọc để reload đúng
+
+Lỗi lớn nhất sau refactor là `LiveAuction.depositedBidders` chỉ là runtime state. Khi user rời màn hình auction, reload client, hoặc server restart, auction có thể mất dấu user đã cọc dù ví vẫn có `frozenBalance`.
+
+Luồng mới bổ sung source of truth bền vững:
+
+- `AuctionSchema` có thêm `depositedBidderIds`.
+- `BidService.ensureDepositFrozen(...)` check và update cả `AuctionSchema.depositedBidderIds` lẫn `LiveAuction.depositedBidders`.
+- Rollback deposit xóa user khỏi cả hai nơi.
+- `AuctionManager.loadAuction(...)` hydrate lại `LiveAuction` từ `depositedBidderIds`.
+- Server startup gọi `auctionService.loadRunningAuctions()` để load lại các auction `RUNNING`, timer kết thúc phiên và trạng thái cọc.
+- Có backfill conservative cho auction cũ: nếu bid history có bidder và bidder đang có đủ `frozenBalance`, hệ thống thêm bidder vào `depositedBidderIds` mà không tự freeze thêm tiền.
+- `GET_AUCTION_DETAIL` có read-repair: nếu runtime live biết user đã cọc, hoặc bid history + frozen balance chứng minh user đã cọc, schema sẽ được tự heal.
+
+Điểm quan trọng: hệ thống không tự trừ tiền chỉ vì user mở lại trang auction. Với auction cũ đã bid trước policy mới nhưng chưa hề bị freeze tiền, cần một migration có chủ đích nếu muốn truy thu cọc cho lịch sử cũ.
+
+### 23.5 Frontend render ví và cọc rõ hơn
+
+Frontend không dùng polling. Luồng render hiện tại:
+
+- Màn bidding gọi `GET_WALLET` một lần khi mở trang để render số dư ví.
+- "Tiền cọc của bạn" dùng `AuctionDTO.depositAmount` và `AuctionDTO.currentUserDeposited`.
+- Sau manual bid hoặc set auto-bid thành công, client refresh wallet một lần và set trạng thái đã cọc.
+- Khi nhận `BID_UPDATE`, client chỉ refresh wallet nếu bid thuộc current user.
+- Màn ví đổi label từ "Tiền đang cọc" thành "Tổng tiền đang cọc" để nói rõ đây là tổng `frozenBalance` trên mọi auction.
+
+### 23.6 Test mới sau cập nhật
+
+`AuctionServiceTest` đã được mở rộng đáng kể, bao gồm các case:
+
+- Bật auto-bid đủ tiền thì freeze cọc và auto-bid ngay nếu đủ điều kiện.
+- Bật auto-bid không đủ tiền thì fail, không lưu config, không tạo AUTO bid.
+- Auto-bid vẫn persist cọc ngay cả khi chưa sinh bid AUTO.
+- Manual bid invalid rollback cọc.
+- User bị outbid vẫn giữ cọc đến cuối phiên.
+- End auction hoàn cọc cho non-winner.
+- Winner thanh toán chỉ trả thêm `finalPrice - deposit`, seller nhận đủ final price.
+- Reload/hydrate `LiveAuction` không làm double-freeze.
+- Startup backfill và hydrate cọc từ bid history + frozen balance.
+- End auction vẫn refund theo persisted list dù `LiveAuction` đã mất.
+- `GET_AUCTION_DETAIL` read-repair persisted deposit từ live state.
+- `GET_AUCTION_DETAIL` backfill từ bid history + frozen balance.
+- `GET_AUCTION_DETAIL` không tự đánh dấu đã cọc nếu bid history có nhưng không có frozen balance.
+
+Kết quả kiểm thử mới:
+
+| Lệnh | Kết quả |
+|---|---|
+| `mvn clean test` | Pass toàn bộ reactor |
+| `AuctionServiceTest` | 22 tests, 0 failures |
+| Server tests | 78 tests, 0 failures |
+| Client tests | 1 test, 0 failures |
+
+### 23.7 Ảnh hưởng tới đánh giá
+
+So với bản báo cáo gốc, các mục sau nên được đánh giá tốt hơn:
+
+- `Auto-bidding`: đã có trigger resolve ngay, có test cho success/fail và case không đủ tiền.
+- `Wallet/deposit/payment`: đã rõ policy giữ cọc đến cuối phiên, persist participation, refund/payment/timeout flow nhất quán hơn.
+- `Unit test`: số test tăng và cover trực tiếp nhiều edge case của bid/cọc/payment hơn.
+- `AuctionServer bootstrap`: load lại `RUNNING` auctions khi startup, giúp timer và trạng thái cọc bền hơn sau restart.
+
+Các rủi ro còn lại sau cập nhật:
+
+- Auto-bid config vẫn là runtime-only; nếu cần giữ auto-bid sau server restart thì cần một feature persistence riêng.
+- Chưa có test concurrency nhiều thread bid cùng lúc.
+- Chưa có realtime price curve dạng line chart.
+- Vẫn nên dọn các `System.out.println`, `printStackTrace` và warning Maven plugin version trước demo/nộp.
