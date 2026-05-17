@@ -1,13 +1,22 @@
 package com.auctionuet.server.network.server;
 
+import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.manager.DataManager;
-import com.auctionuet.server.domain.service.*;
-import com.auctionuet.server.network.controller.*;
+import com.auctionuet.server.domain.service.AuctionService;
+import com.auctionuet.server.domain.service.AuthService;
+import com.auctionuet.server.domain.service.BidService;
+import com.auctionuet.server.domain.service.ItemService;
+import com.auctionuet.server.domain.service.UserService;
+import com.auctionuet.server.domain.service.WalletService;
+import com.auctionuet.server.network.controller.AuctionController;
+import com.auctionuet.server.network.controller.AuthController;
+import com.auctionuet.server.network.controller.BidController;
+import com.auctionuet.server.network.controller.ItemController;
+import com.auctionuet.server.network.controller.WalletController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
-import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.util.AppLogger;
 
 import java.io.IOException;
@@ -21,7 +30,6 @@ public class AuctionServer {
     private boolean isRunning = false;
     private RequestRouter router;
 
-    // Đếm số connection đang active để log
     private final AtomicInteger activeConnections = new AtomicInteger(0);
 
     public AuctionServer(int port) {
@@ -30,7 +38,6 @@ public class AuctionServer {
 
     public void start() {
         try {
-            // ── Khởi tạo DAO ──
             UserDAO userDAO = DataManager.getInstance().getUserDAO();
             AppLogger.logInit("UserDAO", null);
 
@@ -43,23 +50,37 @@ public class AuctionServer {
             BidDAO bidDAO = DataManager.getInstance().getBidDAO();
             AppLogger.logInit("BidDAO", null);
 
-            // ── Khởi tạo Service ──
-            AuthService authService = new AuthService(userDAO);
+            UserService userService = new UserService(userDAO);
+            AppLogger.logInit("UserService", null);
+
+            AuthService authService = new AuthService(userDAO, userService);
             AppLogger.logInit("AuthService", null);
 
-            ItemService itemService = new ItemService(itemDAO);
+            ItemService itemService = new ItemService(itemDAO, userService);
             AppLogger.logInit("ItemService", null);
-            
-            WalletService walletService = new WalletService(userDAO);
+
+            WalletService walletService = new WalletService(userDAO, userService);
             AppLogger.logInit("WalletService", null);
 
-            AuctionService auctionService = new AuctionService(itemService, auctionDAO, walletService);
-            AppLogger.logInit("AuctionService", null);
-            
-            BidService bidService = new BidService(AuctionManager.getInstance(), walletService, bidDAO, itemService, auctionDAO);
+            BidService bidService = new BidService(
+                    AuctionManager.getInstance(),
+                    walletService,
+                    bidDAO,
+                    itemService,
+                    auctionDAO,
+                    userService);
             AppLogger.logInit("BidService", null);
 
-            // ── Khởi tạo Controller ──
+            AuctionService auctionService = new AuctionService(
+                    itemService,
+                    bidService,
+                    userService,
+                    auctionDAO,
+                    walletService);
+            AppLogger.logInit("AuctionService", null);
+            auctionService.loadRunningAuctions();
+            AppLogger.logInit("RunningAuctions", "Loaded");
+
             AuthController authController = new AuthController(authService);
             AppLogger.logInit("AuthController", null);
 
@@ -75,7 +96,6 @@ public class AuctionServer {
             BidController bidController = new BidController(bidService);
             AppLogger.logInit("BidController", null);
 
-            // ── Khởi tạo Router ──
             this.router = new RequestRouter(bidController, walletController, authController, itemController, auctionController);
             AppLogger.logInit("RequestRouter", "Ready");
 
@@ -84,18 +104,18 @@ public class AuctionServer {
             AppLogger.logServerListening(port);
 
             while (isRunning) {
-                Socket clientSocket = serverSocket.accept();  // blocking
+                Socket clientSocket = serverSocket.accept();
                 int count = activeConnections.incrementAndGet();
                 String ip = clientSocket.getInetAddress().getHostAddress();
                 AppLogger.logClientConnected(ip, clientSocket.getPort(), count);
 
-                ClientHandler handler = new ClientHandler(clientSocket, this.router, activeConnections);
+                ClientHandler handler = new ClientHandler(clientSocket, this.router, activeConnections, userService);
                 new Thread(handler, "client-" + ip).start();
             }
 
         } catch (IOException e) {
             if (isRunning) {
-                AppLogger.logServerError("Lỗi khi mở Server", e);
+                AppLogger.logServerError("Loi khi mo Server", e);
             }
         }
     }
@@ -108,7 +128,7 @@ public class AuctionServer {
                 AppLogger.logServerStopped();
             }
         } catch (IOException e) {
-            AppLogger.logServerError("Lỗi khi đóng Server: " + e.getMessage(), e);
+            AppLogger.logServerError("Loi khi dong Server: " + e.getMessage(), e);
         }
     }
 }

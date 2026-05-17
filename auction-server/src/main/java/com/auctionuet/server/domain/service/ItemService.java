@@ -1,83 +1,162 @@
 package com.auctionuet.server.domain.service;
 
+import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.enums.ItemCondition;
+import com.auctionuet.protocol.enums.ItemType;
+import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
-import com.auctionuet.server.mapper.ItemMapper;
-import com.auctionuet.server.network.dto.ItemDTO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.schema.ItemSchema;
-import com.auctionuet.server.util.AppLogger;
+import com.auctionuet.server.util.IdGenerator;
 
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * Service chuyên xử lý các hành động liên quan tới Item Management.
- * Được tách ra từ AuctionService để tuân thủ Single Responsibility Principle.
- */
 public class ItemService {
 
     private final ItemDAO itemDAO;
+    private final UserService userService;
 
-    public ItemService(ItemDAO itemDAO) {
+    public ItemService(ItemDAO itemDAO, UserService userService) {
         this.itemDAO = itemDAO;
+        this.userService = userService;
     }
 
-    /**
-     * Tạo item mới. Chỉ Seller mới có quyền.
-     */
-    public ItemSchema createItem(User seller, ItemDTO itemDTO) throws AuctionException, IllegalArgumentException {
-        AppLogger.logServiceCall("ItemService", "createItem",
-            "seller=" + seller.getUsername() + " itemName=" + itemDTO.getName()
-            + " startingPrice=" + itemDTO.getStartingPrice());
-
-        if (!seller.hasPermission(com.auctionuet.server.domain.enums.Permission.CREATE_ITEM)) {
-            AppLogger.logServiceResult("ItemService", "createItem",
-                "FAIL — no permission CREATE_ITEM | user=" + seller.getUsername());
-            throw new AuctionException("Không có quyền CREATE_ITEM");
+    public ItemDTO createItem(
+            User seller,
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            String imageUrl,
+            ItemCondition condition,
+            Map<String, Object> extraFields) throws AuctionException {
+        if (!seller.hasPermission(Permission.CREATE_ITEM)) {
+            throw new AuctionException("Khong co quyen CREATE_ITEM");
         }
 
-        if (itemDTO.getName() == null || itemDTO.getName().isEmpty() || itemDTO.getStartingPrice() <= 0) {
-            AppLogger.logServiceResult("ItemService", "createItem",
-                "FAIL — invalid item data | name=" + itemDTO.getName());
-            throw new IllegalArgumentException("Dữ liệu item không hợp lệ");
-        }
-
-        ItemSchema schema = ItemMapper.toNewSchema(itemDTO, seller.getId());
+        ItemSchema schema = toNewSchema(
+                name,
+                description,
+                startingPrice,
+                type,
+                imageUrl,
+                condition,
+                extraFields,
+                seller.getId()
+        );
         itemDAO.save(schema);
-
-        AppLogger.logServiceResult("ItemService", "createItem",
-            "OK | itemId=" + schema.getId() + " name=" + schema.getName());
-        return schema;
+        return toItemDTO(schema, userService.toDTO(seller));
     }
 
-    /**
-     * Lấy danh sách item của chính user đang đăng nhập (dùng cho GET_MY_ITEMS).
-     */
-    public List<ItemSchema> getItemsBySellerId(String sellerId) {
-        AppLogger.logServiceCall("ItemService", "getItemsBySellerId", "sellerId=" + sellerId);
-        List<ItemSchema> items = itemDAO.findBySellerId(sellerId);
-        AppLogger.logServiceResult("ItemService", "getItemsBySellerId", "Found " + items.size() + " items");
-        return items;
+    public List<ItemDTO> getItemsBySellerId(String sellerId) {
+        return itemDAO.findBySellerId(sellerId)
+                .stream()
+                .map(this::toItemDTO)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Tìm item theo ID.
-     */
-    public ItemSchema getItemById(String itemId) {
-        AppLogger.logServiceCall("ItemService", "getItemById", "itemId=" + itemId);
-        ItemSchema item = itemDAO.findById(itemId);
-        AppLogger.logServiceResult("ItemService", "getItemById",
-            item != null ? "Found: " + item.getName() : "NOT FOUND");
-        return item;
+    public ItemDTO getItemById(String itemId) {
+        ItemSchema schema = getItemSchemaById(itemId);
+        if (schema == null) {
+            return null;
+        }
+        return toItemDTO(schema);
     }
 
-    /**
-     * Cập nhật thông tin item (tăng auctionCount, v.v.)
-     */
+    public ItemSchema getItemSchemaById(String itemId) {
+        return itemDAO.findById(itemId);
+    }
+
     public void updateItem(ItemSchema item) {
-        AppLogger.logServiceCall("ItemService", "updateItem",
-            "itemId=" + item.getId() + " auctionCount=" + item.getAuctionCount());
         itemDAO.update(item);
-        AppLogger.logServiceResult("ItemService", "updateItem", "OK");
+    }
+
+    private ItemDTO toItemDTO(ItemSchema schema) {
+        return toItemDTO(schema, userService.getUserDTOById(schema.getSellerId()));
+    }
+
+    private ItemDTO toItemDTO(ItemSchema schema, UserDTO seller) {
+        Map<String, Object> normalizedExtra = normalizeExtraFieldsForResponse(schema);
+
+        return new ItemDTO(
+                schema.getId(),
+                schema.getName(),
+                schema.getDescription(),
+                schema.getStartingPrice(),
+                schema.getType(),
+                seller,
+                schema.getImageUrl(),
+                schema.getCondition(),
+                normalizedExtra
+        );
+    }
+
+    private Map<String, Object> normalizeExtraFieldsForResponse(ItemSchema schema) {
+        try {
+            return schema.getType().normalizeAndValidateExtraFields(schema.getExtraFields());
+        } catch (IllegalArgumentException ex) {
+            return defaultExtraFields(schema.getType());
+        }
+    }
+
+    private Map<String, Object> defaultExtraFields(ItemType type) {
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        switch (type) {
+            case ELECTRONICS -> {
+                defaults.put("brand", "Unknown");
+                defaults.put("warrantyMonths", 0);
+            }
+            case ART -> {
+                defaults.put("artist", "Unknown");
+                defaults.put("year", Year.now().getValue());
+                defaults.put("medium", "Unknown");
+            }
+            case VEHICLE -> {
+                defaults.put("make", "Unknown");
+                defaults.put("model", "Unknown");
+                defaults.put("mileage", 0);
+                defaults.put("vehicleYear", 1886);
+            }
+        }
+        return defaults;
+    }
+
+    private ItemSchema toNewSchema(
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            String imageUrl,
+            ItemCondition condition,
+            Map<String, Object> extraFields,
+            String sellerId) {
+        String id = IdGenerator.generate();
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<String, Object> normalizedExtra = type.normalizeAndValidateExtraFields(
+                extraFields == null ? Map.of() : extraFields
+        );
+
+        return new ItemSchema(
+                id,
+                now,
+                now,
+                name,
+                description,
+                startingPrice,
+                type,
+                sellerId,
+                imageUrl,
+                condition,
+                0,
+                normalizedExtra
+        );
     }
 }

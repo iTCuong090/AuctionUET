@@ -1,7 +1,5 @@
 [
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 1.699E7,
@@ -15,8 +13,6 @@
     "updatedAt": "2026-05-08T14:07:50.8037016"
   },
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 100000.0,
@@ -30,8 +26,6 @@
     "updatedAt": "2026-05-08T14:35:14.2488791"
   },
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 100000.0,
@@ -45,8 +39,6 @@
     "updatedAt": "2026-05-08T14:23:26.2404182"
   },
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 100000.0,
@@ -60,8 +52,6 @@
     "updatedAt": "2026-05-08T14:32:56.3173993"
   },
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 100000.0,
@@ -75,8 +65,6 @@
     "updatedAt": "2026-05-08T14:32:57.0319522"
   },
   {
-    "itemType": "ELECTRONICS",
-    "warrantyMonths": 0,
     "name": "ip 15 pro",
     "description": "zin 99%",
     "startingPrice": 1000000.0,
@@ -90,9 +78,6 @@
     "updatedAt": "2026-05-08T14:34:11.3163694"
   },
   {
-    "itemType": "VEHICLE",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "vinfast 9",
     "description": "đểu",
     "startingPrice": 5.0E8,
@@ -104,5 +89,35 @@
     "id": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
     "createdAt": "2026-05-09T13:12:06.2308898",
     "updatedAt": "2026-05-09T13:13:05.5277631"
+  },
+  {
+    "name": "Iphone 17 pro max",
+    "description": "Nát",
+    "startingPrice": 1.0E7,
+    "type": "ELECTRONICS",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "imageUrl": "fgfgrg",
+    "condition": "NEW",
+    "auctionCount": 3,
+    "id": "3924b4d1-662e-424c-ac1e-f828d582ebba",
+    "createdAt": "2026-05-10T00:50:40.1844946",
+    "updatedAt": "2026-05-16T23:03:18.7407404"
+  },
+  {
+    "name": "Iphone 19 Promax",
+    "description": "Nát bét",
+    "startingPrice": 6.9696969E7,
+    "type": "ELECTRONICS",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "imageUrl": "hentailz.net",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "extraFields": {
+      "brand": "appel",
+      "warrantyMonths": 0.0
+    },
+    "id": "bf3aca36-b652-484f-b326-502cd5ab322e",
+    "createdAt": "2026-05-16T20:48:07.0333939",
+    "updatedAt": "2026-05-16T20:48:56.946034"
   }
 ]

@@ -1,11 +1,11 @@
 package com.auctionuet.server.domain.model;
 
-import com.auctionuet.server.domain.enums.UserRole;
-import com.auctionuet.server.domain.enums.Permission;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.Permission;
 
 public class Admin extends User {
-    public Admin(String id,String name) {
-        super(id,name, UserRole.ADMIN);
+    public Admin(String id, String name) {
+        super(id, name, UserRole.ADMIN);
     }
 
     @Override

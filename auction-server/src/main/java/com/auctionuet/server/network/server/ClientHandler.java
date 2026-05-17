@@ -1,14 +1,17 @@
 package com.auctionuet.server.network.server;
 
+import com.auctionuet.protocol.MessageSerializer;
+import com.auctionuet.protocol.PushActionType;
+import com.auctionuet.protocol.PushMessage;
+import com.auctionuet.protocol.Request;
+import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.dto.push.PushEvents;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.server.domain.model.AuctionObserver;
 import com.auctionuet.server.domain.model.BidRecord;
-import com.auctionuet.server.network.protocol.ActionType;
-import com.auctionuet.server.network.protocol.MessageSerializer;
-import com.auctionuet.server.network.protocol.Request;
-import com.auctionuet.server.network.protocol.Response;
+import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.util.AppLogger;
-import com.google.gson.Gson;
-import com.auctionuet.server.util.json.GsonFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,8 +19,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandler implements Runnable, AuctionObserver {
@@ -27,16 +28,17 @@ public class ClientHandler implements Runnable, AuctionObserver {
     private final BufferedReader in;
     private final RequestRouter router;
     private final AtomicInteger activeConnections;
+    private final UserService userService;
 
-    // IP của client để log disconnect
     private final String clientIp;
-    // Thời điểm kết nối để tính session duration
     private final long connectedAt;
 
-    public ClientHandler(Socket socket, RequestRouter router, AtomicInteger activeConnections) throws IOException {
+    public ClientHandler(Socket socket, RequestRouter router, AtomicInteger activeConnections,
+            UserService userService) throws IOException {
         this.socket = socket;
         this.router = router;
         this.activeConnections = activeConnections;
+        this.userService = userService;
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.clientIp = socket.getInetAddress().getHostAddress();
@@ -51,121 +53,91 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 processLine(line);
             }
         } catch (IOException e) {
-            // Client đột ngột đóng kết nối — không cần log stack trace
+            // Client closed the connection.
         } finally {
             cleanup();
         }
     }
 
-    /**
-     * Xử lý một dòng text nhận từ client: deserialize → route → send response.
-     * Đo timing cho toàn bộ pipeline.
-     */
     private void processLine(String line) {
         long startTime = System.currentTimeMillis();
 
-        // 1. Log raw JSON (DEV only)
         AppLogger.logRawReceived(line);
 
-        // 2. Deserialize JSON → Request
         Request request = MessageSerializer.deserialize(line);
 
         if (request == null || request.getAction() == null) {
-            AppLogger.logInvalidRequest("JSON không hợp lệ hoặc thiếu trường 'action'");
+            AppLogger.logInvalidRequest("JSON khong hop le hoac thieu truong 'action'");
             Response errResponse = Response.error("Invalid JSON format or missing action");
-            sendMessage(errResponse);
+            sendResponse(errResponse);
             long elapsed = System.currentTimeMillis() - startTime;
             AppLogger.logResponse("ERROR", elapsed, "Invalid JSON format");
             return;
         }
 
-        // 3. Log parsed request info
         AppLogger.logParsedRequest(
-            request.getAction().name(),
-            request.getToken(),
-            request.getData() != null ? request.getData().keySet() : java.util.Collections.emptySet()
-        );
+                request.getAction().name(),
+                request.getToken(),
+                request.getData() != null ? request.getData().keySet() : java.util.Collections.emptySet());
 
-        // 4. Route request → Response
-        Response response = router.route(request,this);
+        Response response = router.route(request, this);
+        sendResponse(response);
 
-        // 5. Gửi response về client
-        sendMessage(response);
-
-        // 6. Log response + timing
         long elapsed = System.currentTimeMillis() - startTime;
         String respMessage = response.getMessage();
         AppLogger.logResponse(response.getStatus(), elapsed, respMessage);
     }
 
-    public synchronized void sendMessage(Response response) {
-        // Thêm trường type = "RESPONSE" để client listener thread phân loại
-        Map<String, Object> wrapper = new HashMap<>();
-        wrapper.put("type", "RESPONSE");
-        wrapper.put("status", response.getStatus());
-        wrapper.put("message", response.getMessage());
-        wrapper.put("data", response.getData());
-        String json = GsonFactory.createForNetwork().toJson(wrapper);
-        out.println(json);
+    public synchronized void sendResponse(Response response) {
+        if (response != null) {
+            out.println(response.toJson());
+        }
     }
 
     private void cleanup() {
         int remaining = activeConnections.decrementAndGet();
         long durationMs = System.currentTimeMillis() - connectedAt;
-        AppLogger.logClientDisconnected(clientIp, durationMs);
+        AppLogger.logClientDisconnected(clientIp, durationMs, remaining);
 
         try {
             socket.close();
         } catch (IOException e) {
-            // Ignore
+            // Ignore close errors.
         }
     }
-    // ========== AuctionObserver PUSH METHODS ==========
 
     @Override
-    public void onBidPlaced(BidRecord record) {
-        // Server chủ động push JSON về client khi có bid mới
-        Map<String, Object> push = new HashMap<>();
-        push.put("type", "PUSH");
-        push.put("pushType", "BID_UPDATE");
-        push.put("bidderUsername", record.getBidderUsername());
-        push.put("amount", record.getAmount());
-        push.put("timestamp", record.getTimestamp().toString());
-
-        String json = GsonFactory.createForNetwork().toJson(push);
-        sendPush(json);
+    public void onBidPlaced(String auctionId, BidRecord record) {
+        BidDTO bid = new BidDTO(
+                auctionId,
+                userService.getUserDTOById(record.getBidderId()),
+                record.getAmount(),
+                record.getTimestamp(),
+                record.getBidType());
+        PushEvents.BidUpdatePush dto = new PushEvents.BidUpdatePush(auctionId, bid);
+        sendPush(new PushMessage(PushActionType.BID_UPDATE, dto));
     }
 
     @Override
     public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
-        Map<String, Object> push = new HashMap<>();
-        push.put("type", "PUSH");
-        push.put("pushType", "AUCTION_ENDED");
-        push.put("auctionId", auctionId);
-        push.put("winnerId", winnerId);
-        push.put("finalPrice", finalPrice);
-
-        String json = GsonFactory.createForNetwork().toJson(push);
-        sendPush(json);
+        UserDTO winner = winnerId != null ? userService.getUserDTOById(winnerId) : null;
+        PushEvents.AuctionEndedPush dto = new PushEvents.AuctionEndedPush(
+                auctionId,
+                winner,
+                finalPrice,
+                "Phien dau gia da ket thuc");
+        sendPush(new PushMessage(PushActionType.AUCTION_ENDED, dto));
     }
 
     @Override
     public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
-        Map<String, Object> push = new HashMap<>();
-        push.put("type", "PUSH");
-        push.put("pushType", "AUCTION_EXTENDED");
-        push.put("auctionId", auctionId);
-        push.put("newEndTime", newEndTime.toString());
-
-        String json = GsonFactory.createForNetwork().toJson(push);
-        sendPush(json);
-    }
-    /**
-     * Push JSON trực tiếp xuống Client qua PrintWriter.
-     * Thread-safe nhờ synchronized.
-     */
-    public synchronized void sendPush(String json) {
-        out.println(json);
+        PushEvents.AuctionExtendedPush dto = new PushEvents.AuctionExtendedPush(auctionId, newEndTime);
+        sendPush(new PushMessage(PushActionType.AUCTION_EXTENDED, dto));
     }
 
+    public synchronized void sendPush(PushMessage push) {
+        if (push != null) {
+            out.println(push.toJson());
+        }
+    }
 }

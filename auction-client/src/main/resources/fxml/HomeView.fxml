@@ -20,7 +20,7 @@
                     <children>
                         <VBox alignment="CENTER" spacing="15.0">
                             <children>
-                                <Label text="🔥 Đấu giá mùa hè - Săn đồ công nghệ giá cực hời!" textFill="WHITE">
+                                <Label text="🔥 Đấu giá mùa hè - Săn đồ công nghệ giá cực hời!" textFill="WHITE" styleClass="text-title-large">
                                     <font><Font name="System Bold" size="28.0" /></font>
                                 </Label>
                                 <Label text="Hàng nghìn sản phẩm đang chờ bạn khám phá. Đừng bỏ lỡ!" textFill="#e0e0e0">

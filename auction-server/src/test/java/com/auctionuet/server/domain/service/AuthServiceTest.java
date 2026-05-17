@@ -1,6 +1,9 @@
 package com.auctionuet.server.domain.service;
 
-import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.dto.response.auth.LoginResponseDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuthenticationException;
 import com.auctionuet.server.exception.DuplicateUserException;
@@ -27,7 +30,8 @@ public class AuthServiceTest {
         Files.createDirectories(Path.of("data"));
         Files.deleteIfExists(Path.of(TEST_DB_PATH));
         userDAO = new UserDAO(TEST_DB_PATH);
-        authService = new AuthService(userDAO);
+        UserService userService = new UserService(userDAO);
+        authService = new AuthService(userDAO, userService);
         sessionManager = SessionManager.getInstance();
     }
 
@@ -39,7 +43,7 @@ public class AuthServiceTest {
     @Test
     void testRegisterAndLogin() {
         authService.register("newuser", "mypassword", "test@uet.vn", UserRole.BIDDER);
-        LoginResult result = authService.login("newuser", "mypassword");
+        LoginResponseDTO result = authService.login("newuser", "mypassword");
 
         assertNotNull(result.getToken());
         assertNotNull(result.getUser());
@@ -68,7 +72,7 @@ public class AuthServiceTest {
     @Test
     void testValidateToken() {
         authService.register("sessionuser", "password123", "t@uet.vn", UserRole.BIDDER);
-        LoginResult result = authService.login("sessionuser", "password123");
+        LoginResponseDTO result = authService.login("sessionuser", "password123");
         
         User user = sessionManager.validateToken(result.getToken());
         assertNotNull(user);
@@ -78,7 +82,7 @@ public class AuthServiceTest {
     @Test
     void testLogout() {
         authService.register("logoutuser", "password123", "t@uet.vn", UserRole.BIDDER);
-        LoginResult result = authService.login("logoutuser", "password123");
+        LoginResponseDTO result = authService.login("logoutuser", "password123");
         
         sessionManager.removeSession(result.getToken());
         assertThrows(AuthenticationException.class, () -> sessionManager.validateToken(result.getToken()));

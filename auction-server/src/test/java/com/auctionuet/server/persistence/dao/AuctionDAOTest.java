@@ -1,6 +1,6 @@
 package com.auctionuet.server.persistence.dao;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

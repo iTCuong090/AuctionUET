@@ -1,8 +1,7 @@
 package com.auctionuet.server.domain.manager;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.LiveAuction;
-import com.auctionuet.server.mapper.AuctionMapper;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.time.Duration;
@@ -11,29 +10,57 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class AuctionManager {
+public class AuctionManager implements com.auctionuet.server.domain.model.AuctionObserver {
 
-    // Singleton
     private AuctionManager() {}
+
     private static final AuctionManager INSTANCE = new AuctionManager();
+
     public static AuctionManager getInstance() {
         return INSTANCE;
     }
 
     private final Map<String, LiveAuction> liveAuctions = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private java.util.function.Consumer<String> endAuctionCallback;
+
+    public void setEndAuctionCallback(java.util.function.Consumer<String> callback) {
+        this.endAuctionCallback = callback;
+    }
+
+    private void scheduleAuctionEnd(String auctionId, long delayMs) {
+        ScheduledFuture<?> task = scheduledTasks.get(auctionId);
+        if (task != null) {
+            task.cancel(false);
+        }
+
+        if (delayMs > 0) {
+            scheduledTasks.put(auctionId, scheduler.schedule(() -> {
+                if (endAuctionCallback != null) {
+                    endAuctionCallback.accept(auctionId);
+                }
+            }, delayMs, TimeUnit.MILLISECONDS));
+        } else if (endAuctionCallback != null) {
+            endAuctionCallback.accept(auctionId);
+        }
+    }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
-        LiveAuction auction = AuctionMapper.toDomain(schema);
-        liveAuctions.put(auction.getId(), auction);
+        return loadAuction(schema, schema.getHighestBid());
+    }
 
-        // Schedule auto-end
+    public LiveAuction loadAuction(AuctionSchema schema, double startingPrice) {
+        LiveAuction auction = toDomain(schema, startingPrice);
+        auction.markDeposited(schema.getDepositedBidderIds());
+        liveAuctions.put(auction.getId(), auction);
+        auction.addObserver(this);
+
         long delayMs = Duration.between(LocalDateTime.now(), schema.getEndTime()).toMillis();
-        if (delayMs > 0) {
-            scheduler.schedule(() -> endAuction(auction.getId()), delayMs, TimeUnit.MILLISECONDS);
-        }
+        scheduleAuctionEnd(auction.getId(), delayMs);
 
         return auction;
     }
@@ -43,11 +70,14 @@ public class AuctionManager {
     }
 
     public void endAuction(String auctionId) {
+        ScheduledFuture<?> task = scheduledTasks.remove(auctionId);
+        if (task != null) {
+            task.cancel(false);
+        }
         LiveAuction auction = liveAuctions.remove(auctionId);
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);
             auction.notifyAuctionEnded();
-            // Cường's AuctionService sẽ ghi kết quả vào DB
         }
     }
 
@@ -55,12 +85,38 @@ public class AuctionManager {
         LiveAuction auction = liveAuctions.get(auctionId);
         if (auction != null) {
             auction.setEndTime(newEndTime);
-            // In a real app we might need to cancel the previous scheduled task and create a new one.
-            // For now, assume it's handled or we just re-schedule a new one.
             long delayMs = Duration.between(LocalDateTime.now(), newEndTime).toMillis();
-            if (delayMs > 0) {
-                scheduler.schedule(() -> endAuction(auctionId), delayMs, TimeUnit.MILLISECONDS);
-            }
+            scheduleAuctionEnd(auctionId, delayMs);
         }
+    }
+
+    @Override
+    public void onBidPlaced(String auctionId, com.auctionuet.server.domain.model.BidRecord record) {
+        // AuctionManager only reacts to lifecycle events.
+    }
+
+    @Override
+    public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
+        // AuctionService owns persistence and payment state transitions.
+    }
+
+    @Override
+    public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
+        extendAuction(auctionId, newEndTime);
+    }
+
+    private LiveAuction toDomain(AuctionSchema schema, double startingPrice) {
+        return new LiveAuction(
+                schema.getId(),
+                schema.getItemId(),
+                schema.getSellerId(),
+                schema.getEndTime(),
+                schema.getStatus(),
+                schema.getHighestBid(),
+                schema.getWinnerId(),
+                schema.getAntiSnipingWindowSeconds(),
+                schema.getAntiSnipingExtensionSeconds(),
+                startingPrice
+        );
     }
 }

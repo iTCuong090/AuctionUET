@@ -7,7 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.model.UserDTO;
+import com.auctionuet.protocol.dto.response.user.UserDTO;
 
 import java.io.IOException;
 
@@ -80,7 +80,7 @@ public class DashboardController {
 
         // 5. Cập nhật icon nút toggle theme theo trạng thái hiện tại
         if (btnToggleTheme != null) {
-            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+            btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "T" : "S");
         }
     }
 
@@ -143,6 +143,6 @@ public class DashboardController {
     private void handleToggleTheme() {
         ThemeManager.getInstance().toggleTheme();
         ThemeManager.getInstance().applyTheme(btnToggleTheme.getScene());
-        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "🌙" : "☀️");
+        btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "T" : "S");
     }
 }

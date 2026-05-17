@@ -1,8 +1,5 @@
 [
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -13,9 +10,6 @@
     "updatedAt": "2026-04-18T20:57:39.4445971"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -26,9 +20,6 @@
     "updatedAt": "2026-04-18T20:57:39.4842614"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -39,9 +30,6 @@
     "updatedAt": "2026-04-18T20:57:39.5040374"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -52,9 +40,6 @@
     "updatedAt": "2026-04-18T20:57:39.5211093"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -65,10 +50,6 @@
     "updatedAt": "2026-04-18T20:57:39.5252758"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -79,9 +60,6 @@
     "updatedAt": "2026-04-18T20:57:39.5296537"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -92,9 +70,6 @@
     "updatedAt": "2026-04-18T20:57:39.5419348"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -105,9 +80,6 @@
     "updatedAt": "2026-04-18T20:57:39.5466221"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -118,9 +90,6 @@
     "updatedAt": "2026-04-18T20:57:39.558631"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -131,9 +100,6 @@
     "updatedAt": "2026-04-18T20:58:25.4851291"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -144,9 +110,6 @@
     "updatedAt": "2026-04-18T20:58:25.5283161"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -157,9 +120,6 @@
     "updatedAt": "2026-04-18T20:58:25.5593091"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -170,9 +130,6 @@
     "updatedAt": "2026-04-18T20:58:25.5810624"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -183,10 +140,6 @@
     "updatedAt": "2026-04-18T20:58:25.58534"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -197,9 +150,6 @@
     "updatedAt": "2026-04-18T20:58:25.5914573"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -210,9 +160,6 @@
     "updatedAt": "2026-04-18T20:58:25.606013"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -223,9 +170,6 @@
     "updatedAt": "2026-04-18T20:58:25.6105416"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -236,9 +180,6 @@
     "updatedAt": "2026-04-18T20:58:25.6236887"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -249,9 +190,6 @@
     "updatedAt": "2026-04-18T21:06:49.8317877"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -262,9 +200,6 @@
     "updatedAt": "2026-04-18T21:06:49.8935882"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -275,9 +210,6 @@
     "updatedAt": "2026-04-18T21:06:49.9371013"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -288,9 +220,6 @@
     "updatedAt": "2026-04-18T21:06:49.9641508"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -301,10 +230,6 @@
     "updatedAt": "2026-04-18T21:06:49.9706467"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -315,9 +240,6 @@
     "updatedAt": "2026-04-18T21:06:49.9757341"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -328,9 +250,6 @@
     "updatedAt": "2026-04-18T21:06:49.9904029"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -341,9 +260,6 @@
     "updatedAt": "2026-04-18T21:06:49.9981878"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -354,9 +270,6 @@
     "updatedAt": "2026-04-18T21:06:50.0108813"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -367,9 +280,6 @@
     "updatedAt": "2026-04-18T21:26:04.0364099"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -380,9 +290,6 @@
     "updatedAt": "2026-04-18T21:26:04.1159495"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -393,9 +300,6 @@
     "updatedAt": "2026-04-18T21:26:04.1605731"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -406,9 +310,6 @@
     "updatedAt": "2026-04-18T21:26:04.1935947"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -419,10 +320,6 @@
     "updatedAt": "2026-04-18T21:26:04.201856"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -433,9 +330,6 @@
     "updatedAt": "2026-04-18T21:26:04.2089705"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -446,9 +340,6 @@
     "updatedAt": "2026-04-18T21:26:04.2288547"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -459,9 +350,6 @@
     "updatedAt": "2026-04-18T21:26:04.236241"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -472,9 +360,6 @@
     "updatedAt": "2026-04-18T21:26:04.2505252"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -485,9 +370,6 @@
     "updatedAt": "2026-04-18T21:43:46.6553632"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -498,9 +380,6 @@
     "updatedAt": "2026-04-18T21:43:46.722588"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -511,9 +390,6 @@
     "updatedAt": "2026-04-18T21:43:46.753526"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -524,9 +400,6 @@
     "updatedAt": "2026-04-18T21:43:46.7794784"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -537,10 +410,6 @@
     "updatedAt": "2026-04-18T21:43:46.7842026"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -551,9 +420,6 @@
     "updatedAt": "2026-04-18T21:43:46.7892969"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -564,9 +430,6 @@
     "updatedAt": "2026-04-18T21:43:46.8018542"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -577,9 +440,6 @@
     "updatedAt": "2026-04-18T21:43:46.8079781"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -590,9 +450,6 @@
     "updatedAt": "2026-04-18T21:43:46.8184357"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -603,9 +460,6 @@
     "updatedAt": "2026-04-18T21:45:11.5240977"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -616,9 +470,6 @@
     "updatedAt": "2026-04-18T21:45:11.5962683"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -629,9 +480,6 @@
     "updatedAt": "2026-04-18T21:45:11.6363459"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -642,9 +490,6 @@
     "updatedAt": "2026-04-18T21:45:11.6617408"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -655,10 +500,6 @@
     "updatedAt": "2026-04-18T21:45:11.6683524"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -669,9 +510,6 @@
     "updatedAt": "2026-04-18T21:45:11.6750354"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -682,9 +520,6 @@
     "updatedAt": "2026-04-18T21:45:11.6912034"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -695,9 +530,6 @@
     "updatedAt": "2026-04-18T21:45:11.6979501"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -708,9 +540,6 @@
     "updatedAt": "2026-04-18T21:45:11.7090762"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -721,9 +550,6 @@
     "updatedAt": "2026-05-08T15:22:37.2464786"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -734,9 +560,6 @@
     "updatedAt": "2026-05-08T15:22:37.4728836"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -747,9 +570,6 @@
     "updatedAt": "2026-05-08T15:22:37.5560468"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -760,9 +580,6 @@
     "updatedAt": "2026-05-08T15:22:37.6139095"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -773,10 +590,6 @@
     "updatedAt": "2026-05-08T15:22:37.6243714"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -787,9 +600,6 @@
     "updatedAt": "2026-05-08T15:22:37.6350795"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -800,9 +610,6 @@
     "updatedAt": "2026-05-08T15:22:37.6550373"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -813,9 +620,6 @@
     "updatedAt": "2026-05-08T15:22:37.6642062"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -826,9 +630,6 @@
     "updatedAt": "2026-05-08T15:22:37.6830069"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -839,9 +640,6 @@
     "updatedAt": "2026-05-08T15:22:54.3113793"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -852,9 +650,6 @@
     "updatedAt": "2026-05-08T15:22:54.5473382"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -865,9 +660,6 @@
     "updatedAt": "2026-05-08T15:22:54.6271476"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -878,9 +670,6 @@
     "updatedAt": "2026-05-08T15:22:54.68273"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -891,10 +680,6 @@
     "updatedAt": "2026-05-08T15:22:54.6926465"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -905,9 +690,6 @@
     "updatedAt": "2026-05-08T15:22:54.7023606"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -918,9 +700,6 @@
     "updatedAt": "2026-05-08T15:22:54.7259069"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -931,9 +710,6 @@
     "updatedAt": "2026-05-08T15:22:54.7366146"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -944,9 +720,6 @@
     "updatedAt": "2026-05-08T15:22:54.7562914"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -957,9 +730,6 @@
     "updatedAt": "2026-05-08T15:23:29.1439819"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -970,9 +740,6 @@
     "updatedAt": "2026-05-08T15:23:29.4073233"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -983,9 +750,6 @@
     "updatedAt": "2026-05-08T15:23:29.4834917"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -996,9 +760,6 @@
     "updatedAt": "2026-05-08T15:23:29.5513724"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -1009,10 +770,6 @@
     "updatedAt": "2026-05-08T15:23:29.5651563"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -1023,9 +780,6 @@
     "updatedAt": "2026-05-08T15:23:29.5787758"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1036,9 +790,6 @@
     "updatedAt": "2026-05-08T15:23:29.6048447"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -1049,9 +800,6 @@
     "updatedAt": "2026-05-08T15:23:29.6210141"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -1062,9 +810,6 @@
     "updatedAt": "2026-05-08T15:23:29.6438532"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -1075,9 +820,6 @@
     "updatedAt": "2026-05-09T21:14:54.2960488"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1088,9 +830,6 @@
     "updatedAt": "2026-05-09T21:14:54.3584367"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1101,9 +840,6 @@
     "updatedAt": "2026-05-09T21:14:54.4457808"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -1114,9 +850,6 @@
     "updatedAt": "2026-05-09T21:14:54.4842167"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -1127,10 +860,6 @@
     "updatedAt": "2026-05-09T21:14:54.4930438"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -1141,9 +870,6 @@
     "updatedAt": "2026-05-09T21:14:54.5028759"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1154,9 +880,6 @@
     "updatedAt": "2026-05-09T21:14:54.5232783"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -1167,9 +890,6 @@
     "updatedAt": "2026-05-09T21:14:54.5336764"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -1180,9 +900,6 @@
     "updatedAt": "2026-05-09T21:14:54.5488458"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -1193,9 +910,6 @@
     "updatedAt": "2026-05-09T21:17:35.5780985"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1206,9 +920,6 @@
     "updatedAt": "2026-05-09T21:17:35.6456672"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1219,9 +930,6 @@
     "updatedAt": "2026-05-09T21:17:35.7055985"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -1232,9 +940,6 @@
     "updatedAt": "2026-05-09T21:17:35.7642886"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -1245,10 +950,6 @@
     "updatedAt": "2026-05-09T21:17:35.7860733"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -1259,9 +960,6 @@
     "updatedAt": "2026-05-09T21:17:35.8087512"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1272,9 +970,6 @@
     "updatedAt": "2026-05-09T21:17:35.8357464"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -1285,9 +980,6 @@
     "updatedAt": "2026-05-09T21:17:35.8508185"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -1298,9 +990,6 @@
     "updatedAt": "2026-05-09T21:17:35.8705008"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -1311,9 +1000,6 @@
     "updatedAt": "2026-05-09T21:19:50.9893619"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1324,9 +1010,6 @@
     "updatedAt": "2026-05-09T21:19:51.1353158"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1337,9 +1020,6 @@
     "updatedAt": "2026-05-09T21:19:51.1939056"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -1350,9 +1030,6 @@
     "updatedAt": "2026-05-09T21:19:51.2348648"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -1363,10 +1040,6 @@
     "updatedAt": "2026-05-09T21:19:51.2429762"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -1377,9 +1050,6 @@
     "updatedAt": "2026-05-09T21:19:51.2545398"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1390,9 +1060,6 @@
     "updatedAt": "2026-05-09T21:19:51.2765408"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -1403,9 +1070,6 @@
     "updatedAt": "2026-05-09T21:19:51.284703"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -1416,9 +1080,6 @@
     "updatedAt": "2026-05-09T21:19:51.3085304"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Vase",
     "startingPrice": 100.0,
     "type": "ART",
@@ -1429,9 +1090,6 @@
     "updatedAt": "2026-05-09T21:33:34.3734041"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "ItemA",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1442,9 +1100,6 @@
     "updatedAt": "2026-05-09T21:33:34.5233374"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1455,9 +1110,6 @@
     "updatedAt": "2026-05-09T21:33:34.5787676"
   },
   {
-    "itemType": "ELECTRONICS",
-    "brand": "UET",
-    "warrantyMonths": 0,
     "name": "PC",
     "startingPrice": 100.0,
     "type": "ELECTRONICS",
@@ -1468,9 +1120,6 @@
     "updatedAt": "2026-05-09T21:33:34.6188717"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Painting",
     "startingPrice": 200.0,
     "type": "ART",
@@ -1481,10 +1130,6 @@
     "updatedAt": "2026-05-09T21:33:34.6304415"
   },
   {
-    "itemType": "VEHICLE",
-    "make": "VinFast",
-    "mileage": 0,
-    "vehicleYear": 0,
     "name": "Car",
     "startingPrice": 1000.0,
     "type": "VEHICLE",
@@ -1495,9 +1140,6 @@
     "updatedAt": "2026-05-09T21:33:34.638003"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item1",
     "startingPrice": 10.0,
     "type": "ART",
@@ -1508,9 +1150,6 @@
     "updatedAt": "2026-05-09T21:33:34.6615996"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item2",
     "startingPrice": 20.0,
     "type": "ART",
@@ -1521,9 +1160,6 @@
     "updatedAt": "2026-05-09T21:33:34.6687691"
   },
   {
-    "itemType": "ART",
-    "artist": "UET",
-    "year": 0,
     "name": "Item3",
     "startingPrice": 30.0,
     "type": "ART",
@@ -1532,5 +1168,158 @@
     "id": "2f485392-5139-4072-a9a4-80917260568d",
     "createdAt": "2026-05-09T21:33:34.6837716",
     "updatedAt": "2026-05-09T21:33:34.6837716"
+  },
+  {
+    "name": "Vase",
+    "description": "Desc",
+    "startingPrice": 100.0,
+    "type": "ART",
+    "sellerId": "5169a77c-1803-42ee-9d4c-56a510b77250",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "3819653f-c980-4156-b595-e8051b546f44",
+    "createdAt": "2026-05-13T12:15:17.1651428",
+    "updatedAt": "2026-05-13T12:15:17.235323"
+  },
+  {
+    "name": "ItemA",
+    "description": "Desc",
+    "startingPrice": 10.0,
+    "type": "ART",
+    "sellerId": "332201d7-6b35-4f5b-9741-3b4bbfc7bc5d",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "feffb055-59db-4806-81e6-2d4652620c19",
+    "createdAt": "2026-05-13T12:15:17.4606657",
+    "updatedAt": "2026-05-13T12:15:17.4606657"
+  },
+  {
+    "name": "Item",
+    "description": "Desc",
+    "startingPrice": 10.0,
+    "type": "ART",
+    "sellerId": "62aeada8-01a1-418b-8d29-5a877bbf29f2",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "dd49cf5f-56b4-47f2-89b7-02cebe2cecee",
+    "createdAt": "2026-05-13T12:15:17.5127091",
+    "updatedAt": "2026-05-13T12:15:17.5399523"
+  },
+  {
+    "name": "PC",
+    "description": "Desc",
+    "startingPrice": 100.0,
+    "type": "ELECTRONICS",
+    "sellerId": "11dbfea1-d78f-491d-89b9-cff0459ebebc",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "brand": "UET",
+      "warrantyMonths": 12.0
+    },
+    "id": "b2314df5-ab47-4e41-b66f-8fd52ce8ddc2",
+    "createdAt": "2026-05-13T12:15:17.6412523",
+    "updatedAt": "2026-05-13T12:15:17.6412523"
+  },
+  {
+    "name": "Painting",
+    "description": "Desc",
+    "startingPrice": 200.0,
+    "type": "ART",
+    "sellerId": "11dbfea1-d78f-491d-89b9-cff0459ebebc",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "f816bf84-9b9b-43ab-a5f8-dd76d0dc4b84",
+    "createdAt": "2026-05-13T12:15:17.6568118",
+    "updatedAt": "2026-05-13T12:15:17.6568118"
+  },
+  {
+    "name": "Car",
+    "description": "Desc",
+    "startingPrice": 1000.0,
+    "type": "VEHICLE",
+    "sellerId": "11dbfea1-d78f-491d-89b9-cff0459ebebc",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "make": "VinFast",
+      "model": "VF",
+      "mileage": 0.0,
+      "vehicleYear": 2024.0
+    },
+    "id": "d3440c82-1c62-440f-97bc-3cdebd40b26f",
+    "createdAt": "2026-05-13T12:15:17.6707577",
+    "updatedAt": "2026-05-13T12:15:17.6707577"
+  },
+  {
+    "name": "Item1",
+    "description": "Desc",
+    "startingPrice": 10.0,
+    "type": "ART",
+    "sellerId": "f1005a28-5033-4c3d-be60-a19b9cca6227",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "84fabd6f-8475-4bc1-85a2-a429ef5ff498",
+    "createdAt": "2026-05-13T12:15:17.6952793",
+    "updatedAt": "2026-05-13T12:15:17.6952793"
+  },
+  {
+    "name": "Item2",
+    "description": "Desc",
+    "startingPrice": 20.0,
+    "type": "ART",
+    "sellerId": "f1005a28-5033-4c3d-be60-a19b9cca6227",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024.0,
+      "medium": "Oil"
+    },
+    "id": "efc9b5c7-5be2-4c06-a0db-7617745b4a74",
+    "createdAt": "2026-05-13T12:15:17.7045517",
+    "updatedAt": "2026-05-13T12:15:17.7045517"
+  },
+  {
+    "name": "Item3",
+    "description": "Desc",
+    "startingPrice": 30.0,
+    "type": "ART",
+    "sellerId": "169ff63a-e552-46ae-9072-16a3f4746bb1",
+    "condition": "GOOD",
+    "auctionCount": 0,
+    "extraFields": {
+      "artist": "UET",
+      "year": 2024,
+      "medium": "Oil"
+    },
+    "id": "2f389558-2c0c-4613-b61c-48ad395cafa7",
+    "createdAt": "2026-05-13T12:15:17.7260999",
+    "updatedAt": "2026-05-13T12:15:17.7260999"
   }
 ]

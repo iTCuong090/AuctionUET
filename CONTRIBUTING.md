@@ -1,20 +1,9 @@
 # Hướng dẫn đóng góp - AuctionUET
 ### 1. Tạo branch
-- Từ `main`, tạo branch mới theo format: `feat/tuan-X-ten-nguoi-mo-ta`
-- Ví dụ: `feat/tuan-1-cuong-maven-setup`
+- Từ `main`, tạo branch mới trước khi làm việc.
 
-### 2. Coding
-- Tuân thủ Google Java Style Guide
-- Viết comment tiếng Việt
-- Mỗi commit phải có message rõ ràng theo Conventional Commits:
-    - `feat: thêm class User`
-    - `fix: sửa lỗi chia cho 0 trong Calculator`
-    - `docs: thêm Javadoc cho class Auction`
-    - `test: thêm test cho UserService`
-    - `refactor: tách method validateBid`
-
-### 3. Push & Pull Request
-- Push branch lên GitHub: `git push origin feature/tuan-X-...`
+### 2. Push & Pull Request
+- Push branch lên GitHub: `git push origin tên_nhánh`
 - Tạo Pull Request vào `main`
 - Mô tả PR rõ ràng (dùng PR template)
 
@@ -28,5 +17,5 @@
 
 ### 5. Merge
 - CI phải pass (GitHub Actions pass)
-- Merge chỉ thực hiện trong buổi họp Chủ nhật
+- Merge chỉ thực hiện sau khi họp chung với nhau.
 

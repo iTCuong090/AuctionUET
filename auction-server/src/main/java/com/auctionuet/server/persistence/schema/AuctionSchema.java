@@ -1,7 +1,9 @@
 package com.auctionuet.server.persistence.schema;
 
 import java.time.LocalDateTime;
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import java.util.ArrayList;
+import java.util.List;
+import com.auctionuet.protocol.enums.AuctionStatus;
 
 public class AuctionSchema extends BaseSchema {
     private String itemId;
@@ -13,6 +15,7 @@ public class AuctionSchema extends BaseSchema {
     private AuctionStatus status;
     private double highestBid;
     private String winnerId;
+    private List<String> depositedBidderIds = new ArrayList<>();
     private int antiSnipingWindowSeconds = 60;     // Mặc định 60 giây
     private int antiSnipingExtensionSeconds = 120; // Mặc định gia hạn 2 phút
 
@@ -64,6 +67,46 @@ public class AuctionSchema extends BaseSchema {
     
     public String getWinnerId() { return winnerId; }
     public void setWinnerId(String winnerId) { this.winnerId = winnerId; }
+
+    public List<String> getDepositedBidderIds() {
+        ensureDepositedBidderIds();
+        return new ArrayList<>(depositedBidderIds);
+    }
+
+    public void setDepositedBidderIds(List<String> depositedBidderIds) {
+        this.depositedBidderIds = depositedBidderIds != null
+                ? new ArrayList<>(depositedBidderIds)
+                : new ArrayList<>();
+    }
+
+    public boolean hasDepositedBidder(String bidderId) {
+        ensureDepositedBidderIds();
+        return bidderId != null && depositedBidderIds.contains(bidderId);
+    }
+
+    public boolean addDepositedBidder(String bidderId) {
+        ensureDepositedBidderIds();
+        if (bidderId == null || bidderId.isBlank() || depositedBidderIds.contains(bidderId)) {
+            return false;
+        }
+        return depositedBidderIds.add(bidderId);
+    }
+
+    public boolean removeDepositedBidder(String bidderId) {
+        ensureDepositedBidderIds();
+        return depositedBidderIds.remove(bidderId);
+    }
+
+    public void clearDepositedBidders() {
+        ensureDepositedBidderIds();
+        depositedBidderIds.clear();
+    }
+
+    private void ensureDepositedBidderIds() {
+        if (depositedBidderIds == null) {
+            depositedBidderIds = new ArrayList<>();
+        }
+    }
 
     public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
     public void setAntiSnipingWindowSeconds(int antiSnipingWindowSeconds) { this.antiSnipingWindowSeconds = antiSnipingWindowSeconds; }

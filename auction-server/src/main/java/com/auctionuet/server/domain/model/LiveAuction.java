@@ -1,10 +1,12 @@
 package com.auctionuet.server.domain.model;
 
-import com.auctionuet.server.domain.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.exception.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -12,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 
 public class LiveAuction {
@@ -19,6 +22,7 @@ public class LiveAuction {
     private final String id;
     private final String itemId;
     private final String sellerId;
+    private final double startingPrice;
     private final List<BidRecord> bidHistory;
     private final Map<String, AutoBidConfig> autoBids = new ConcurrentHashMap<>();
 
@@ -45,9 +49,19 @@ public class LiveAuction {
                        LocalDateTime endTime, AuctionStatus status,
                        double currentHighestBid, String currentWinnerId,
                        int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) {
+        this(id, itemId, sellerId, endTime, status, currentHighestBid, currentWinnerId,
+                antiSnipingWindowSeconds, antiSnipingExtensionSeconds, currentHighestBid);
+    }
+
+    public LiveAuction(String id, String itemId, String sellerId,
+                       LocalDateTime endTime, AuctionStatus status,
+                       double currentHighestBid, String currentWinnerId,
+                       int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds,
+                       double startingPrice) {
         this.id = id;
         this.itemId = itemId;
         this.sellerId = sellerId;
+        this.startingPrice = startingPrice;
         this.endTime = endTime;
         this.status = status;
         this.currentHighestBid = currentHighestBid;
@@ -63,7 +77,7 @@ public class LiveAuction {
     }
 
 
-    public BidRecord placeBid(User bidder, double amount)
+    public BidRecord placeBid(User bidder, double amount, Consumer<BidRecord> onAutoBidPlaced)
             throws InvalidBidException, AuctionClosedException {
 
         bidLock.lock();
@@ -72,9 +86,10 @@ public class LiveAuction {
             if (status != AuctionStatus.RUNNING) {
                 throw new AuctionClosedException("Phiên đấu giá đã kết thúc");
             }
-            if (amount <= currentHighestBid) {
+            double currentPrice = getCurrentPrice();
+            if (amount <= currentPrice) {
                 throw new InvalidBidException(
-                        "Giá phải lớn hơn giá hiện tại: " + currentHighestBid);
+                        "Giá phải lớn hơn giá hiện tại: " + currentPrice);
             }
             if (bidder.getId().equals(sellerId)) {
                 throw new InvalidBidException("Người bán không được tự đấu giá");
@@ -82,7 +97,7 @@ public class LiveAuction {
 
             // 2. Update state
             BidRecord record = new BidRecord(
-                    bidder.getId(), bidder.getUsername(), amount, LocalDateTime.now());
+                    bidder.getId(), bidder.getUsername(), amount, LocalDateTime.now(), BidType.MANUAL);
             this.currentHighestBid = amount;
             this.currentWinnerId = bidder.getId();
             this.bidHistory.add(record);
@@ -94,7 +109,7 @@ public class LiveAuction {
             notifyObservers(record);
 
             // Trigger Auto-Bid resolution — THÊM MỚI
-            resolveAutoBids();
+            resolveAutoBids(onAutoBidPlaced);
 
             return record;
         } finally {
@@ -121,6 +136,10 @@ public class LiveAuction {
 
     // === AUTO-BID ===
     public void addAutoBid(AutoBidConfig config) {
+        addAutoBid(config, null);
+    }
+
+    public void addAutoBid(AutoBidConfig config, Consumer<BidRecord> onAutoBidPlaced) {
         bidLock.lock();
         try {
             // Remove existing config for same bidder (update scenario)
@@ -128,6 +147,7 @@ public class LiveAuction {
             autoBidQueue.add(config);
             // Also store in map for quick lookup
             autoBids.put(config.getBidderId(), config);
+            resolveAutoBids(onAutoBidPlaced);
         } finally {
             bidLock.unlock();
         }
@@ -157,7 +177,7 @@ public class LiveAuction {
      *    - Người dẫn đầu chính là top auto-bidder
      */
 
-    public void resolveAutoBids() {
+    public void resolveAutoBids(Consumer<BidRecord> onAutoBidPlaced) {
         // KHÔNG CẦN lock vì hàm này luôn được gọi trong placeBid() đã lock sẵn
 
         boolean keepResolving = true;
@@ -169,29 +189,32 @@ public class LiveAuction {
             keepResolving = false;
 
             // Tìm auto-bid tốt nhất (không phải current winner)
-            AutoBidConfig bestConfig = null;
-            for (AutoBidConfig config : autoBidQueue) {
-                if (!config.getBidderId().equals(currentWinnerId)) {
-                    bestConfig = config;
-                    break; // PriorityQueue đã sort, lấy cái đầu tiên khác winner
-                }
-            }
+            AutoBidConfig bestConfig = autoBidQueue.stream()
+                    .filter(config -> !config.getBidderId().equals(currentWinnerId))
+                    .min(AutoBidConfig::compareTo)
+                    .orElse(null);
 
             if (bestConfig == null) break; // Không ai auto-bid
 
-            double newBidAmount = currentHighestBid + bestConfig.getIncrement();
+            double newBidAmount = getCurrentPrice() + bestConfig.getIncrement();
 
             if (newBidAmount <= bestConfig.getMaxBid()) {
                 // Auto-bid!
                 BidRecord autoRecord = new BidRecord(
                         bestConfig.getBidderId(),
-                        bestConfig.getBidderUsername() + " [AUTO]",
+                        bestConfig.getBidderName(),
                         newBidAmount,
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        BidType.AUTO
                 );
                 this.currentHighestBid = newBidAmount;
                 this.currentWinnerId = bestConfig.getBidderId();
                 this.bidHistory.add(autoRecord);
+                
+                // Gửi callback để lưu vào DB
+                if (onAutoBidPlaced != null) {
+                    onAutoBidPlaced.accept(autoRecord);
+                }
 
                 // Anti-sniping cho auto-bid
                 extendIfSniping();
@@ -203,6 +226,7 @@ public class LiveAuction {
             } else {
                 // maxBid không đủ → remove config
                 autoBidQueue.remove(bestConfig);
+                autoBids.remove(bestConfig.getBidderId());
             }
         }
     }
@@ -212,7 +236,23 @@ public class LiveAuction {
         return depositedBidders.contains(bidderId);
     }
     public void markDeposited(String bidderId) {
-        depositedBidders.add(bidderId);
+        if (bidderId != null && !bidderId.isBlank()) {
+            depositedBidders.add(bidderId);
+        }
+    }
+    public void markDeposited(Collection<String> bidderIds) {
+        if (bidderIds == null) {
+            return;
+        }
+        for (String bidderId : bidderIds) {
+            markDeposited(bidderId);
+        }
+    }
+    public void unmarkDeposited(String bidderId) {
+        depositedBidders.remove(bidderId);
+    }
+    public List<String> getDepositedBidderIds() {
+        return new ArrayList<>(depositedBidders);
     }
 
 
@@ -231,7 +271,7 @@ public class LiveAuction {
     }
     private void notifyObservers(BidRecord record) {
         for (AuctionObserver obs : observers) {
-            obs.onBidPlaced(record);
+            obs.onBidPlaced(this.id, record);
         }
     }
 
@@ -256,6 +296,9 @@ public class LiveAuction {
     }
     public double getCurrentHighestBid() {
         return currentHighestBid;
+    }
+    public double getCurrentPrice() {
+        return currentHighestBid > 0 ? currentHighestBid : startingPrice;
     }
     public String getCurrentWinnerId() {
         return currentWinnerId;

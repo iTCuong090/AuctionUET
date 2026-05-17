@@ -1,13 +1,21 @@
 package com.auctionuet.server.IntegrationTest;
 
-import com.auctionuet.server.network.protocol.Response;
-import org.junit.jupiter.api.*;
+import com.auctionuet.protocol.Response;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AuctionIntegrationTest {
@@ -31,203 +39,192 @@ public class AuctionIntegrationTest {
         TestHelper.cleanTestData();
     }
 
-    // ================= HELPER =================
     private String registerAndLogin(String username, String role) throws Exception {
-
         Response reg = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"REGISTER\",\"data\":{\"username\":\"" + username + "\",\"password\":\"12345678\",\"role\":\"" + role + "\"}}");
+                "{\"action\":\"REGISTER\",\"data\":{\"username\":\"" + username
+                        + "\",\"password\":\"12345678\",\"email\":\"" + username
+                        + "@uet.vn\",\"role\":\"" + role + "\"}}");
 
         assertEquals("OK", reg.getStatus(), reg.getMessage());
 
         Response login = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"" + username + "\",\"password\":\"12345678\"}}");
+                "{\"action\":\"LOGIN\",\"data\":{\"username\":\"" + username
+                        + "\",\"password\":\"12345678\"}}");
 
         assertEquals("OK", login.getStatus(), login.getMessage());
-
         return ((Map<String, Object>) login.getData()).get("token").toString();
     }
 
-    // ================= FULL FLOW =================
     @Test
     @Order(1)
     void testFullAuctionFlow() throws Exception {
-
         String sToken = registerAndLogin("seller123", "SELLER");
 
-        Response itemRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + sToken + "\",\"data\":{\"name\":\"Vase\",\"type\":\"ART\",\"startingPrice\":100,\"artist\":\"UET\"}}");
-
+        Response itemRes = createItem(sToken, artItemData("Vase", 100));
         assertEquals("OK", itemRes.getStatus(), itemRes.getMessage());
+
         Map<String, Object> item = (Map<String, Object>) itemRes.getData();
         assertNotNull(item);
         String itemId = item.get("id").toString();
 
-        String startTime = LocalDateTime.now().plusMinutes(5).toString();
-        String endTime = LocalDateTime.now().plusDays(1).toString();
-        Response auctionRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + sToken + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"Auction Test\",\"description\":\"Desc\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
-
+        Response auctionRes = createAuction(sToken, itemId, "Auction Test");
         assertEquals("OK", auctionRes.getStatus(), auctionRes.getMessage());
+
         Map<String, Object> auction = (Map<String, Object>) auctionRes.getData();
         assertNotNull(auction);
         String auctionId = auction.get("id").toString();
         assertEquals("OPEN", auction.get("status").toString());
 
         Response startRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"START_AUCTION\",\"token\":\"" + sToken + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
-
-        assertEquals("OK", startRes.getStatus());
+                "{\"action\":\"START_AUCTION\",\"token\":\"" + sToken
+                        + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
+        assertEquals("OK", startRes.getStatus(), startRes.getMessage());
 
         String bToken = registerAndLogin("bidder123", "BIDDER");
 
         Response listRes = TestHelper.sendRawRequest(PORT,
                 "{\"action\":\"GET_AUCTIONS\",\"token\":\"" + bToken + "\"}");
+        assertEquals("OK", listRes.getStatus(), listRes.getMessage());
 
-        assertEquals("OK", listRes.getStatus());
         List<Map<String, Object>> list = (List<Map<String, Object>>) listRes.getData();
         assertNotNull(list);
         assertFalse(list.isEmpty());
 
         Response detailRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"GET_AUCTION_DETAIL\",\"token\":\"" + bToken + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
+                "{\"action\":\"GET_AUCTION_DETAIL\",\"token\":\"" + bToken
+                        + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
+        assertEquals("OK", detailRes.getStatus(), detailRes.getMessage());
 
-        assertEquals("OK", detailRes.getStatus());
         Map<String, Object> detail = (Map<String, Object>) detailRes.getData();
         assertNotNull(detail);
         assertEquals("RUNNING", detail.get("status").toString());
     }
 
-    // ================= PERMISSION =================
     @Test
     @Order(2)
     void testPermissionCreateItem_BidderDenied() throws Exception {
-
         String token = registerAndLogin("bidderAAA", "BIDDER");
 
-        Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":{\"name\":\"Laptop\"}}");
-
+        Response res = createItem(token, artItemData("Laptop", 100));
         assertEquals("ERROR", res.getStatus());
     }
 
     @Test
     @Order(3)
     void testPermissionCreateAuction_BidderDenied() throws Exception {
-
         String token = registerAndLogin("bidderBBB", "BIDDER");
 
-        Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"itemId\":\"fake\"}}");
-
+        Response res = createAuction(token, "fake", "Denied Auction");
         assertEquals("ERROR", res.getStatus());
     }
 
-    // ================= BUSINESS =================
     @Test
     @Order(4)
     void testSellerCannotCreateAuctionForOtherItem() throws Exception {
-
         String tokenA = registerAndLogin("sellerAAA", "SELLER");
 
-        Response itemRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + tokenA + "\",\"data\":{\"name\":\"ItemA\",\"type\":\"ART\",\"startingPrice\":10,\"artist\":\"UET\"}}");
-
-        assertEquals("OK", itemRes.getStatus());
+        Response itemRes = createItem(tokenA, artItemData("ItemA", 10));
+        assertEquals("OK", itemRes.getStatus(), itemRes.getMessage());
         String itemId = ((Map<String, Object>) itemRes.getData()).get("id").toString();
 
         String tokenB = registerAndLogin("sellerBBB", "SELLER");
 
-        String startTime = LocalDateTime.now().plusMinutes(5).toString();
-        String endTime = LocalDateTime.now().plusDays(1).toString();
-        Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + tokenB + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"A\",\"description\":\"D\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
-
+        Response res = createAuction(tokenB, itemId, "Other Seller Auction");
         assertEquals("ERROR", res.getStatus());
     }
 
-    // ================= STATE =================
     @Test
     @Order(5)
     void testStartAuctionAlreadyRunning() throws Exception {
-
         String token = registerAndLogin("sellerCCC", "SELLER");
 
-        Response itemRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":{\"name\":\"Item\",\"type\":\"ART\",\"startingPrice\":10,\"artist\":\"UET\"}}");
-
-        assertEquals("OK", itemRes.getStatus());
+        Response itemRes = createItem(token, artItemData("Item", 10));
+        assertEquals("OK", itemRes.getStatus(), itemRes.getMessage());
         String itemId = ((Map<String, Object>) itemRes.getData()).get("id").toString();
 
-        String startTime = LocalDateTime.now().plusMinutes(5).toString();
-        String endTime = LocalDateTime.now().plusDays(1).toString();
-        Response auctionRes = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"itemId\":\"" + itemId + "\",\"title\":\"Auction\",\"description\":\"Desc\",\"startTime\":\"" + startTime + "\",\"endTime\":\"" + endTime + "\"}}");
-
+        Response auctionRes = createAuction(token, itemId, "Auction");
         assertEquals("OK", auctionRes.getStatus(), auctionRes.getMessage());
         String auctionId = ((Map<String, Object>) auctionRes.getData()).get("id").toString();
 
-        TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"START_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
+        Response firstStart = TestHelper.sendRawRequest(PORT,
+                "{\"action\":\"START_AUCTION\",\"token\":\"" + token
+                        + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
+        assertEquals("OK", firstStart.getStatus(), firstStart.getMessage());
 
         Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"START_AUCTION\",\"token\":\"" + token + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
-
+                "{\"action\":\"START_AUCTION\",\"token\":\"" + token
+                        + "\",\"data\":{\"auctionId\":\"" + auctionId + "\"}}");
         assertEquals("ERROR", res.getStatus());
     }
 
-    // ================= AUTH =================
     @Test
     @Order(6)
     void testGetAuctionsNoAuth() throws Exception {
-
-        Response res = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"GET_AUCTIONS\"}");
-
+        Response res = TestHelper.sendRawRequest(PORT, "{\"action\":\"GET_AUCTIONS\"}");
         assertEquals("ERROR", res.getStatus());
     }
 
-    // ================= ITEM TYPES =================
     @Test
     @Order(7)
     void testCreateItemWithAllTypes() throws Exception {
-
         String token = registerAndLogin("sellerDDD", "SELLER");
 
-        Response r1 = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":{\"type\":\"ELECTRONICS\",\"name\":\"PC\",\"startingPrice\":100,\"brand\":\"UET\"}}");
-
-        Response r2 = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":{\"type\":\"ART\",\"name\":\"Painting\",\"startingPrice\":200,\"artist\":\"UET\"}}");
-
-        Response r3 = TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":{\"type\":\"VEHICLE\",\"name\":\"Car\",\"startingPrice\":1000,\"make\":\"VinFast\"}}");
+        Response r1 = createItem(token, electronicsItemData("PC", 100));
+        Response r2 = createItem(token, artItemData("Painting", 200));
+        Response r3 = createItem(token, vehicleItemData("Car", 1000));
 
         assertEquals("OK", r1.getStatus(), r1.getMessage());
         assertEquals("OK", r2.getStatus(), r2.getMessage());
         assertEquals("OK", r3.getStatus(), r3.getMessage());
     }
 
-    // ================= MULTI SELLER =================
     @Test
     @Order(8)
     void testMultipleSellersCreateItems() throws Exception {
-
         String tokenA = registerAndLogin("sellerEEE", "SELLER");
 
-        TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + tokenA + "\",\"data\":{\"name\":\"Item1\",\"type\":\"ART\",\"startingPrice\":10,\"artist\":\"UET\"}}");
-
-        TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + tokenA + "\",\"data\":{\"name\":\"Item2\",\"type\":\"ART\",\"startingPrice\":20,\"artist\":\"UET\"}}");
+        createItem(tokenA, artItemData("Item1", 10));
+        createItem(tokenA, artItemData("Item2", 20));
 
         String tokenB = registerAndLogin("sellerFFF", "SELLER");
-
-        TestHelper.sendRawRequest(PORT,
-                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + tokenB + "\",\"data\":{\"name\":\"Item3\",\"type\":\"ART\",\"startingPrice\":30,\"artist\":\"UET\"}}");
+        createItem(tokenB, artItemData("Item3", 30));
 
         Response res = TestHelper.sendRawRequest(PORT,
                 "{\"action\":\"GET_AUCTIONS\",\"token\":\"" + tokenA + "\"}");
+        assertEquals("OK", res.getStatus(), res.getMessage());
+    }
 
-        assertEquals("OK", res.getStatus());
+    private Response createItem(String token, String dataJson) throws Exception {
+        return TestHelper.sendRawRequest(PORT,
+                "{\"action\":\"CREATE_ITEM\",\"token\":\"" + token + "\",\"data\":" + dataJson + "}");
+    }
+
+    private Response createAuction(String token, String itemId, String title) throws Exception {
+        String startTime = LocalDateTime.now().plusMinutes(5).toString();
+        String endTime = LocalDateTime.now().plusDays(1).toString();
+        return TestHelper.sendRawRequest(PORT,
+                "{\"action\":\"CREATE_AUCTION\",\"token\":\"" + token
+                        + "\",\"data\":{\"itemId\":\"" + itemId
+                        + "\",\"title\":\"" + title
+                        + "\",\"description\":\"Desc\",\"startTime\":\"" + startTime
+                        + "\",\"endTime\":\"" + endTime + "\"}}");
+    }
+
+    private String artItemData(String name, double price) {
+        return "{\"name\":\"" + name
+                + "\",\"description\":\"Desc\",\"type\":\"ART\",\"startingPrice\":" + price
+                + ",\"condition\":\"GOOD\",\"extraFields\":{\"artist\":\"UET\",\"year\":2024,\"medium\":\"Oil\"}}";
+    }
+
+    private String electronicsItemData(String name, double price) {
+        return "{\"name\":\"" + name
+                + "\",\"description\":\"Desc\",\"type\":\"ELECTRONICS\",\"startingPrice\":" + price
+                + ",\"condition\":\"GOOD\",\"extraFields\":{\"brand\":\"UET\",\"warrantyMonths\":12}}";
+    }
+
+    private String vehicleItemData(String name, double price) {
+        return "{\"name\":\"" + name
+                + "\",\"description\":\"Desc\",\"type\":\"VEHICLE\",\"startingPrice\":" + price
+                + ",\"condition\":\"GOOD\",\"extraFields\":{\"make\":\"VinFast\",\"model\":\"VF\",\"mileage\":0,\"vehicleYear\":2024}}";
     }
 }

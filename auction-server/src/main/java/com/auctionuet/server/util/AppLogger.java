@@ -89,11 +89,11 @@ public class AppLogger {
     /**
      * Log khi client ngắt kết nối.
      */
-    public static void logClientDisconnected(String ip, long durationMs) {
+    public static void logClientDisconnected(String ip, long durationMs, int activeCount) {
         if (durationMs > 0) {
-            NETWORK.info("✖ CLIENT DISCONNECTED │ {} │ Duration: {}s", ip, durationMs / 1000);
+            NETWORK.info("✖ CLIENT DISCONNECTED │ {} │ Duration: {}s │ Active: {}", ip, durationMs / 1000, activeCount);
         } else {
-            NETWORK.info("✖ CLIENT DISCONNECTED │ {}", ip);
+            NETWORK.info("✖ CLIENT DISCONNECTED │ {} │ Active: {}", ip, activeCount);
         }
     }
 

@@ -26,29 +26,32 @@ public class SceneManager {
     public void switchScene(String fxmlPath) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
-            Scene scene = new Scene(root);
-
-            // Nhúng CSS base (layout) + theme (màu sắc)
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
-            ThemeManager.getInstance().applyTheme(scene);
-
-
-            // 1. Ghi nhớ lại trạng thái hiện tại của cửa sổ (đang full màn hay kích thước bao nhiêu)
-            boolean isMaximized = primaryStage.isMaximized();
-            double width = primaryStage.getWidth();
-            double height = primaryStage.getHeight();
-
-            // 2. Lắp Scene mới vào (Lúc này nó định thu nhỏ lại)
-            primaryStage.setScene(scene);
-
-            // 3Nhưng mình ép nó giữ nguyên form cũ ngay lập tức!
-            if (isMaximized) {
-                primaryStage.setMaximized(true); // Nếu trước đó full màn, ép full màn tiếp
-            } else if (!Double.isNaN(width) && !Double.isNaN(height)) {
-                primaryStage.setWidth(width);    // Nếu không thì giữ nguyên chiều rộng
-                primaryStage.setHeight(height);  // Giữ nguyên chiều cao
+            
+            if (primaryStage.getScene() == null) {
+                // Nếu chưa có Scene nào (lần đầu), tạo mới
+                Scene scene = new Scene(root);
+                ThemeManager.getInstance().applyTheme(scene);
+                primaryStage.setScene(scene);
+            } else {
+                // Nếu đã có Scene, chỉ cần thay đổi "ruột" (Root)
+                // Việc này giúp giữ nguyên trạng thái cửa sổ (Maximized, Width, Height) mà không bị giật
+                Scene scene = primaryStage.getScene();
+                scene.setRoot(root);
+                ThemeManager.getInstance().applyTheme(scene);
             }
 
+            // --- Tự động Resize cửa sổ theo màn hình ---
+            if (fxmlPath.contains("DashboardView")) {
+                // Nếu vào Dashboard -> Phóng to toàn màn hình cho "đã"
+                primaryStage.setMaximized(true);
+            } else if (fxmlPath.contains("MainView")) {
+                // Nếu quay về Đăng nhập -> Thu nhỏ lại cho đẹp
+                primaryStage.setMaximized(false);
+                primaryStage.setWidth(1000);
+                primaryStage.setHeight(650);
+                // Căn giữa lại màn hình sau khi thu nhỏ
+                primaryStage.centerOnScreen();
+            }
 
             primaryStage.show();
 

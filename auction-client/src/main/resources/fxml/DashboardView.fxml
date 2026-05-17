@@ -9,13 +9,13 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<HBox prefHeight="650.0" prefWidth="1050.0" spacing="25.0" styleClass="dashboard-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.DashboardController">
+<HBox prefHeight="650.0" prefWidth="1050.0" spacing="25.0" styleClass="dashboard-root" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.DashboardController">
     <padding>
         <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
     </padding>
 
     <!-- ====== THẺ SIDEBAR BÊN TRÁI ====== -->
-    <VBox prefWidth="260.0" styleClass="dashboard-sidebar-card" HBox.hgrow="NEVER">
+    <VBox minWidth="260.0" prefWidth="260.0" styleClass="dashboard-sidebar-card" HBox.hgrow="NEVER">
         <padding>
             <Insets bottom="30.0" left="20.0" right="20.0" top="30.0" />
         </padding>
@@ -66,14 +66,14 @@
                 </padding>
                 <children>
                     <!-- Dòng chữ chào mừng -->
-                    <Label text="Chào mừng trở lại!" styleClass="text-secondary">
+                    <Label text="Chào mừng trở lại!" styleClass="text-secondary, dashboard-welcome-text">
                         <font><Font name="System Bold" size="16.0" /></font>
                     </Label>
                     
                     <Region HBox.hgrow="ALWAYS" />
                     
                     <!-- Nút đổi theme -->
-                    <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="🌙" />
+                    <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="S" />
                     <Region prefWidth="20.0" />
                     
                     <!-- Thông tin user -->

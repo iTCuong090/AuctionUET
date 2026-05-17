@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.WalletController">
+<ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.WalletController">
     <content>
         <VBox spacing="25.0" styleClass="dark-bg">
             <padding>
@@ -32,7 +32,7 @@
                             </Label>
                         </HBox>
                         <HBox spacing="20.0" alignment="CENTER_LEFT">
-                            <Label styleClass="text-secondary" text="Tiền đang cọc:" prefWidth="120.0" />
+                            <Label styleClass="text-secondary" text="Tổng tiền đang cọc:" prefWidth="140.0" />
                             <Label fx:id="frozenLabel" styleClass="text-secondary" text="0 VNĐ">
                                 <font><Font size="16.0" /></font>
                             </Label>

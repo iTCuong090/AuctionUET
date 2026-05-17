@@ -1,6 +1,6 @@
 package com.auctionuet.server.persistence.schema;
 
-import com.auctionuet.server.domain.enums.UserRole;
+import com.auctionuet.protocol.enums.UserRole;
 import java.time.LocalDateTime;
 
 public class UserSchema extends BaseSchema {
