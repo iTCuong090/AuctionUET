@@ -170,7 +170,7 @@ public class LiveAuction {
      */
     public void resolveAutoBids(Consumer<BidRecord> onAutoBidPlaced) {
         // KHÔNG CẦN lock vì hàm này luôn được gọi khi đã giữ bidLock.
-        removeExhaustedAutoBids();
+        deactivateExhaustedAutoBids();
 
         AutoBidConfig winningConfig = findBestAutoBidConfig();
         if (winningConfig == null) {
@@ -201,17 +201,20 @@ public class LiveAuction {
         // Anti-sniping cho auto-bid.
         extendIfSniping();
 
+        deactivateExhaustedAutoBids();
         notifyObservers(autoRecord);
     }
 
     private AutoBidConfig findBestAutoBidConfig() {
         return autoBidQueue.stream()
+                .filter(AutoBidConfig::isActive)
                 .min(AutoBidConfig::comparePriority)
                 .orElse(null);
     }
 
     private AutoBidConfig findBestCompetingAutoBidConfig(String bidderId) {
         return autoBidQueue.stream()
+                .filter(AutoBidConfig::isActive)
                 .filter(config -> !config.getBidderId().equals(bidderId))
                 .min(AutoBidConfig::comparePriority)
                 .orElse(null);
@@ -238,15 +241,16 @@ public class LiveAuction {
         return nextBidAmount <= winningConfig.getMaxBid() ? nextBidAmount : getCurrentPrice();
     }
 
-    private void removeExhaustedAutoBids() {
+    private void deactivateExhaustedAutoBids() {
         List<AutoBidConfig> exhaustedConfigs = autoBidQueue.stream()
+                .filter(AutoBidConfig::isActive)
                 .filter(config -> !config.getBidderId().equals(currentWinnerId))
                 .filter(config -> config.getMaxBid() <= getCurrentPrice())
                 .toList();
 
         for (AutoBidConfig config : exhaustedConfigs) {
+            config.markInactive();
             autoBidQueue.remove(config);
-            autoBids.remove(config.getBidderId());
         }
     }
 

@@ -2,6 +2,7 @@ package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
+import com.auctionuet.protocol.enums.AutoBidStatus;
 import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.AutoBidConfig;
@@ -124,11 +125,25 @@ public class BidService {
             return null;
         }
 
+        AutoBidStatus status;
+        double protectedUntil = 0.0;
+        if (!config.isActive()) {
+            status = AutoBidStatus.INEFFECTIVE;
+        } else if (bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
+            status = AutoBidStatus.PROTECTING;
+            protectedUntil = config.getMaxBid();
+        } else {
+            status = AutoBidStatus.WAITING;
+            protectedUntil = config.getMaxBid();
+        }
+
         return new AutoBidConfigDTO(
                 auctionId,
                 userService.toDTO(bidder),
                 config.getMaxBid(),
-                config.getIncrement());
+                config.getIncrement(),
+                status,
+                protectedUntil);
     }
 
     public BidDTO toBidDTO(BidRecord record, String auctionId) {

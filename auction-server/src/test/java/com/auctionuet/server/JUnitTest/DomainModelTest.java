@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DomainModelTest {
 
@@ -69,6 +71,8 @@ class DomainModelTest {
 
         assertEquals("bid1", auction.getCurrentWinnerId());
         assertEquals(1000.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+        assertFalse(auction.getAutoBidConfig("bid2").isActive());
     }
 
     @Test
@@ -82,6 +86,8 @@ class DomainModelTest {
 
         assertEquals("bid2", auction.getCurrentWinnerId());
         assertEquals(950.0, auction.getCurrentHighestBid());
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+        assertTrue(auction.getAutoBidConfig("bid2").isActive());
     }
 
     @Test
@@ -94,5 +100,35 @@ class DomainModelTest {
 
         assertEquals("bid2", auction.getCurrentWinnerId());
         assertEquals(925.0, auction.getCurrentHighestBid());
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+        assertTrue(auction.getAutoBidConfig("bid2").isActive());
+    }
+
+    @Test
+    void testAutoBidWaitingConfigRemainsActive() {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0));
+
+        assertEquals(500.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+    }
+
+    @Test
+    void testAutoBidCanBeEnabledAgainAfterInactive() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0));
+        auction.placeBid(new Bidder("bid2", "user2"), 530.0, null);
+
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 700.0, 50.0));
+
+        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals(580.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
     }
 }

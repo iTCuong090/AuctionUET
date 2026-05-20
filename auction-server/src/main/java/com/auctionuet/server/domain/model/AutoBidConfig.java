@@ -8,6 +8,7 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
     private double maxBid;
     private final double increment;
     private final LocalDateTime registeredAt;
+    private boolean active = true;
 
     public AutoBidConfig(String bidderId, String bidderName,
                          double maxBid, double increment) {
@@ -33,6 +34,10 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
         return this.registeredAt.compareTo(other.registeredAt);
     }
 
+    public void markInactive() {
+        this.active = false;
+    }
+
     // Getters
     public String getBidderId() {
         return bidderId;
@@ -51,5 +56,8 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
     }
     public LocalDateTime getRegisteredAt() {
         return registeredAt;
+    }
+    public boolean isActive() {
+        return active;
     }
 }

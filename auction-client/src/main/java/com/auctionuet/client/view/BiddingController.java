@@ -13,6 +13,7 @@ import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
+import com.auctionuet.protocol.enums.AutoBidStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -158,6 +159,7 @@ public class BiddingController {
                     renderAuctionDeposit();
                     loadWalletInfo();
                 }
+                checkAutoBidState();
                 return;
             }
 
@@ -238,15 +240,13 @@ public class BiddingController {
                 AutoBidConfigDTO state = bidClient.checkAutoBid(token, currentAuctionId);
                 Platform.runLater(() -> {
                     if (state != null) {
-                        enableAutoBidBtn.setDisable(true);
-                        cancelAutoBidBtn.setDisable(false);
                         maxBidField.setText(String.format("%.0f", state.getMaxBid()));
                         incrementField.setText(String.format("%.0f", state.getIncrement()));
-                        autoBidStatusLabel.setText("Dang bat Auto-Bid");
-                        autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
+                        renderAutoBidState(state);
                     } else {
                         enableAutoBidBtn.setDisable(false);
                         cancelAutoBidBtn.setDisable(true);
+                        autoBidStatusLabel.setText("");
                     }
                 });
             } catch (Exception ignored) {}
@@ -313,13 +313,10 @@ public class BiddingController {
                 try {
                     bidClient.setAutoBid(token, currentAuctionId, maxBid, increment);
                     Platform.runLater(() -> {
-                        autoBidStatusLabel.setText("Da bat Auto-Bid!");
-                        autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
-                        enableAutoBidBtn.setDisable(true);
-                        cancelAutoBidBtn.setDisable(false);
                         currentUserDeposited = true;
                         renderAuctionDeposit();
                         loadWalletInfo();
+                        checkAutoBidState();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -387,6 +384,36 @@ public class BiddingController {
     private void renderAuctionDeposit() {
         double deposit = currentUserDeposited ? auctionDepositAmount : 0.0;
         depositLabel.setText(String.format("%,.0f VND", deposit));
+    }
+
+    private void renderAutoBidState(AutoBidConfigDTO state) {
+        AutoBidStatus status = state.getStatus();
+        if (status == AutoBidStatus.PROTECTING) {
+            enableAutoBidBtn.setDisable(true);
+            cancelAutoBidBtn.setDisable(false);
+            autoBidStatusLabel.setText("Bạn đang dẫn đầu. Auto-Bid sẽ bảo vệ tới "
+                    + formatMoney(state.getProtectedUntil()) + ".");
+            autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
+            return;
+        }
+
+        if (status == AutoBidStatus.INEFFECTIVE) {
+            enableAutoBidBtn.setDisable(false);
+            cancelAutoBidBtn.setDisable(false);
+            autoBidStatusLabel.setText("Auto-Bid của bạn không còn hiệu lực.");
+            autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+            return;
+        }
+
+        enableAutoBidBtn.setDisable(true);
+        cancelAutoBidBtn.setDisable(false);
+        autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá tới "
+                + formatMoney(state.getProtectedUntil()) + " khi cần.");
+        autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
+    }
+
+    private String formatMoney(double amount) {
+        return String.format("%,.0f VND", amount);
     }
 
     private boolean isCurrentUser(UserDTO user) {
