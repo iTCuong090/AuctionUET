@@ -2,15 +2,21 @@ package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.WalletClient;
+import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 public class WalletController {
+    private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     @FXML private Label balanceLabel;
     @FXML private Label frozenLabel;
@@ -23,12 +29,14 @@ public class WalletController {
 
     @FXML private TextField withdrawAmountField;
     @FXML private Label statusLabel;
+    @FXML private ListView<String> transactionListView;
 
     private final WalletClient walletClient = new WalletClient();
 
     @FXML
     public void initialize() {
         loadWalletInfo();
+        loadTransactionHistory();
     }
 
     private void loadWalletInfo() {
@@ -44,6 +52,20 @@ public class WalletController {
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> statusLabel.setText("Loi tai vi: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    private void loadTransactionHistory() {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null || transactionListView == null) return;
+
+        new Thread(() -> {
+            try {
+                List<TransactionDTO> transactions = walletClient.getMyTransactions(token);
+                Platform.runLater(() -> renderTransactions(transactions));
+            } catch (Exception e) {
+                Platform.runLater(() -> transactionListView.getItems().setAll("Loi tai lich su: " + e.getMessage()));
             }
         }).start();
     }
@@ -99,6 +121,7 @@ public class WalletController {
                         confirmDepositBtn.setManaged(false);
                         generateQrBtn.setVisible(true);
                         generateQrBtn.setManaged(true);
+                        loadTransactionHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -138,6 +161,7 @@ public class WalletController {
                         statusLabel.setText("Rut tien thanh cong!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
                         withdrawAmountField.clear();
+                        loadTransactionHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -160,5 +184,30 @@ public class WalletController {
         balanceLabel.setText(String.format("%,.0f VND", balance));
         frozenLabel.setText(String.format("%,.0f VND", frozen));
         totalLabel.setText(String.format("%,.0f VND", total));
+    }
+
+    private void renderTransactions(List<TransactionDTO> transactions) {
+        transactionListView.getItems().clear();
+        if (transactions == null || transactions.isEmpty()) {
+            transactionListView.getItems().add("Chua co giao dich nao.");
+            return;
+        }
+
+        for (TransactionDTO transaction : transactions) {
+            String time = transaction.getCreatedAt() != null
+                    ? transaction.getCreatedAt().format(DISPLAY_TIME)
+                    : "Chua ro";
+            String auctionText = transaction.getAuctionId() != null
+                    ? " | Auction: " + transaction.getAuctionId()
+                    : "";
+            String description = transaction.getDescription() != null ? " | " + transaction.getDescription() : "";
+            transactionListView.getItems().add(String.format(
+                    "%s | %s | %,.0f VND%s%s",
+                    time,
+                    transaction.getType(),
+                    transaction.getAmount(),
+                    auctionText,
+                    description));
+        }
     }
 }

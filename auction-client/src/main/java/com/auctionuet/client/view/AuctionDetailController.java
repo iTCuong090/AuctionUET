@@ -3,11 +3,17 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.BidClient;
+import com.auctionuet.client.network.ServerConnection;
+import com.auctionuet.protocol.PushActionType;
+import com.auctionuet.protocol.PushMessage;
+import com.auctionuet.protocol.dto.push.PushEvents;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -16,6 +22,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +45,7 @@ public class AuctionDetailController {
     @FXML private Label bidErrorLabel;
 
     private String currentAuctionId;
+    private boolean subscribed;
 
     @FXML
     public void initialize() {
@@ -103,6 +111,11 @@ public class AuctionDetailController {
             biddingArea.setVisible(true);
             biddingArea.setManaged(true);
         }
+
+        if (status == AuctionStatus.OPEN) {
+            subscribeToAuction(dto.getId());
+            ServerConnection.getInstance().setPushListener(this::onPushMessage);
+        }
     }
 
     @FXML
@@ -158,6 +171,67 @@ public class AuctionDetailController {
         } catch (NumberFormatException ex) {
             showBidError("Vui long nhap so hop le.");
         }
+    }
+
+    private void subscribeToAuction(String auctionId) {
+        if (subscribed) {
+            return;
+        }
+        subscribed = true;
+        new Thread(() -> {
+            try {
+                new BidClient().subscribe(ClientSession.getInstance().getToken(), auctionId);
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    bidErrorLabel.setText("Loi subscribe: " + e.getMessage());
+                    bidErrorLabel.setVisible(true);
+                });
+            }
+        }).start();
+    }
+
+    private void onPushMessage(PushMessage push) {
+        if (push == null || push.getPushType() != PushActionType.AUCTION_STARTED) {
+            return;
+        }
+
+        PushEvents.AuctionStartedPush data = push.getDataAs(PushEvents.AuctionStartedPush.class);
+        if (data == null || !currentAuctionId.equals(data.getAuctionId())) {
+            return;
+        }
+
+        Platform.runLater(this::openBiddingView);
+    }
+
+    private void openBiddingView() {
+        cleanup();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingView.fxml"));
+            Parent root = loader.load();
+            BiddingController biddingController = loader.getController();
+            biddingController.setAuctionId(currentAuctionId);
+
+            Parent currentRoot = nameLabel.getScene().getRoot();
+            if (currentRoot instanceof HBox) {
+                VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
+                javafx.scene.layout.StackPane contentArea =
+                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+                contentArea.getChildren().setAll(root);
+            }
+        } catch (Exception e) {
+            statusLabel.setText("Loi chuyen sang man dau gia: " + e.getMessage());
+            statusLabel.setTextFill(javafx.scene.paint.Color.RED);
+        }
+    }
+
+    public void cleanup() {
+        if (subscribed && currentAuctionId != null) {
+            new Thread(() -> new BidClient().unsubscribe(
+                    ClientSession.getInstance().getToken(),
+                    currentAuctionId)).start();
+            subscribed = false;
+        }
+        ServerConnection.getInstance().setPushListener(null);
     }
 
     private void showBidError(String message) {

@@ -12,7 +12,7 @@ public class Bidder extends User {
         return switch (action) {
             case PLACE_BID, VIEW_AUCTION, VIEW_BID_HISTORY,
                  GET_PROFILE, UPDATE_PROFILE, SUBSCRIBE, UNSUBSCRIBE,
-                 DEPOSIT, WITHDRAW, GET_WALLET, PAY_AUCTION,    // Wallet + Payment
+                 DEPOSIT, WITHDRAW, GET_WALLET, GET_MY_TRANSACTIONS, PAY_AUCTION,    // Wallet + Payment
                  SET_AUTO_BID, CANCEL_AUTO_BID                   // Auto-bid
                     -> true;
             default -> false;

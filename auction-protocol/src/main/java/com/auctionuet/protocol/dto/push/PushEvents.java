@@ -6,6 +6,25 @@ import com.auctionuet.protocol.dto.response.user.UserDTO;
 import java.time.LocalDateTime;
 
 public class PushEvents {
+    public static class AuctionStartedPush {
+        private String auctionId;
+        private LocalDateTime startTime;
+        private LocalDateTime endTime;
+        private String message;
+
+        public AuctionStartedPush(String auctionId, LocalDateTime startTime, LocalDateTime endTime, String message) {
+            this.auctionId = auctionId;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.message = message;
+        }
+
+        public String getAuctionId() { return auctionId; }
+        public LocalDateTime getStartTime() { return startTime; }
+        public LocalDateTime getEndTime() { return endTime; }
+        public String getMessage() { return message; }
+    }
+
     public static class BidUpdatePush {
         private String auctionId;
         private BidDTO bid;

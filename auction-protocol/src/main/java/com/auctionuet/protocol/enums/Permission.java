@@ -21,6 +21,7 @@ public enum Permission {
     DEPOSIT,
     WITHDRAW,
     GET_WALLET,
+    GET_MY_TRANSACTIONS,
     PAY_AUCTION,
     SET_AUTO_BID,
     CANCEL_AUTO_BID

@@ -10,6 +10,7 @@ import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
+import com.auctionuet.server.persistence.schema.AuctionDepositRefSchema;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
@@ -21,9 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class AuctionService {
 
@@ -33,7 +31,6 @@ public class AuctionService {
     private final AuctionDAO auctionDAO;
     private final AuctionManager auctionManager;
     private final WalletService walletService;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     public AuctionService(ItemService itemService, BidService bidService, UserService userService,
             AuctionDAO auctionDAO, WalletService walletService) {
@@ -43,7 +40,10 @@ public class AuctionService {
         this.auctionDAO = auctionDAO;
         this.walletService = walletService;
         this.auctionManager = AuctionManager.getInstance();
+        this.auctionManager.setStartAuctionCallback(this::onAuctionStartDue);
         this.auctionManager.setEndAuctionCallback(this::endAuction);
+        this.auctionManager.setPaymentDeadlineCallback(this::expirePaymentDeadline);
+        this.auctionManager.setReconcileCallback(this::reconcileAuctionsFromDatabase);
     }
 
     public AuctionDTO createAuction(User seller, String itemId, LocalDateTime startTime,
@@ -72,6 +72,7 @@ public class AuctionService {
                 antiSnipingExtensionSeconds);
 
         auctionDAO.save(schema);
+        auctionManager.scheduleAuctionStart(schema.getId(), schema.getStartTime());
 
         item.setAuctionCount(item.getAuctionCount() + 1);
         itemService.updateItem(item);
@@ -80,67 +81,134 @@ public class AuctionService {
         return toAuctionDTO(schema, itemDTO);
     }
 
-    public void startAuction(User seller, String auctionId) throws AuctionException {
+    public synchronized void startAuction(User seller, String auctionId) throws AuctionException {
         AuctionSchema schema = requireAuction(auctionId);
         requireAuctionOwner(seller, schema);
         requireAuctionStatus(schema, AuctionStatus.OPEN, "Auction hien khong o trang thai OPEN");
-        ItemSchema item = requireItem(schema.getItemId());
-
-        schema.setStatus(AuctionStatus.RUNNING);
-        auctionDAO.update(schema);
-        auctionManager.loadAuction(schema, item.getStartingPrice());
+        startAuctionNow(schema);
     }
 
     public void loadRunningAuctions() {
-        for (AuctionSchema schema : auctionDAO.findByStatus(AuctionStatus.RUNNING)) {
-            ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
-            if (item == null) {
+        reconcileAuctionsFromDatabase();
+    }
+
+    public synchronized void reconcileAuctionsFromDatabase() {
+        LocalDateTime now = LocalDateTime.now();
+        for (AuctionSchema schema : auctionDAO.findAll()) {
+            if (schema.getStatus() == AuctionStatus.PAID || schema.getStatus() == AuctionStatus.CANCELED) {
+                auctionManager.cancelAllTasks(schema.getId());
+                auctionManager.removeLiveAuction(schema.getId());
                 continue;
             }
 
-            double depositAmount = calculateDepositAmount(item);
-            if (backfillDepositsFromBidHistory(schema, depositAmount)) {
-                auctionDAO.update(schema);
+            if (hasInvalidAuctionTime(schema) || !schema.getEndTime().isAfter(now)) {
+                cancelStaleAuction(schema, "Huy phien dau gia qua han khi dong bo du lieu");
+                continue;
             }
-            auctionManager.loadAuction(schema, item.getStartingPrice());
+
+            if (schema.getStatus() == AuctionStatus.OPEN) {
+                if (!schema.getStartTime().isAfter(now)) {
+                    startAuctionNow(schema);
+                } else {
+                    auctionManager.scheduleAuctionStart(schema.getId(), schema.getStartTime());
+                }
+                continue;
+            }
+
+            if (schema.getStatus() == AuctionStatus.RUNNING) {
+                hydrateRunningAuction(schema);
+                continue;
+            }
+
+            if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
+                reconcilePaymentDeadline(schema);
+                continue;
+            }
+
+            cancelStaleAuction(schema, "Huy phien dau gia co trang thai khong hop le");
         }
     }
 
-    public void endAuction(String auctionId) throws AuctionException {
+    public synchronized void onAuctionStartDue(String auctionId) {
         AuctionSchema schema = auctionDAO.findById(auctionId);
-        if (schema != null) {
-            LiveAuction liveAuction = auctionManager.getAuction(auctionId);
-            ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
-            double depositAmount = item != null ? calculateDepositAmount(item) : 0;
+        if (schema == null || schema.getStatus() != AuctionStatus.OPEN) {
+            return;
+        }
+        if (hasInvalidAuctionTime(schema) || !schema.getEndTime().isAfter(LocalDateTime.now())) {
+            cancelStaleAuction(schema, "Huy phien dau gia qua han khi den lich bat dau");
+            return;
+        }
+        startAuctionNow(schema);
+    }
 
-            if (schema.getWinnerId() != null) {
-                refundDepositsExcept(schema, liveAuction, schema.getWinnerId(), depositAmount);
-                schema.setStatus(AuctionStatus.WAITING_PAYMENT);
-                auctionDAO.update(schema);
+    public synchronized void endAuction(String auctionId) throws AuctionException {
+        AuctionSchema schema = auctionDAO.findById(auctionId);
+        if (schema == null) {
+            auctionManager.removeLiveAuction(auctionId);
+            return;
+        }
+        if (schema.getStatus() == AuctionStatus.PAID || schema.getStatus() == AuctionStatus.CANCELED) {
+            auctionManager.removeLiveAuction(auctionId);
+            return;
+        }
+        if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
+            auctionManager.removeLiveAuction(auctionId);
+            reconcilePaymentDeadline(schema);
+            return;
+        }
 
-                scheduler.schedule(() -> {
-                    AuctionSchema currentSchema = auctionDAO.findById(auctionId);
-                    if (currentSchema != null && currentSchema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
-                        try {
-                            walletService.forfeitDeposit(currentSchema.getWinnerId(), depositAmount);
-                            clearDepositParticipation(currentSchema, null, currentSchema.getWinnerId());
-                            currentSchema.setStatus(AuctionStatus.CANCELED);
-                            auctionDAO.update(currentSchema);
-                        } catch (Exception e) {
-                            // Ignore scheduler payment-forfeit errors.
-                        }
-                    }
-                }, 24, TimeUnit.HOURS);
-            } else {
-                refundDepositsExcept(schema, liveAuction, null, depositAmount);
-                schema.setStatus(AuctionStatus.CANCELED);
-                auctionDAO.update(schema);
-            }
+        LiveAuction liveAuction = auctionManager.getAuction(auctionId);
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        double depositAmount = item != null ? calculateDepositAmount(item) : 0;
+
+        if (schema.getWinnerId() != null) {
+            refundDepositsExcept(schema, liveAuction, schema.getWinnerId(), depositAmount,
+                    "Hoan tien coc cho nguoi khong thang dau gia");
+            schema.setStatus(AuctionStatus.WAITING_PAYMENT);
+            schema.setPaymentDeadlineAt(LocalDateTime.now().plusMinutes(AuctionManager.PAYMENT_DEADLINE_MINUTES));
+            auctionDAO.update(schema);
+            auctionManager.schedulePaymentDeadline(schema.getId(), schema.getPaymentDeadlineAt());
+        } else {
+            refundDepositsExcept(schema, liveAuction, null, depositAmount,
+                    "Hoan tien coc do phien dau gia khong co nguoi thang");
+            schema.setStatus(AuctionStatus.CANCELED);
+            schema.setPaymentDeadlineAt(null);
+            auctionDAO.update(schema);
         }
         auctionManager.endAuction(auctionId);
     }
 
-    public void payAuction(User winner, String auctionId) throws AuctionException {
+    public synchronized void expirePaymentDeadline(String auctionId) {
+        AuctionSchema schema = auctionDAO.findById(auctionId);
+        if (schema == null || schema.getStatus() != AuctionStatus.WAITING_PAYMENT) {
+            auctionManager.cancelPaymentDeadline(auctionId);
+            return;
+        }
+
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        double depositAmount = item != null ? calculateDepositAmount(item) : 0;
+        AuctionDepositRefSchema winnerDeposit = schema.getDepositRef(schema.getWinnerId());
+        double amount = amountOfDeposit(winnerDeposit, depositAmount);
+        String relatedTransactionId = winnerDeposit != null ? winnerDeposit.getDepositTransactionId() : null;
+
+        if (schema.getWinnerId() != null) {
+            walletService.forfeitAuctionDeposit(
+                    schema.getWinnerId(),
+                    amount,
+                    auctionId,
+                    relatedTransactionId,
+                    "Tich thu tien coc do qua han thanh toan");
+            clearDepositParticipation(schema, auctionManager.getAuction(auctionId), schema.getWinnerId());
+        }
+
+        schema.setStatus(AuctionStatus.CANCELED);
+        schema.setPaymentDeadlineAt(null);
+        auctionDAO.update(schema);
+        auctionManager.cancelPaymentDeadline(auctionId);
+        auctionManager.removeLiveAuction(auctionId);
+    }
+
+    public synchronized void payAuction(User winner, String auctionId) throws AuctionException {
         AuctionSchema schema = requireAuction(auctionId);
         requireAuctionStatus(schema, AuctionStatus.WAITING_PAYMENT, "Auction khong o trang thai cho thanh toan");
         requireWinner(winner, schema);
@@ -148,16 +216,26 @@ public class AuctionService {
 
         double totalPrice = schema.getHighestBid();
         double depositAmount = calculateDepositAmount(itemSchema);
-        double remaining = totalPrice - depositAmount;
+        AuctionDepositRefSchema winnerDeposit = schema.getDepositRef(winner.getId());
+        double retainedDepositAmount = amountOfDeposit(winnerDeposit, depositAmount);
+        double remaining = totalPrice - retainedDepositAmount;
+        String relatedTransactionId = winnerDeposit != null ? winnerDeposit.getDepositTransactionId() : null;
 
         try {
-            walletService.withdraw(winner.getId(), remaining);
-            walletService.forfeitDeposit(winner.getId(), depositAmount);
-            walletService.deposit(schema.getSellerId(), totalPrice);
+            if (remaining > 0) {
+                walletService.payAuctionRemaining(winner.getId(), remaining, auctionId,
+                        "Thanh toan phan con lai cua phien dau gia");
+            }
+            walletService.forfeitAuctionDeposit(winner.getId(), retainedDepositAmount, auctionId, relatedTransactionId,
+                    "Ap tien coc vao thanh toan phien dau gia");
+            walletService.payoutSeller(schema.getSellerId(), totalPrice, auctionId,
+                    "Nhan tien tu nguoi thang dau gia");
             clearDepositParticipation(schema, null, winner.getId());
 
             schema.setStatus(AuctionStatus.PAID);
+            schema.setPaymentDeadlineAt(null);
             auctionDAO.update(schema);
+            auctionManager.cancelPaymentDeadline(auctionId);
         } catch (IllegalArgumentException e) {
             throw new AuctionException("Thanh toan that bai: " + e.getMessage());
         }
@@ -185,6 +263,65 @@ public class AuctionService {
 
     public List<AuctionDTO> getAuctionsBySeller(String sellerId) {
         return toAuctionDTOList(auctionDAO.findBySellerId(sellerId));
+    }
+
+    private synchronized void startAuctionNow(AuctionSchema schema) {
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        if (item == null) {
+            cancelStaleAuction(schema, "Huy phien dau gia do item khong ton tai");
+            return;
+        }
+        auctionManager.cancelAuctionStart(schema.getId());
+        schema.setStatus(AuctionStatus.RUNNING);
+        schema.setPaymentDeadlineAt(null);
+        auctionDAO.update(schema);
+        auctionManager.loadAuction(schema, item.getStartingPrice());
+        auctionManager.markAuctionStarted(schema);
+    }
+
+    private void hydrateRunningAuction(AuctionSchema schema) {
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        if (item == null) {
+            cancelStaleAuction(schema, "Huy phien dau gia do item khong ton tai");
+            return;
+        }
+
+        double depositAmount = calculateDepositAmount(item);
+        if (backfillDepositsFromBidHistory(schema, depositAmount)) {
+            auctionDAO.update(schema);
+        }
+        auctionManager.loadAuction(schema, item.getStartingPrice());
+    }
+
+    private void reconcilePaymentDeadline(AuctionSchema schema) {
+        LocalDateTime deadline = schema.getPaymentDeadlineAt();
+        if (deadline == null) {
+            LocalDateTime base = schema.getUpdatedAt() != null ? schema.getUpdatedAt() : LocalDateTime.now();
+            deadline = base.plusMinutes(AuctionManager.PAYMENT_DEADLINE_MINUTES);
+            schema.setPaymentDeadlineAt(deadline);
+            auctionDAO.update(schema);
+        }
+
+        if (!deadline.isAfter(LocalDateTime.now())) {
+            expirePaymentDeadline(schema.getId());
+        } else {
+            auctionManager.schedulePaymentDeadline(schema.getId(), deadline);
+        }
+    }
+
+    private void cancelStaleAuction(AuctionSchema schema, String description) {
+        if (schema == null) {
+            return;
+        }
+        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        double depositAmount = item != null ? calculateDepositAmount(item) : 0;
+        refundDepositsExcept(schema, liveAuction, null, depositAmount, description);
+        schema.setStatus(AuctionStatus.CANCELED);
+        schema.setPaymentDeadlineAt(null);
+        auctionDAO.update(schema);
+        auctionManager.cancelAllTasks(schema.getId());
+        auctionManager.removeLiveAuction(schema.getId());
     }
 
     private List<AuctionDTO> toAuctionDTOList(List<AuctionSchema> schemas) {
@@ -246,6 +383,9 @@ public class AuctionService {
         }
 
         if (schema.hasDepositedBidder(userId)) {
+            if (schema.getDepositRef(userId) == null) {
+                persistDepositParticipation(schema, auctionManager.getAuction(schema.getId()), userId);
+            }
             return true;
         }
 
@@ -271,18 +411,35 @@ public class AuctionService {
             AuctionSchema schema,
             LiveAuction liveAuction,
             String retainedBidderId,
-            double depositAmount) {
+            double defaultDepositAmount,
+            String description) {
         if (schema == null) {
             return;
         }
 
-        for (String bidderId : schema.getDepositedBidderIds()) {
+        Set<String> handledBidderIds = new HashSet<>();
+        for (AuctionDepositRefSchema ref : schema.getDepositRefs()) {
+            String bidderId = ref.getBidderId();
             if (retainedBidderId != null && retainedBidderId.equals(bidderId)) {
                 continue;
             }
-            if (depositAmount > 0) {
-                walletService.unfreezeDeposit(bidderId, depositAmount);
+            double amount = amountOfDeposit(ref, defaultDepositAmount);
+            walletService.refundAuctionDeposit(
+                    bidderId,
+                    amount,
+                    schema.getId(),
+                    ref.getDepositTransactionId(),
+                    description);
+            clearDepositParticipation(schema, liveAuction, bidderId);
+            handledBidderIds.add(bidderId);
+        }
+
+        for (String bidderId : schema.getLegacyDepositedBidderIds()) {
+            if (handledBidderIds.contains(bidderId)
+                    || (retainedBidderId != null && retainedBidderId.equals(bidderId))) {
+                continue;
             }
+            walletService.refundAuctionDeposit(bidderId, defaultDepositAmount, schema.getId(), null, description);
             clearDepositParticipation(schema, liveAuction, bidderId);
         }
     }
@@ -297,8 +454,18 @@ public class AuctionService {
     }
 
     private void persistDepositParticipation(AuctionSchema schema, LiveAuction liveAuction, String bidderId) {
-        if (schema != null && schema.addDepositedBidder(bidderId)) {
-            auctionDAO.update(schema);
+        if (schema != null && schema.getDepositRef(bidderId) == null) {
+            ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+            double amount = item != null ? calculateDepositAmount(item) : 0;
+            if (amount > 0) {
+                String transactionId = walletService.recordLegacyAuctionDeposit(
+                        bidderId,
+                        amount,
+                        schema.getId(),
+                        "Khoi phuc coc tu du lieu runtime hoac bid history");
+                schema.addDepositRef(createDepositRef(bidderId, amount, transactionId));
+                auctionDAO.update(schema);
+            }
         }
         if (liveAuction != null) {
             liveAuction.markDeposited(bidderId);
@@ -341,20 +508,48 @@ public class AuctionService {
         }
 
         for (String bidderId : bidderIds) {
-            if (schema.hasDepositedBidder(bidderId)) {
+            if (schema.getDepositRef(bidderId) != null) {
                 continue;
             }
 
             try {
                 UserSchema bidder = userService.getUserSchemaById(bidderId);
                 if (bidder.getFrozenBalance() >= depositAmount) {
-                    changed |= schema.addDepositedBidder(bidderId);
+                    String transactionId = walletService.recordLegacyAuctionDeposit(
+                            bidderId,
+                            depositAmount,
+                            schema.getId(),
+                            "Khoi phuc coc tu bid history khi load server");
+                    changed |= schema.addDepositRef(createDepositRef(bidderId, depositAmount, transactionId));
                 }
             } catch (RuntimeException e) {
-                // Ignore stale bid history entries during startup backfill.
+                // Bo qua bid history cu khong con user hop le.
             }
         }
         return changed;
+    }
+
+    private AuctionDepositRefSchema createDepositRef(String bidderId, double amount, String transactionId) {
+        UserSchema bidder = userService.getUserSchemaById(bidderId);
+        return new AuctionDepositRefSchema(
+                bidderId,
+                bidder.getUsername(),
+                amount,
+                transactionId,
+                LocalDateTime.now());
+    }
+
+    private boolean hasInvalidAuctionTime(AuctionSchema schema) {
+        return schema.getStartTime() == null
+                || schema.getEndTime() == null
+                || !schema.getEndTime().isAfter(schema.getStartTime());
+    }
+
+    private double amountOfDeposit(AuctionDepositRefSchema ref, double defaultAmount) {
+        if (ref != null && ref.getAmount() > 0) {
+            return ref.getAmount();
+        }
+        return defaultAmount;
     }
 
     private double calculateDepositAmount(ItemSchema itemSchema) {

@@ -6,7 +6,10 @@ import com.auctionuet.server.domain.service.WalletService;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.protocol.dto.request.wallet.AmountRequestDTO;
+import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
+
+import java.util.List;
 
 public class WalletController {
     private final WalletService walletService;
@@ -37,6 +40,12 @@ public class WalletController {
         User user = sessionManager.validateToken(request.getToken());
         WalletResponseDTO wallet = walletService.getWallet(user.getId());
         return Response.ok(wallet);
+    }
+
+    public Response handleGetMyTransactions(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        List<TransactionDTO> transactions = walletService.getTransactions(user.getId());
+        return Response.ok(transactions);
     }
 }
 

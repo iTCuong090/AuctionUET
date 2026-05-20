@@ -21,7 +21,7 @@ public enum ActionType {
     GET_ALL_USERS, DELETE_USER, UPDATE_ROLE,
 
     // Wallet (tuần 5)
-    DEPOSIT, WITHDRAW, GET_WALLET,
+    DEPOSIT, WITHDRAW, GET_WALLET, GET_MY_TRANSACTIONS,
 
     // Payment (tuần 5)
     PAY_AUCTION
