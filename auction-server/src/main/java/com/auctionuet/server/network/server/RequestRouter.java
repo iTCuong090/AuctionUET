@@ -93,6 +93,8 @@ public class RequestRouter {
                 return walletController.handleWithdraw(request);
             case GET_WALLET:
                 return walletController.handleGetWallet(request);
+            case GET_MY_TRANSACTIONS:
+                return walletController.handleGetMyTransactions(request);
 
             // ── Payment ──
             case PAY_AUCTION:

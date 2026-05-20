@@ -9,11 +9,12 @@ import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.AuctionManager;
+import com.auctionuet.server.domain.manager.DataManager;
 import com.auctionuet.server.domain.manager.SessionManager;
-import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.BidService;
 import com.auctionuet.server.network.server.ClientHandler;
+import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.util.List;
 
@@ -79,12 +80,12 @@ public class BidController {
         sessionManager.validateToken(request.getToken());
         AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
-        LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
+        AuctionSchema auction = DataManager.getInstance().getAuctionDAO().findById(req.getAuctionId());
         if (auction == null) {
-            return Response.error("Phien dau gia khong ton tai hoac chua RUNNING");
+            return Response.error("Phien dau gia khong ton tai");
         }
 
-        auction.addObserver(clientHandler);
+        AuctionManager.getInstance().addObserver(req.getAuctionId(), clientHandler);
         return Response.ok("Da subscribe phien " + req.getAuctionId());
     }
 
@@ -92,10 +93,7 @@ public class BidController {
         sessionManager.validateToken(request.getToken());
         AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
-        LiveAuction auction = AuctionManager.getInstance().getAuction(req.getAuctionId());
-        if (auction != null) {
-            auction.removeObserver(clientHandler);
-        }
+        AuctionManager.getInstance().removeObserver(req.getAuctionId(), clientHandler);
         return Response.ok("Da unsubscribe phien " + req.getAuctionId());
     }
 }

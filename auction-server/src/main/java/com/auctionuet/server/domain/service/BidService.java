@@ -10,6 +10,7 @@ import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
+import com.auctionuet.server.persistence.schema.AuctionDepositRefSchema;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
@@ -43,13 +44,13 @@ public class BidService {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found or not running");
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        boolean depositedNow = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
+        DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
         try {
             record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
         } catch (Exception e) {
-            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, depositedNow);
+            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
         }
 
@@ -94,7 +95,7 @@ public class BidService {
         validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
-        boolean depositedNow = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
+        DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
         try {
@@ -102,7 +103,7 @@ public class BidService {
             syncAuctionState(auctionId, liveAuction);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
-            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, depositedNow);
+            rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
         }
     }
@@ -174,28 +175,52 @@ public class BidService {
         return itemSchema.getStartingPrice() * ESCROW_DEPOSIT_RATE;
     }
 
-    private boolean ensureDepositFrozen(String auctionId, LiveAuction liveAuction, User bidder, double depositAmount) {
+    private DepositHoldResult ensureDepositFrozen(String auctionId, LiveAuction liveAuction, User bidder, double depositAmount) {
         AuctionSchema auctionSchema = auctionDAO.findById(auctionId);
         String bidderId = bidder.getId();
 
         if (auctionSchema != null && auctionSchema.hasDepositedBidder(bidderId)) {
+            if (auctionSchema.getDepositRef(bidderId) == null) {
+                persistDepositParticipation(auctionSchema, bidder, depositAmount, null);
+            }
             liveAuction.markDeposited(bidderId);
-            return false;
+            return DepositHoldResult.existing();
         }
 
         if (liveAuction.hasDeposited(bidderId)) {
-            persistDepositParticipation(auctionSchema, bidderId);
-            return false;
+            persistDepositParticipation(auctionSchema, bidder, depositAmount, null);
+            return DepositHoldResult.existing();
         }
 
-        walletService.freezeDeposit(bidderId, depositAmount);
+        String transactionId = walletService.holdAuctionDeposit(
+                bidderId,
+                depositAmount,
+                auctionId,
+                "Giu tien coc phien dau gia " + auctionId);
         liveAuction.markDeposited(bidderId);
-        persistDepositParticipation(auctionSchema, bidderId);
-        return true;
+        persistDepositParticipation(auctionSchema, bidder, depositAmount, transactionId);
+        return DepositHoldResult.held(transactionId);
     }
 
-    private void persistDepositParticipation(AuctionSchema auctionSchema, String bidderId) {
-        if (auctionSchema != null && auctionSchema.addDepositedBidder(bidderId)) {
+    private void persistDepositParticipation(
+            AuctionSchema auctionSchema,
+            User bidder,
+            double depositAmount,
+            String transactionId) {
+        if (auctionSchema != null && !auctionSchema.hasDepositedBidder(bidder.getId())) {
+            String effectiveTransactionId = transactionId != null
+                    ? transactionId
+                    : walletService.recordLegacyAuctionDeposit(
+                            bidder.getId(),
+                            depositAmount,
+                            auctionSchema.getId(),
+                            "Khoi phuc coc tu runtime khi dat gia");
+            auctionSchema.addDepositRef(new AuctionDepositRefSchema(
+                    bidder.getId(),
+                    bidder.getUsername(),
+                    depositAmount,
+                    effectiveTransactionId,
+                    LocalDateTime.now()));
             auctionDAO.update(auctionSchema);
         }
     }
@@ -209,9 +234,6 @@ public class BidService {
         auctionSchema.setWinnerId(liveAuction.getCurrentWinnerId());
         auctionSchema.setUpdatedAt(LocalDateTime.now());
         auctionSchema.setEndTime(liveAuction.getEndTime());
-        for (String bidderId : liveAuction.getDepositedBidderIds()) {
-            auctionSchema.addDepositedBidder(bidderId);
-        }
         auctionDAO.update(auctionSchema);
     }
 
@@ -220,9 +242,14 @@ public class BidService {
             LiveAuction liveAuction,
             User bidder,
             double depositAmount,
-            boolean depositedNow) {
-        if (depositedNow) {
-            walletService.unfreezeDeposit(bidder.getId(), depositAmount);
+            DepositHoldResult deposit) {
+        if (deposit != null && deposit.heldNow()) {
+            walletService.refundAuctionDeposit(
+                    bidder.getId(),
+                    depositAmount,
+                    auctionId,
+                    deposit.transactionId(),
+                    "Hoan tien coc do dat gia khong hop le");
             liveAuction.unmarkDeposited(bidder.getId());
             removeDepositParticipation(auctionId, bidder.getId());
         }
@@ -251,5 +278,15 @@ public class BidService {
                 record.getAmount(),
                 record.getTimestamp(),
                 record.getBidType());
+    }
+
+    private record DepositHoldResult(boolean heldNow, String transactionId) {
+        static DepositHoldResult existing() {
+            return new DepositHoldResult(false, null);
+        }
+
+        static DepositHoldResult held(String transactionId) {
+            return new DepositHoldResult(true, transactionId);
+        }
     }
 }

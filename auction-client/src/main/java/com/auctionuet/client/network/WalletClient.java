@@ -4,7 +4,10 @@ import com.auctionuet.protocol.ActionType;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.protocol.dto.request.wallet.AmountRequestDTO;
+import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
+
+import java.util.List;
 
 public class WalletClient {
 
@@ -22,6 +25,16 @@ public class WalletClient {
 
         if ("OK".equals(response.getStatus())) {
             return response.getDataAs(WalletResponseDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
+
+    public List<TransactionDTO> getMyTransactions(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.GET_MY_TRANSACTIONS, null, token));
+
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataListAs(TransactionDTO.class);
         }
         throw new Exception(response.getMessage());
     }

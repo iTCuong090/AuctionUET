@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
@@ -84,6 +85,15 @@
                 </VBox>
                 
                 <Label fx:id="statusLabel" styleClass="error-label" text="" />
+
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <Label styleClass="text-primary" text="LỊCH SỬ GIAO DỊCH">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                        <ListView fx:id="transactionListView" prefHeight="260.0" />
+                    </children>
+                </VBox>
 
             </children>
         </VBox>

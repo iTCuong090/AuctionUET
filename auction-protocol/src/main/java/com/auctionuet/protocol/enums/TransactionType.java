@@ -1,0 +1,11 @@
+package com.auctionuet.protocol.enums;
+
+public enum TransactionType {
+    WALLET_DEPOSIT,
+    WALLET_WITHDRAW,
+    AUCTION_DEPOSIT_HOLD,
+    AUCTION_DEPOSIT_REFUND,
+    AUCTION_DEPOSIT_FORFEIT,
+    AUCTION_PAYMENT,
+    SELLER_PAYOUT
+}

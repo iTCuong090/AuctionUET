@@ -6,6 +6,7 @@ import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.service.BidService;
 import com.auctionuet.server.domain.service.ItemService;
+import com.auctionuet.server.domain.service.TransactionService;
 import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.domain.service.WalletService;
 import com.auctionuet.server.network.controller.AuctionController;
@@ -16,6 +17,7 @@ import com.auctionuet.server.network.controller.WalletController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
+import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.util.AppLogger;
 
@@ -50,6 +52,9 @@ public class AuctionServer {
             BidDAO bidDAO = DataManager.getInstance().getBidDAO();
             AppLogger.logInit("BidDAO", null);
 
+            TransactionDAO transactionDAO = DataManager.getInstance().getTransactionDAO();
+            AppLogger.logInit("TransactionDAO", null);
+
             UserService userService = new UserService(userDAO);
             AppLogger.logInit("UserService", null);
 
@@ -59,7 +64,10 @@ public class AuctionServer {
             ItemService itemService = new ItemService(itemDAO, userService);
             AppLogger.logInit("ItemService", null);
 
-            WalletService walletService = new WalletService(userDAO, userService);
+            TransactionService transactionService = new TransactionService(transactionDAO);
+            AppLogger.logInit("TransactionService", null);
+
+            WalletService walletService = new WalletService(userDAO, userService, transactionService);
             AppLogger.logInit("WalletService", null);
 
             BidService bidService = new BidService(
@@ -78,8 +86,9 @@ public class AuctionServer {
                     auctionDAO,
                     walletService);
             AppLogger.logInit("AuctionService", null);
-            auctionService.loadRunningAuctions();
-            AppLogger.logInit("RunningAuctions", "Loaded");
+            auctionService.reconcileAuctionsFromDatabase();
+            AuctionManager.getInstance().startPeriodicReconcile();
+            AppLogger.logInit("AuctionReconcile", "Started");
 
             AuthController authController = new AuthController(authService);
             AppLogger.logInit("AuthController", null);

@@ -13,7 +13,8 @@ public class Admin extends User {
         return switch (action) {
             case MANAGE_USERS, GET_ALL_USERS, DELETE_USER, UPDATE_ROLE,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
-                 GET_PROFILE, UPDATE_PROFILE
+                 GET_PROFILE, UPDATE_PROFILE,
+                 GET_WALLET, GET_MY_TRANSACTIONS
                     -> true;
             default -> false;
         };

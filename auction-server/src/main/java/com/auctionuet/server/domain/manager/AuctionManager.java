@@ -1,19 +1,24 @@
 package com.auctionuet.server.domain.manager;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.server.domain.model.AuctionObserver;
+import com.auctionuet.server.domain.model.BidRecord;
 import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class AuctionManager implements com.auctionuet.server.domain.model.AuctionObserver {
+public class AuctionManager implements AuctionObserver {
+    public static final int PAYMENT_DEADLINE_MINUTES = 5;
+    public static final int RECONCILE_INTERVAL_SECONDS = 30;
 
     private AuctionManager() {}
 
@@ -24,29 +29,88 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
     }
 
     private final Map<String, LiveAuction> liveAuctions = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> startTasks = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> endTasks = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> paymentDeadlineTasks = new ConcurrentHashMap<>();
+    private final Map<String, Set<AuctionObserver>> observers = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+
+    private ScheduledFuture<?> reconcileTask;
+    private java.util.function.Consumer<String> startAuctionCallback;
     private java.util.function.Consumer<String> endAuctionCallback;
+    private java.util.function.Consumer<String> paymentDeadlineCallback;
+    private Runnable reconcileCallback;
+
+    public void setStartAuctionCallback(java.util.function.Consumer<String> callback) {
+        this.startAuctionCallback = callback;
+    }
 
     public void setEndAuctionCallback(java.util.function.Consumer<String> callback) {
         this.endAuctionCallback = callback;
     }
 
-    private void scheduleAuctionEnd(String auctionId, long delayMs) {
-        ScheduledFuture<?> task = scheduledTasks.get(auctionId);
-        if (task != null) {
-            task.cancel(false);
-        }
+    public void setPaymentDeadlineCallback(java.util.function.Consumer<String> callback) {
+        this.paymentDeadlineCallback = callback;
+    }
 
-        if (delayMs > 0) {
-            scheduledTasks.put(auctionId, scheduler.schedule(() -> {
-                if (endAuctionCallback != null) {
-                    endAuctionCallback.accept(auctionId);
-                }
-            }, delayMs, TimeUnit.MILLISECONDS));
-        } else if (endAuctionCallback != null) {
-            endAuctionCallback.accept(auctionId);
+    public void setReconcileCallback(Runnable callback) {
+        this.reconcileCallback = callback;
+    }
+
+    public void scheduleAuctionStart(String auctionId, LocalDateTime startTime) {
+        long delayMs = Duration.between(LocalDateTime.now(), startTime).toMillis();
+        scheduleTask(startTasks, auctionId, delayMs, () -> {
+            if (startAuctionCallback != null) {
+                startAuctionCallback.accept(auctionId);
+            }
+        });
+    }
+
+    public void scheduleAuctionEnd(String auctionId, LocalDateTime endTime) {
+        long delayMs = Duration.between(LocalDateTime.now(), endTime).toMillis();
+        scheduleTask(endTasks, auctionId, delayMs, () -> {
+            if (endAuctionCallback != null) {
+                endAuctionCallback.accept(auctionId);
+            }
+        });
+    }
+
+    public void schedulePaymentDeadline(String auctionId, LocalDateTime deadline) {
+        long delayMs = Duration.between(LocalDateTime.now(), deadline).toMillis();
+        scheduleTask(paymentDeadlineTasks, auctionId, delayMs, () -> {
+            if (paymentDeadlineCallback != null) {
+                paymentDeadlineCallback.accept(auctionId);
+            }
+        });
+    }
+
+    public void cancelAuctionStart(String auctionId) {
+        cancelTask(startTasks, auctionId);
+    }
+
+    public void cancelAuctionEnd(String auctionId) {
+        cancelTask(endTasks, auctionId);
+    }
+
+    public void cancelPaymentDeadline(String auctionId) {
+        cancelTask(paymentDeadlineTasks, auctionId);
+    }
+
+    public void cancelAllTasks(String auctionId) {
+        cancelAuctionStart(auctionId);
+        cancelAuctionEnd(auctionId);
+        cancelPaymentDeadline(auctionId);
+    }
+
+    public synchronized void startPeriodicReconcile() {
+        if (reconcileTask != null && !reconcileTask.isCancelled() && !reconcileTask.isDone()) {
+            return;
         }
+        reconcileTask = scheduler.scheduleWithFixedDelay(() -> {
+            if (reconcileCallback != null) {
+                reconcileCallback.run();
+            }
+        }, RECONCILE_INTERVAL_SECONDS, RECONCILE_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     public LiveAuction loadAuction(AuctionSchema schema) {
@@ -58,10 +122,7 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         auction.markDeposited(schema.getDepositedBidderIds());
         liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this);
-
-        long delayMs = Duration.between(LocalDateTime.now(), schema.getEndTime()).toMillis();
-        scheduleAuctionEnd(auction.getId(), delayMs);
-
+        scheduleAuctionEnd(auction.getId(), schema.getEndTime());
         return auction;
     }
 
@@ -69,11 +130,13 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         return liveAuctions.get(auctionId);
     }
 
+    public void markAuctionStarted(AuctionSchema schema) {
+        cancelAuctionStart(schema.getId());
+        notifyAuctionStarted(schema.getId(), schema.getStartTime(), schema.getEndTime());
+    }
+
     public void endAuction(String auctionId) {
-        ScheduledFuture<?> task = scheduledTasks.remove(auctionId);
-        if (task != null) {
-            task.cancel(false);
-        }
+        cancelAuctionEnd(auctionId);
         LiveAuction auction = liveAuctions.remove(auctionId);
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);
@@ -81,28 +144,89 @@ public class AuctionManager implements com.auctionuet.server.domain.model.Auctio
         }
     }
 
+    public void removeLiveAuction(String auctionId) {
+        cancelAuctionEnd(auctionId);
+        liveAuctions.remove(auctionId);
+    }
+
     public void extendAuction(String auctionId, LocalDateTime newEndTime) {
         LiveAuction auction = liveAuctions.get(auctionId);
         if (auction != null) {
             auction.setEndTime(newEndTime);
-            long delayMs = Duration.between(LocalDateTime.now(), newEndTime).toMillis();
-            scheduleAuctionEnd(auctionId, delayMs);
+        }
+        scheduleAuctionEnd(auctionId, newEndTime);
+    }
+
+    public void addObserver(String auctionId, AuctionObserver observer) {
+        if (auctionId == null || observer == null) {
+            return;
+        }
+        observers.computeIfAbsent(auctionId, id -> ConcurrentHashMap.newKeySet()).add(observer);
+    }
+
+    public void removeObserver(String auctionId, AuctionObserver observer) {
+        if (auctionId == null || observer == null) {
+            return;
+        }
+        Set<AuctionObserver> auctionObservers = observers.get(auctionId);
+        if (auctionObservers != null) {
+            auctionObservers.remove(observer);
+            if (auctionObservers.isEmpty()) {
+                observers.remove(auctionId);
+            }
         }
     }
 
     @Override
-    public void onBidPlaced(String auctionId, com.auctionuet.server.domain.model.BidRecord record) {
-        // AuctionManager only reacts to lifecycle events.
+    public void onBidPlaced(String auctionId, BidRecord record) {
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onBidPlaced(auctionId, record);
+        }
     }
 
     @Override
     public void onAuctionEnded(String auctionId, String winnerId, double finalPrice) {
-        // AuctionService owns persistence and payment state transitions.
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onAuctionEnded(auctionId, winnerId, finalPrice);
+        }
     }
 
     @Override
     public void onAuctionExtended(String auctionId, LocalDateTime newEndTime) {
         extendAuction(auctionId, newEndTime);
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onAuctionExtended(auctionId, newEndTime);
+        }
+    }
+
+    private void notifyAuctionStarted(String auctionId, LocalDateTime startTime, LocalDateTime endTime) {
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onAuctionStarted(auctionId, startTime, endTime);
+        }
+    }
+
+    private void scheduleTask(
+            Map<String, ScheduledFuture<?>> tasks,
+            String auctionId,
+            long delayMs,
+            Runnable taskBody) {
+        cancelTask(tasks, auctionId);
+        Runnable wrapped = () -> {
+            tasks.remove(auctionId);
+            taskBody.run();
+        };
+        if (delayMs <= 0) {
+            wrapped.run();
+            return;
+        }
+        tasks.put(auctionId, scheduler.schedule(wrapped, delayMs, TimeUnit.MILLISECONDS));
+    }
+
+    private void cancelTask(Map<String, ScheduledFuture<?>> tasks, String auctionId) {
+        ScheduledFuture<?> task = tasks.remove(auctionId);
+        if (task != null) {
+            task.cancel(false);
+        }
     }
 
     private LiveAuction toDomain(AuctionSchema schema, double startingPrice) {

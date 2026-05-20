@@ -9,6 +9,15 @@ import java.time.LocalDateTime;
 public interface AuctionObserver {
 
     /**
+     * Được gọi khi phiên đấu giá bắt đầu nhận bid.
+     * @param auctionId ID phiên đấu giá
+     * @param startTime thời gian bắt đầu
+     * @param endTime thời gian kết thúc
+     */
+    default void onAuctionStarted(String auctionId, LocalDateTime startTime, LocalDateTime endTime) {
+    }
+
+    /**
      * Được gọi khi có một bid mới được đặt thành công.
      * @param auctionId ID phiên đấu giá
      * @param record thông tin bid mới

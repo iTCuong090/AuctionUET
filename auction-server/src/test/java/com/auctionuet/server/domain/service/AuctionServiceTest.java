@@ -8,6 +8,7 @@ import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.protocol.enums.Permission;
+import com.auctionuet.protocol.enums.TransactionType;
 import com.auctionuet.protocol.enums.UserRole;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.User;
@@ -15,10 +16,12 @@ import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
+import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
+import com.auctionuet.server.persistence.schema.TransactionSchema;
 import com.auctionuet.server.persistence.schema.UserSchema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +45,7 @@ public class AuctionServiceTest {
     private AuctionDAO auctionDAO;
     private UserDAO userDAO;
     private BidDAO bidDAO;
+    private TransactionDAO transactionDAO;
     private ItemService itemService;
     private AuctionService auctionService;
     private BidService bidService;
@@ -51,6 +55,7 @@ public class AuctionServiceTest {
     private final String auctionFile = "data/test_auctions_service.json";
     private final String userFile = "data/test_users_service.json";
     private final String bidFile = "data/test_bids_service.json";
+    private final String transactionFile = "data/test_transactions_service.json";
 
     @BeforeEach
     public void setup() {
@@ -60,10 +65,12 @@ public class AuctionServiceTest {
         auctionDAO = new AuctionDAO(auctionFile);
         userDAO = new UserDAO(userFile);
         bidDAO = new BidDAO(bidFile);
+        transactionDAO = new TransactionDAO(transactionFile);
 
         UserService userService = new UserService(userDAO);
         itemService = new ItemService(itemDAO, userService);
-        walletService = new WalletService(userDAO, userService);
+        TransactionService transactionService = new TransactionService(transactionDAO);
+        walletService = new WalletService(userDAO, userService, transactionService);
         bidService = new BidService(
                 AuctionManager.getInstance(),
                 walletService,
@@ -395,6 +402,9 @@ public class AuctionServiceTest {
         assertEquals(AuctionStatus.WAITING_PAYMENT, updated.getStatus());
         assertFalse(updated.hasDepositedBidder("bidder1"));
         assertTrue(updated.hasDepositedBidder("bidder2"));
+        List<TransactionSchema> bidder1Transactions = transactionDAO.findByUserId("bidder1");
+        assertTrue(bidder1Transactions.stream()
+                .anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_REFUND));
     }
 
     @Test
@@ -572,6 +582,11 @@ public class AuctionServiceTest {
         AuctionSchema updated = auctionDAO.findById(auction.getId());
         assertEquals(AuctionStatus.PAID, updated.getStatus());
         assertFalse(updated.hasDepositedBidder("bidder1"));
+        List<TransactionSchema> bidderTransactions = transactionDAO.findByUserId("bidder1");
+        assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_PAYMENT));
+        assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_FORFEIT));
+        assertTrue(transactionDAO.findByUserId("seller1").stream()
+                .anyMatch(t -> t.getType() == TransactionType.SELLER_PAYOUT));
     }
 
     private void saveUser(String id, String username, UserRole role) {
@@ -619,5 +634,6 @@ public class AuctionServiceTest {
         new File(auctionFile).delete();
         new File(userFile).delete();
         new File(bidFile).delete();
+        new File(transactionFile).delete();
     }
 }

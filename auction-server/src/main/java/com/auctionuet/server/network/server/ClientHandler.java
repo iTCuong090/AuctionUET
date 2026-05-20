@@ -107,6 +107,16 @@ public class ClientHandler implements Runnable, AuctionObserver {
     }
 
     @Override
+    public void onAuctionStarted(String auctionId, LocalDateTime startTime, LocalDateTime endTime) {
+        PushEvents.AuctionStartedPush dto = new PushEvents.AuctionStartedPush(
+                auctionId,
+                startTime,
+                endTime,
+                "Phien dau gia da bat dau");
+        sendPush(new PushMessage(PushActionType.AUCTION_STARTED, dto));
+    }
+
+    @Override
     public void onBidPlaced(String auctionId, BidRecord record) {
         BidDTO bid = new BidDTO(
                 auctionId,

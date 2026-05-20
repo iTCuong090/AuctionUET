@@ -3,6 +3,7 @@ package com.auctionuet.server.domain.manager;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
+import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
 
 public class DataManager {
@@ -13,12 +14,14 @@ public class DataManager {
     private final ItemDAO itemDAO;
     private final AuctionDAO auctionDAO;
     private final BidDAO bidDAO;
+    private final TransactionDAO transactionDAO;
 
     private DataManager() {
         this.userDAO = new UserDAO();
         this.itemDAO = new ItemDAO();
         this.auctionDAO = new AuctionDAO();
         this.bidDAO = new BidDAO();
+        this.transactionDAO = new TransactionDAO();
     }
 
     public static DataManager getInstance() {
@@ -39,5 +42,9 @@ public class DataManager {
 
     public BidDAO getBidDAO() {
         return bidDAO;
+    }
+
+    public TransactionDAO getTransactionDAO() {
+        return transactionDAO;
     }
 }

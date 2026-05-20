@@ -15,7 +15,7 @@ public class Seller extends User {
                  CREATE_AUCTION, START_AUCTION,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
                  GET_PROFILE, UPDATE_PROFILE,
-                 DEPOSIT, WITHDRAW, GET_WALLET
+                 DEPOSIT, WITHDRAW, GET_WALLET, GET_MY_TRANSACTIONS
                     -> true;
             default -> false;
         };
