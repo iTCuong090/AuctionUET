@@ -20,10 +20,16 @@ public class AutoBidConfig implements Comparable<AutoBidConfig> {
 
     @Override
     public int compareTo(AutoBidConfig other) {
-        // maxBid cao hơn → ưu tiên trước (nằm đầu queue)
-        int cmp = Double.compare(other.maxBid, this.maxBid);
-        if (cmp != 0) return cmp;
-        // Nếu bằng → đăng ký sớm hơn ưu tiên
+        return comparePriority(other);
+    }
+
+    public int comparePriority(AutoBidConfig other) {
+        // maxBid cao hơn được ưu tiên trước.
+        int maxBidComparison = Double.compare(other.maxBid, this.maxBid);
+        if (maxBidComparison != 0) {
+            return maxBidComparison;
+        }
+        // Nếu maxBid bằng nhau thì người bật auto-bid sớm hơn được ưu tiên.
         return this.registeredAt.compareTo(other.registeredAt);
     }
 

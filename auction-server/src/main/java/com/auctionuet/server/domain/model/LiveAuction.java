@@ -164,70 +164,89 @@ public class LiveAuction {
     }
 
     /**
-     * Xử lý Auto-Bid PriorityQueue.
-     * Gọi SAU mỗi lần placeBid thành công.
-     *
-     * Logic:
-     * 1. Lấy auto-bid config có maxBid cao nhất (đầu PriorityQueue)
-     * 2. Nếu config này KHÔNG phải người đang dẫn đầu
-     *    VÀ currentHighestBid + increment <= maxBid
-     *    → Tự động đặt giá = currentHighestBid + increment
-     * 3. Lặp lại cho đến khi:
-     *    - Không còn auto-bid nào đủ điều kiện, HOẶC
-     *    - Người dẫn đầu chính là top auto-bidder
+     * Xử lý auto-bid theo kiểu proxy:
+     * người có trần cao nhất thắng, hòa trần thì người bật sớm hơn thắng.
+     * Giá thắng được đẩy tới trần cao thứ hai cộng increment của người thắng.
      */
-
     public void resolveAutoBids(Consumer<BidRecord> onAutoBidPlaced) {
-        // KHÔNG CẦN lock vì hàm này luôn được gọi trong placeBid() đã lock sẵn
+        // KHÔNG CẦN lock vì hàm này luôn được gọi khi đã giữ bidLock.
+        removeExhaustedAutoBids();
 
-        boolean keepResolving = true;
-        int maxIterations = 100; // Safety: tránh infinite loop
-        int iteration = 0;
+        AutoBidConfig winningConfig = findBestAutoBidConfig();
+        if (winningConfig == null) {
+            return;
+        }
 
-        while (keepResolving && iteration < maxIterations) {
-            iteration++;
-            keepResolving = false;
+        double newBidAmount = calculateProxyAutoBidAmount(winningConfig);
+        if (newBidAmount <= getCurrentPrice()) {
+            return;
+        }
 
-            // Tìm auto-bid tốt nhất (không phải current winner)
-            AutoBidConfig bestConfig = autoBidQueue.stream()
-                    .filter(config -> !config.getBidderId().equals(currentWinnerId))
-                    .min(AutoBidConfig::compareTo)
-                    .orElse(null);
+        BidRecord autoRecord = new BidRecord(
+                winningConfig.getBidderId(),
+                winningConfig.getBidderName(),
+                newBidAmount,
+                LocalDateTime.now(),
+                BidType.AUTO
+        );
+        this.currentHighestBid = newBidAmount;
+        this.currentWinnerId = winningConfig.getBidderId();
+        this.bidHistory.add(autoRecord);
 
-            if (bestConfig == null) break; // Không ai auto-bid
+        // Gửi callback để lưu vào DB.
+        if (onAutoBidPlaced != null) {
+            onAutoBidPlaced.accept(autoRecord);
+        }
 
-            double newBidAmount = getCurrentPrice() + bestConfig.getIncrement();
+        // Anti-sniping cho auto-bid.
+        extendIfSniping();
 
-            if (newBidAmount <= bestConfig.getMaxBid()) {
-                // Auto-bid!
-                BidRecord autoRecord = new BidRecord(
-                        bestConfig.getBidderId(),
-                        bestConfig.getBidderName(),
-                        newBidAmount,
-                        LocalDateTime.now(),
-                        BidType.AUTO
-                );
-                this.currentHighestBid = newBidAmount;
-                this.currentWinnerId = bestConfig.getBidderId();
-                this.bidHistory.add(autoRecord);
-                
-                // Gửi callback để lưu vào DB
-                if (onAutoBidPlaced != null) {
-                    onAutoBidPlaced.accept(autoRecord);
-                }
+        notifyObservers(autoRecord);
+    }
 
-                // Anti-sniping cho auto-bid
-                extendIfSniping();
+    private AutoBidConfig findBestAutoBidConfig() {
+        return autoBidQueue.stream()
+                .min(AutoBidConfig::comparePriority)
+                .orElse(null);
+    }
 
-                // Notify
-                notifyObservers(autoRecord);
+    private AutoBidConfig findBestCompetingAutoBidConfig(String bidderId) {
+        return autoBidQueue.stream()
+                .filter(config -> !config.getBidderId().equals(bidderId))
+                .min(AutoBidConfig::comparePriority)
+                .orElse(null);
+    }
 
-                keepResolving = true; // Có thể còn auto-bid khác phản hồi
-            } else {
-                // maxBid không đủ → remove config
-                autoBidQueue.remove(bestConfig);
-                autoBids.remove(bestConfig.getBidderId());
+    private double calculateProxyAutoBidAmount(AutoBidConfig winningConfig) {
+        AutoBidConfig competingConfig = findBestCompetingAutoBidConfig(winningConfig.getBidderId());
+        if (winningConfig.getBidderId().equals(currentWinnerId)) {
+            if (competingConfig == null) {
+                return getCurrentPrice();
             }
+            return Math.min(
+                    winningConfig.getMaxBid(),
+                    competingConfig.getMaxBid() + winningConfig.getIncrement());
+        }
+
+        double priceToBeat = getCurrentPrice();
+        if (competingConfig != null) {
+            priceToBeat = Math.max(priceToBeat, competingConfig.getMaxBid());
+            return Math.min(winningConfig.getMaxBid(), priceToBeat + winningConfig.getIncrement());
+        }
+
+        double nextBidAmount = priceToBeat + winningConfig.getIncrement();
+        return nextBidAmount <= winningConfig.getMaxBid() ? nextBidAmount : getCurrentPrice();
+    }
+
+    private void removeExhaustedAutoBids() {
+        List<AutoBidConfig> exhaustedConfigs = autoBidQueue.stream()
+                .filter(config -> !config.getBidderId().equals(currentWinnerId))
+                .filter(config -> config.getMaxBid() <= getCurrentPrice())
+                .toList();
+
+        for (AutoBidConfig config : exhaustedConfigs) {
+            autoBidQueue.remove(config);
+            autoBids.remove(config.getBidderId());
         }
     }
 
