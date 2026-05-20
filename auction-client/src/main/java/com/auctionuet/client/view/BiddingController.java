@@ -14,6 +14,7 @@ import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import com.auctionuet.protocol.enums.AutoBidStatus;
+import com.auctionuet.protocol.enums.BidType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -31,6 +32,8 @@ import java.util.List;
 
 public class BiddingController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final String AUTO_BID_INEFFECTIVE_NOTICE =
+            "Auto-Bid của bạn không còn hiệu lực vì đã bị Auto-Bid khác vượt trần.";
 
     @FXML private Label titleLabel;
     @FXML private Label priceLabel;
@@ -63,6 +66,9 @@ public class BiddingController {
     private LocalDateTime endDateTime;
     private double auctionDepositAmount;
     private boolean currentUserDeposited;
+    private AutoBidStatus lastAutoBidStatus;
+    private boolean autoBidStateLoaded;
+    private boolean pendingAutoBidLossNotice;
 
     public void setAuctionId(String auctionId) {
         this.currentAuctionId = auctionId;
@@ -159,6 +165,7 @@ public class BiddingController {
                     renderAuctionDeposit();
                     loadWalletInfo();
                 }
+                pendingAutoBidLossNotice = bid.getBidType() == BidType.AUTO && !isCurrentUser(bid.getBidder());
                 checkAutoBidState();
                 return;
             }
@@ -247,6 +254,9 @@ public class BiddingController {
                         enableAutoBidBtn.setDisable(false);
                         cancelAutoBidBtn.setDisable(true);
                         autoBidStatusLabel.setText("");
+                        lastAutoBidStatus = null;
+                        autoBidStateLoaded = true;
+                        pendingAutoBidLossNotice = false;
                     }
                 });
             } catch (Exception ignored) {}
@@ -388,20 +398,35 @@ public class BiddingController {
 
     private void renderAutoBidState(AutoBidConfigDTO state) {
         AutoBidStatus status = state.getStatus();
+        boolean shouldNotifyIneffective = autoBidStateLoaded
+                && status == AutoBidStatus.INEFFECTIVE
+                && lastAutoBidStatus != null
+                && lastAutoBidStatus != AutoBidStatus.INEFFECTIVE
+                && pendingAutoBidLossNotice;
+
         if (status == AutoBidStatus.PROTECTING) {
             enableAutoBidBtn.setDisable(true);
             cancelAutoBidBtn.setDisable(false);
             autoBidStatusLabel.setText("Bạn đang dẫn đầu. Auto-Bid sẽ bảo vệ tới "
                     + formatMoney(state.getProtectedUntil()) + ".");
             autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
+            lastAutoBidStatus = status;
+            autoBidStateLoaded = true;
+            pendingAutoBidLossNotice = false;
             return;
         }
 
         if (status == AutoBidStatus.INEFFECTIVE) {
             enableAutoBidBtn.setDisable(false);
             cancelAutoBidBtn.setDisable(false);
-            autoBidStatusLabel.setText("Auto-Bid của bạn không còn hiệu lực.");
+            autoBidStatusLabel.setText(AUTO_BID_INEFFECTIVE_NOTICE);
             autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+            if (shouldNotifyIneffective) {
+                bidHistoryList.getItems().add(0, "Thông báo - " + AUTO_BID_INEFFECTIVE_NOTICE);
+            }
+            lastAutoBidStatus = status;
+            autoBidStateLoaded = true;
+            pendingAutoBidLossNotice = false;
             return;
         }
 
@@ -410,6 +435,9 @@ public class BiddingController {
         autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá tới "
                 + formatMoney(state.getProtectedUntil()) + " khi cần.");
         autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
+        lastAutoBidStatus = status;
+        autoBidStateLoaded = true;
+        pendingAutoBidLossNotice = false;
     }
 
     private String formatMoney(double amount) {
