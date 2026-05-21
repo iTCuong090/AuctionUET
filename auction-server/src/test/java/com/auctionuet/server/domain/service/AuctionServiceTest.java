@@ -388,6 +388,54 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testSetAutoBidEqualMaxKeepsEarlierBidderAsWinner() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
+        bidService.setAutoBid(bidder2, auction.getId(), 1000.0, 50.0);
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals("bidder1", updated.getWinnerId());
+        assertEquals(1000.0, updated.getHighestBid());
+
+        AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
+        AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
+        assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
+        assertEquals(AutoBidStatus.INEFFECTIVE, bidder2State.getStatus());
+    }
+
+    @Test
+    public void testManualBidAtAutoBidMaxKeepsEarlierAutoBidderAsWinner() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
+        bidService.placeBid(bidder2, auction.getId(), 1000.0);
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals("bidder1", updated.getWinnerId());
+        assertEquals(1000.0, updated.getHighestBid());
+
+        AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
+        assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
+        assertTrue(bidDAO.findByAuctionId(auction.getId()).stream()
+                .anyMatch(bid -> "bidder1".equals(bid.getBidderId())
+                        && Double.compare(1000.0, bid.getAmount()) == 0
+                        && bid.getBidType() == BidType.AUTO));
+    }
+
+    @Test
     public void testCheckAutoBidReturnsNullWhenMissingOrCanceled() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);

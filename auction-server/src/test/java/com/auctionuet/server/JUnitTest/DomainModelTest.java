@@ -1,6 +1,7 @@
 package com.auctionuet.server.JUnitTest;
 
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.server.domain.model.AutoBidConfig;
 import com.auctionuet.server.domain.model.Bidder;
 import com.auctionuet.server.domain.model.LiveAuction;
@@ -73,6 +74,33 @@ class DomainModelTest {
         assertEquals(1000.0, auction.getCurrentHighestBid());
         assertTrue(auction.getAutoBidConfig("bid1").isActive());
         assertFalse(auction.getAutoBidConfig("bid2").isActive());
+    }
+
+    @Test
+    void testAutoBidKeepsPriorityWhenManualBidMatchesMax() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        auction.placeBid(new Bidder("bid2", "user2"), 1000.0, null);
+
+        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals(1000.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(BidType.AUTO, auction.getBidHistory().get(2).getBidType());
+    }
+
+    @Test
+    void testAutoBidUsesMaxWhenManualBidIsBelowMaxButIncrementWouldOvershoot() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        auction.placeBid(new Bidder("bid2", "user2"), 980.0, null);
+
+        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals(1000.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
     }
 
     @Test

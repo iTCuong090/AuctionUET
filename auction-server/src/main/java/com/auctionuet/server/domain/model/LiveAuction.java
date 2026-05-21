@@ -170,7 +170,7 @@ public class LiveAuction {
      */
     public void resolveAutoBids(Consumer<BidRecord> onAutoBidPlaced) {
         // KHÔNG CẦN lock vì hàm này luôn được gọi khi đã giữ bidLock.
-        deactivateExhaustedAutoBids();
+        deactivateAutoBidsBelowCurrentPrice();
 
         AutoBidConfig winningConfig = findBestAutoBidConfig();
         if (winningConfig == null) {
@@ -178,7 +178,8 @@ public class LiveAuction {
         }
 
         double newBidAmount = calculateProxyAutoBidAmount(winningConfig);
-        if (newBidAmount <= getCurrentPrice()) {
+        if (!canApplyAutoBid(winningConfig, newBidAmount)) {
+            deactivateExhaustedAutoBids();
             return;
         }
 
@@ -238,14 +239,65 @@ public class LiveAuction {
         }
 
         double nextBidAmount = priceToBeat + winningConfig.getIncrement();
-        return nextBidAmount <= winningConfig.getMaxBid() ? nextBidAmount : getCurrentPrice();
+        if (nextBidAmount <= winningConfig.getMaxBid()) {
+            return nextBidAmount;
+        }
+        return currentWinnerId == null ? getCurrentPrice() : winningConfig.getMaxBid();
+    }
+
+    private boolean canApplyAutoBid(AutoBidConfig winningConfig, double newBidAmount) {
+        double currentPrice = getCurrentPrice();
+        if (newBidAmount > currentPrice) {
+            return true;
+        }
+        if (Double.compare(newBidAmount, currentPrice) != 0) {
+            return false;
+        }
+        return canClaimCurrentPriceTie(winningConfig);
+    }
+
+    private boolean canClaimCurrentPriceTie(AutoBidConfig winningConfig) {
+        if (currentWinnerId == null
+                || winningConfig.getBidderId().equals(currentWinnerId)
+                || Double.compare(winningConfig.getMaxBid(), getCurrentPrice()) != 0) {
+            return false;
+        }
+
+        BidRecord currentWinningBid = findCurrentWinningBidRecord();
+        return currentWinningBid != null
+                && !winningConfig.getRegisteredAt().isAfter(currentWinningBid.getTimestamp());
+    }
+
+    private BidRecord findCurrentWinningBidRecord() {
+        BidRecord latestWinningBid = null;
+        for (BidRecord record : bidHistory) {
+            if (!record.getBidderId().equals(currentWinnerId)
+                    || Double.compare(record.getAmount(), getCurrentPrice()) != 0) {
+                continue;
+            }
+            if (latestWinningBid == null
+                    || record.getTimestamp().isAfter(latestWinningBid.getTimestamp())) {
+                latestWinningBid = record;
+            }
+        }
+        return latestWinningBid;
+    }
+
+    private void deactivateAutoBidsBelowCurrentPrice() {
+        deactivateAutoBids(false);
     }
 
     private void deactivateExhaustedAutoBids() {
+        deactivateAutoBids(true);
+    }
+
+    private void deactivateAutoBids(boolean includeCurrentPriceTies) {
         List<AutoBidConfig> exhaustedConfigs = autoBidQueue.stream()
                 .filter(AutoBidConfig::isActive)
                 .filter(config -> !config.getBidderId().equals(currentWinnerId))
-                .filter(config -> config.getMaxBid() <= getCurrentPrice())
+                .filter(config -> includeCurrentPriceTies
+                        ? config.getMaxBid() <= getCurrentPrice()
+                        : config.getMaxBid() < getCurrentPrice())
                 .toList();
 
         for (AutoBidConfig config : exhaustedConfigs) {
