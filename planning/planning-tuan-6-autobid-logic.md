@@ -5,10 +5,10 @@
 - Nhánh: `khanh-hoan-thien-auto-bid`
 - Nhánh gốc dùng để so sánh: `main`
 - Commit gốc: `51e14eb` - `Merge pull request #42 from iTCuong090/develop/week6-cuong`
-- Trạng thái trước khi viết lại tài liệu: worktree sạch
+- Tài liệu này mô tả trạng thái code thực tế đang giữ lại `WAITING`; không mô tả phương án xóa `WAITING`.
 - Phạm vi chính: hoàn thiện auto-bid theo hướng proxy bidding, bổ sung trạng thái auto-bid cho client, và sửa tie-break khi nhiều người cùng trần tiền.
 
-## 2. Các commit trong nhánh
+## 2. Các commit logic được tài liệu hóa
 
 1. `9ec15b8` - `Implement proxy autobid pricing`
 2. `1afffa8` - `Add autobid status reporting and UI feedback`
@@ -17,6 +17,8 @@
 5. `c52e827` - `Fix auto-bid tie-break at equal max bids`
 
 Commit `2b84d4f` chủ yếu thêm tài liệu planning ban đầu. Các thay đổi logic nằm ở bốn commit còn lại.
+
+Các thử nghiệm sau đó về việc xóa `WAITING` không phải trạng thái code đang được mô tả ở tài liệu này. Code hiện tại vẫn dùng `WAITING` trong protocol, server DTO mapping, client UI và test.
 
 ## 3. File thay đổi theo layer
 
@@ -40,7 +42,19 @@ Commit `2b84d4f` chủ yếu thêm tài liệu planning ban đầu. Các thay đ
 - `auction-server/src/test/java/com/auctionuet/server/JUnitTest/DomainModelTest.java`
 - `auction-server/src/test/java/com/auctionuet/server/domain/service/AuctionServiceTest.java`
 
-## 4. Mục tiêu nghiệp vụ
+## 4. Những gì thực sự đã thay đổi trên code
+
+Thay đổi code hiện tại tập trung vào các điểm sau:
+
+- Protocol thêm `AutoBidStatus` với 3 trạng thái `PROTECTING`, `WAITING`, `INEFFECTIVE`.
+- `AutoBidConfigDTO` có thêm `status` và `protectedUntil` để server trả trạng thái auto-bid cho client.
+- `AutoBidConfig.comparePriority(...)` định nghĩa thứ tự ưu tiên: `maxBid` cao hơn thắng, cùng `maxBid` thì người đăng ký sớm hơn thắng, cuối cùng dùng `registrationOrder` để tie-break ổn định.
+- `LiveAuction` xử lý auto-bid theo mô hình proxy bidding, giữ quyền ưu tiên của auto-bid đặt trước khi người khác bid thủ công đúng bằng trần.
+- `BidService` chịu trách nhiệm validate tham số auto-bid, giữ cọc, rollback khi lỗi, đồng bộ auction state xuống JSON và map trạng thái auto-bid sang DTO.
+- `BiddingController` render 3 trạng thái auto-bid và hiển thị thông báo khi auto-bid của người dùng mất hiệu lực.
+- Test server bổ sung các case proxy bidding, equal max tie-break, manual bid đúng bằng trần auto-bid và trạng thái `WAITING`/`PROTECTING`/`INEFFECTIVE`.
+
+## 5. Mục tiêu nghiệp vụ
 
 Trước nhánh này, auto-bid chưa thể hiện rõ mô hình proxy bidding. Sau mỗi bid, hệ thống tăng giá theo từng bước, nhưng chưa xử lý đầy đủ các tình huống cạnh tranh giữa nhiều auto-bid, đặc biệt là khi hai bidder có cùng `maxBid`.
 
@@ -53,7 +67,7 @@ Mục tiêu sau thay đổi:
 - Client biết auto-bid đang bảo vệ, đang chờ, hoặc đã mất hiệu lực.
 - Luồng đặt giá thủ công không được phá quyền ưu tiên của auto-bid đã đặt trước ở cùng trần tiền.
 
-## 5. Thay đổi trong protocol
+## 6. Thay đổi trong protocol
 
 ### AutoBidStatus
 
@@ -78,7 +92,7 @@ Quy ước hiện tại:
 
 DTO vẫn implement `ValidatableDTO` và validate các trường chính: `auctionId`, `bidder`, `maxBid`, `increment`, `status`, `protectedUntil`.
 
-## 6. Thay đổi trong server domain
+## 7. Thay đổi trong server domain
 
 ### AutoBidConfig
 
@@ -162,7 +176,7 @@ Các hàm liên quan:
 
 Sau khi resolve xong, `deactivateExhaustedAutoBids()` mới loại các config không thắng có `maxBid <= currentPrice`.
 
-## 7. Thay đổi trong BidService
+## 8. Thay đổi trong BidService
 
 `BidService.setAutoBid(...)` vẫn chịu trách nhiệm:
 
@@ -183,7 +197,22 @@ Sau khi resolve xong, `deactivateExhaustedAutoBids()` mới loại các config k
 
 Business logic vẫn nằm trong service/domain, controller chỉ parse DTO, check auth/permission và gọi service.
 
-## 8. Thay đổi trong client
+### Khi nào `WAITING` xảy ra
+
+`WAITING` xảy ra khi server kiểm tra trạng thái auto-bid của một bidder và thấy config vẫn còn hiệu lực nhưng bidder đó chưa phải người dẫn đầu hiện tại.
+
+Điều kiện cụ thể trong `BidService.getAutoBidConfigDTO(...)`:
+
+1. `AuctionManager` vẫn có `LiveAuction` cho auction đó.
+2. Bidder có `AutoBidConfig` trong `liveAuction.getAutoBidConfig(bidder.getId())`.
+3. `config.isActive() == true`.
+4. `bidder.getId()` khác `liveAuction.getCurrentWinnerId()`.
+
+Ví dụ đang được test trong `AuctionServiceTest`: current price là `500`, bidder set auto-bid `maxBid = 520`, `increment = 50`. Config được lưu và tiền cọc được giữ, nhưng chưa có auto bid record vì bước bid hợp lệ tiếp theo cần lên `550`, vượt quá `maxBid = 520`. Bidder chưa dẫn đầu nên `CHECK_AUTO_BID` trả `WAITING` với `protectedUntil = 520`.
+
+Trạng thái này không có nghĩa auto-bid bị hỏng. Nó chỉ nói rằng config còn active nhưng hiện chưa bảo vệ vị trí dẫn đầu cho bidder.
+
+## 9. Thay đổi trong client
 
 `BiddingController` được cập nhật để client phản ánh trạng thái auto-bid rõ hơn.
 
@@ -226,7 +255,7 @@ Khi nhận push `BidType.AUTO` từ người khác, client đánh dấu cần ki
 Auto-Bid của bạn không còn hiệu lực vì đã bị Auto-Bid khác vượt trần.
 ```
 
-## 9. Các case đã được test
+## 10. Các case đã được test
 
 ### DomainModelTest
 
@@ -258,7 +287,7 @@ Các case chính:
 - Manual bid đúng bằng trần auto-bid không cướp winner của bidder set trước.
 - Cancel hoặc chưa có auto-bid thì `CHECK_AUTO_BID` trả `null`.
 
-## 10. Kết quả kiểm tra
+## 11. Kết quả kiểm tra
 
 Đã chạy nhóm test trực tiếp cho auto-bid:
 
@@ -284,7 +313,7 @@ Kết quả:
 
 Maven vẫn có warning sẵn có về thiếu version của `maven-compiler-plugin` và khuyến nghị dùng `--release 21`, nhưng không làm fail test.
 
-## 11. Nhận xét kỹ thuật
+## 12. Nhận xét kỹ thuật
 
 Thiết kế hiện tại bám theo kiến trúc contract-first:
 
@@ -302,7 +331,7 @@ Một số điểm cần lưu ý sau nhánh này:
 - `checkAutoBidState()` ở client đang bỏ qua exception. Nếu request check trạng thái fail đúng lúc auto-bid mất hiệu lực, thông báo UI có thể bị trễ.
 - Thông báo mất hiệu lực hiện được client suy luận từ push bid auto của người khác rồi gọi lại `CHECK_AUTO_BID`; nếu muốn chắc hơn, có thể bổ sung push event riêng cho auto-bid bị mất hiệu lực.
 
-## 12. Đề xuất sau khi merge
+## 13. Đề xuất sau khi merge
 
 1. Kiểm thử thủ công với 2 bidder bật auto-bid cùng `maxBid`.
 2. Kiểm thử thủ công case bidder thứ hai bid thủ công đúng bằng trần auto-bid của bidder thứ nhất.

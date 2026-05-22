@@ -18,16 +18,11 @@ import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class BidService {
     private static final double ESCROW_DEPOSIT_RATE = 0.10;
-    private static final Comparator<BidSchema> BID_HISTORY_ORDER = Comparator
-            .comparing(BidSchema::getTimestamp, Comparator.nullsFirst(Comparator.naturalOrder()))
-            .thenComparing(BidSchema::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
-            .thenComparing(BidSchema::getId, Comparator.nullsFirst(Comparator.naturalOrder()));
 
     private final AuctionManager auctionManager;
     private final WalletService walletService;
@@ -53,9 +48,8 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
-        List<BidRecord> autoBidRecords = new ArrayList<>();
         try {
-            record = liveAuction.placeBid(bidder, amount, autoBidRecords::add);
+            record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
         } catch (Exception e) {
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
@@ -65,7 +59,6 @@ public class BidService {
 
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
-        saveAutoBidRecords(auctionId, autoBidRecords);
 
         return toBidDTO(record, auctionId);
     }
@@ -76,7 +69,6 @@ public class BidService {
 
     public List<BidDTO> getBidHistoryDTO(String auctionId) {
         return getBidHistory(auctionId).stream()
-                .sorted(BID_HISTORY_ORDER)
                 .map(this::toBidDTO)
                 .toList();
     }
@@ -107,11 +99,9 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
-        List<BidRecord> autoBidRecords = new ArrayList<>();
         try {
-            liveAuction.addAutoBid(config, autoBidRecords::add);
+            liveAuction.addAutoBid(config, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
             syncAuctionState(auctionId, liveAuction);
-            saveAutoBidRecords(auctionId, autoBidRecords);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
@@ -284,12 +274,6 @@ public class BidService {
         AuctionSchema auctionSchema = auctionDAO.findById(auctionId);
         if (auctionSchema != null && auctionSchema.removeDepositedBidder(bidderId)) {
             auctionDAO.update(auctionSchema);
-        }
-    }
-
-    private void saveAutoBidRecords(String auctionId, List<BidRecord> autoRecords) {
-        for (BidRecord autoRecord : autoRecords) {
-            saveAutoBidRecord(auctionId, autoRecord);
         }
     }
 

@@ -136,6 +136,9 @@ public class BiddingController {
                         for (BidDTO entry : history) {
                             bidHistoryList.getItems().add(formatBid(entry));
                         }
+
+                        BidDTO latest = history.get(history.size() - 1);
+                        leaderLabel.setText("Leader: " + usernameOf(latest.getBidder()));
                     }
                 });
             } catch (Exception e) {
@@ -155,6 +158,7 @@ public class BiddingController {
                 if (bid == null) return;
 
                 priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
+                leaderLabel.setText("Leader: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vua xong - " + formatBid(bid));
                 if (isCurrentUser(bid.getBidder())) {
                     currentUserDeposited = true;
@@ -162,7 +166,6 @@ public class BiddingController {
                     loadWalletInfo();
                 }
                 pendingAutoBidLossNotice = bid.getBidType() == BidType.AUTO && !isCurrentUser(bid.getBidder());
-                loadAuctionDetail();
                 checkAutoBidState();
                 return;
             }
@@ -285,8 +288,6 @@ public class BiddingController {
                         currentUserDeposited = true;
                         renderAuctionDeposit();
                         loadWalletInfo();
-                        loadAuctionDetail();
-                        loadBidHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -325,8 +326,6 @@ public class BiddingController {
                         currentUserDeposited = true;
                         renderAuctionDeposit();
                         loadWalletInfo();
-                        loadAuctionDetail();
-                        loadBidHistory();
                         checkAutoBidState();
                     });
                 } catch (Exception e) {
