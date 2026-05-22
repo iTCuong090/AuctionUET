@@ -146,5 +146,62 @@
     "id": "160d9fe6-ab75-4382-9179-7495909bd01c",
     "createdAt": "2026-05-22T22:19:23.8093172",
     "updatedAt": "2026-05-22T22:19:23.8093172"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "WALLET_DEPOSIT",
+    "amount": 7.273332723785375E23,
+    "balanceBefore": 5.784204143460404E15,
+    "balanceAfter": 7.273332781627416E23,
+    "frozenBalanceBefore": 100000.0,
+    "frozenBalanceAfter": 100000.0,
+    "description": "Nap tien vao vi",
+    "id": "f54a805a-e5cf-4a35-a72a-874ca74ee181",
+    "createdAt": "2026-05-22T23:29:17.4876827",
+    "updatedAt": "2026-05-22T23:29:17.4876827"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "WALLET_DEPOSIT",
+    "amount": 4.7114451258412525E25,
+    "balanceBefore": 7.273332781627416E23,
+    "balanceAfter": 4.7841784536575266E25,
+    "frozenBalanceBefore": 100000.0,
+    "frozenBalanceAfter": 100000.0,
+    "description": "Nap tien vao vi",
+    "id": "f07305f6-d4cc-475d-bd08-aeb9048dcd59",
+    "createdAt": "2026-05-22T23:29:28.3141327",
+    "updatedAt": "2026-05-22T23:29:28.3141327"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "WALLET_DEPOSIT",
+    "amount": 1.2345645614251425E98,
+    "balanceBefore": 4.7841784536575266E25,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 100000.0,
+    "frozenBalanceAfter": 100000.0,
+    "description": "Nap tien vao vi",
+    "id": "58162a65-269c-489d-b6ad-21f8772c2437",
+    "createdAt": "2026-05-22T23:29:41.1799366",
+    "updatedAt": "2026-05-22T23:29:41.1799366"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_HOLD",
+    "amount": 27735.300000000003,
+    "auctionId": "c65e2106-af2a-47c8-93fe-a83407a2c3c5",
+    "balanceBefore": 1.2345645614251425E98,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 100000.0,
+    "frozenBalanceAfter": 127735.3,
+    "description": "Giu tien coc phien dau gia c65e2106-af2a-47c8-93fe-a83407a2c3c5",
+    "id": "6c18198a-2285-48af-9c74-7a51beac4160",
+    "createdAt": "2026-05-22T23:30:29.8962539",
+    "updatedAt": "2026-05-22T23:30:29.8962539"
   }
 ]

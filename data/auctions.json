@@ -156,14 +156,23 @@
     "startTime": "2026-05-22T18:15:00",
     "endTime": "2026-05-23T09:45:00",
     "status": "RUNNING",
-    "highestBid": 0.0,
+    "highestBid": 7.52542542242E11,
+    "winnerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "depositedBidderIds": [],
-    "depositRefs": [],
+    "depositRefs": [
+      {
+        "bidderId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+        "usernameSnapshot": "ccc456",
+        "amount": 27735.300000000003,
+        "depositTransactionId": "6c18198a-2285-48af-9c74-7a51beac4160",
+        "depositedAt": "2026-05-22T23:30:29.8982423"
+      }
+    ],
     "antiSnipingWindowSeconds": 60,
     "antiSnipingExtensionSeconds": 120,
     "id": "c65e2106-af2a-47c8-93fe-a83407a2c3c5",
     "createdAt": "2026-05-22T18:13:02.4781785",
-    "updatedAt": "2026-05-22T18:15:00.0167386"
+    "updatedAt": "2026-05-22T23:30:29.9142701"
   },
   {
     "itemId": "b0f56b8f-15ac-425a-93e6-172534128d15",
