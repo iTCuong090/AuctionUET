@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<ScrollPane fitToWidth="true" prefHeight="700.0" prefWidth="900.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.ItemHistoryController">
+   <content>
+      <VBox spacing="30.0" styleClass="dark-bg">
+         <padding>
+            <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
+         </padding>
+         <children>
+            <Label styleClass="text-heading" text="📦 Lịch sử vật phẩm">
+               <font><Font name="System Bold" size="26.0" /></font>
+            </Label>
+
+            <HBox spacing="30.0">
+               <children>
+                  <VBox prefWidth="250.0" spacing="10.0">
+                     <children>
+                        <StackPane prefHeight="220.0" prefWidth="220.0" styleClass="card-bg" style="-fx-background-radius: 12;">
+                           <children>
+                              <ImageView fx:id="productImageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+                              <Label styleClass="text-secondary" text="[Ảnh sản phẩm]" />
+                           </children>
+                        </StackPane>
+                     </children>
+                  </VBox>
+
+                  <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="nameLabel" styleClass="text-accent" text="Vật phẩm: Đang tải...">
+                           <font><Font name="System Bold" size="22.0" /></font>
+                        </Label>
+                        <Label fx:id="ownerLabel" styleClass="text-secondary" text="Owner: --" />
+                        <Label fx:id="typeLabel" styleClass="text-secondary" text="🏷 Loại: --" />
+                        <Label fx:id="specLabel" styleClass="text-detail" text="⚙ Thông số: --" wrapText="true" />
+                        <Label fx:id="conditionLabel" styleClass="text-detail" text="✨ Tình trạng: --" />
+                        <Label fx:id="descriptionLabel" styleClass="text-secondary" lineSpacing="5.0" text="Đang tải dữ liệu mô tả..." wrapText="true">
+                           <VBox.margin><Insets top="10.0" /></VBox.margin>
+                        </Label>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <HBox spacing="30.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <VBox spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="text-accent" text="📊 Biểu đồ giá vật phẩm">
+                           <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                        <LineChart fx:id="priceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;">
+                           <xAxis><NumberAxis autoRanging="true" label="Phiên" side="BOTTOM" /></xAxis>
+                           <yAxis><NumberAxis label="Giá (VNĐ)" side="LEFT" /></yAxis>
+                        </LineChart>
+                     </children>
+                  </VBox>
+
+                  <VBox prefWidth="380.0" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
+                     <children>
+                        <Label styleClass="text-accent" text="👤 Lịch sử vật phẩm">
+                           <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                        <TableView fx:id="auctionHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;">
+                           <columns>
+                              <TableColumn fx:id="titleCol" prefWidth="110.0" text="Phiên" />
+                              <TableColumn fx:id="priceCol" prefWidth="95.0" text="Giá (VNĐ)" />
+                              <TableColumn fx:id="statusCol" prefWidth="85.0" text="Trạng thái" />
+                              <TableColumn fx:id="timeCol" prefWidth="88.0" text="Kết thúc" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <Label fx:id="statusLabel" styleClass="text-secondary" text="Đang tải lịch sử..." />
+         </children>
+      </VBox>
+   </content>
+</ScrollPane>
