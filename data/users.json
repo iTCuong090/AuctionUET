@@ -29,11 +29,11 @@
     "passwordSalt": "47b2cb8010446034c03219029f07ca41",
     "email": "ccc@gmail.com",
     "role": "BIDDER",
-    "balance": 5.785435356571189E15,
-    "frozenBalance": 112345.6,
+    "balance": 5.784204143460404E15,
+    "frozenBalance": 100000.0,
     "id": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "createdAt": "2026-05-08T14:05:41.3492979",
-    "updatedAt": "2026-05-22T22:12:58.7775455"
+    "updatedAt": "2026-05-22T22:19:23.8023246"
   },
   {
     "username": "seller",
@@ -101,10 +101,10 @@
     "passwordSalt": "c099b54e7c644ac11931eed6b6677673",
     "email": "congcao@gmail.com",
     "role": "SELLER",
-    "balance": 1.3221323212332131E17,
+    "balance": 1.3221446333644445E17,
     "frozenBalance": 0.0,
     "id": "4cf74e6c-2e70-45a6-9117-274996072608",
     "createdAt": "2026-05-22T16:55:28.1620134",
-    "updatedAt": "2026-05-22T18:14:02.373713"
+    "updatedAt": "2026-05-22T22:19:23.8083178"
   }
 ]

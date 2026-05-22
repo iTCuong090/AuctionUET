@@ -100,5 +100,51 @@
     "id": "bb691990-6c0c-4854-88c4-424ba243552c",
     "createdAt": "2026-05-22T22:12:58.7785435",
     "updatedAt": "2026-05-22T22:12:58.7785435"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_PAYMENT",
+    "amount": 1.2312131107854E12,
+    "auctionId": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
+    "balanceBefore": 5.785435356571189E15,
+    "balanceAfter": 5.784204143460404E15,
+    "frozenBalanceBefore": 112345.6,
+    "frozenBalanceAfter": 112345.6,
+    "description": "Thanh toan phan con lai cua phien dau gia",
+    "id": "28aef1e3-a27f-4ab1-aa14-a1af40f492e1",
+    "createdAt": "2026-05-22T22:19:23.7983208",
+    "updatedAt": "2026-05-22T22:19:23.7983208"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "amount": 12345.6,
+    "auctionId": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
+    "relatedTransactionId": "bb691990-6c0c-4854-88c4-424ba243552c",
+    "balanceBefore": 5.784204143460404E15,
+    "balanceAfter": 5.784204143460404E15,
+    "frozenBalanceBefore": 112345.6,
+    "frozenBalanceAfter": 100000.0,
+    "description": "Ap tien coc vao thanh toan phien dau gia",
+    "id": "5ffa4f35-f9e9-4b50-ae1a-0b92485db850",
+    "createdAt": "2026-05-22T22:19:23.8043187",
+    "updatedAt": "2026-05-22T22:19:23.8043187"
+  },
+  {
+    "userId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "usernameSnapshot": "ccc777",
+    "type": "SELLER_PAYOUT",
+    "amount": 1.231213123131E12,
+    "auctionId": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
+    "balanceBefore": 1.3221323212332131E17,
+    "balanceAfter": 1.3221446333644445E17,
+    "frozenBalanceBefore": 0.0,
+    "frozenBalanceAfter": 0.0,
+    "description": "Nhan tien tu nguoi thang dau gia",
+    "id": "160d9fe6-ab75-4382-9179-7495909bd01c",
+    "createdAt": "2026-05-22T22:19:23.8093172",
+    "updatedAt": "2026-05-22T22:19:23.8093172"
   }
 ]

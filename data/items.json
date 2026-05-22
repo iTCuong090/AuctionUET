@@ -191,7 +191,7 @@
     "description": "xấu",
     "startingPrice": 123456.0,
     "type": "ART",
-    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "sellerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "imageUrl": "anh.jpg",
     "condition": "NEW",
     "auctionCount": 1,
@@ -203,6 +203,6 @@
     },
     "id": "b0f56b8f-15ac-425a-93e6-172534128d15",
     "createdAt": "2026-05-22T22:06:44.9601122",
-    "updatedAt": "2026-05-22T22:07:44.900924"
+    "updatedAt": "2026-05-22T22:19:23.8123211"
   }
 ]
