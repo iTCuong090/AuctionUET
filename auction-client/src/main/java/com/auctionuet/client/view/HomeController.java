@@ -142,26 +142,43 @@ public class HomeController {
             "-fx-cursor: hand;"
         );
 
-        btnDetail.setOnAction(e -> {
-            try {
-                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
-                        getClass().getResource("/fxml/AuctionDetailView.fxml"));
-                javafx.scene.Parent detailRoot = loader.load();
-                AuctionDetailController detailCtrl = loader.getController();
-                detailCtrl.setAuctionData(auction.getId());
-
-                javafx.scene.Parent currentRoot = btnDetail.getScene().getRoot();
-                if (currentRoot instanceof javafx.scene.layout.BorderPane) {
-                    ((javafx.scene.layout.BorderPane) currentRoot).setCenter(detailRoot);
-                }
-            } catch (Exception ex) {
-                System.out.println("Lỗi chuyển trang chi tiết: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        });
+        btnDetail.setOnAction(e -> openAuctionView(btnDetail, auction, auction.getStatus()));
 
         card.getChildren().addAll(title, price, timeLabel, sellerLabel, btnDetail);
         return card;
+    }
+
+    private void openAuctionView(Button source, AuctionDTO auction, AuctionStatus status) {
+        try {
+            boolean openBidding = status == AuctionStatus.RUNNING && !ClientSession.getInstance().isSeller();
+            String fxmlPath = openBidding ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent root = loader.load();
+
+            if (openBidding) {
+                BiddingController biddingController = loader.getController();
+                biddingController.setAuctionId(auction.getId());
+            } else {
+                AuctionDetailController detailController = loader.getController();
+                detailController.setAuctionData(auction.getId());
+            }
+
+            Parent currentRoot = source.getScene().getRoot();
+            if (currentRoot instanceof HBox) {
+                VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
+                javafx.scene.layout.StackPane contentArea =
+                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+                contentArea.getChildren().setAll(root);
+            } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+                ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
+            } else {
+                System.out.println("Dashboard layout không khớp.");
+            }
+        } catch (Exception ex) {
+            System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
+            ex.printStackTrace();
+        }
     }
 
     private String formatTime(LocalDateTime time) {
