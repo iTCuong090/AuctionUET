@@ -1,0 +1,123 @@
+[
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 1.699E7,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "anhnen.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 0,
+    "id": "17a4d966-4858-46e0-8812-c80971311038",
+    "createdAt": "2026-05-08T14:07:50.8037016",
+    "updatedAt": "2026-05-08T14:07:50.8037016"
+  },
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 100000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "image.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 1,
+    "id": "96ff3093-8265-43da-95bb-7a3e7c36ee2a",
+    "createdAt": "2026-05-08T14:23:24.8080647",
+    "updatedAt": "2026-05-08T14:35:14.2488791"
+  },
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 100000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "image.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 0,
+    "id": "c44833af-c31a-47bd-93f9-a5f4876b50f9",
+    "createdAt": "2026-05-08T14:23:26.2404182",
+    "updatedAt": "2026-05-08T14:23:26.2404182"
+  },
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 100000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "image.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 0,
+    "id": "b9517f74-d3dc-40bf-bfbc-3012eb35a9f0",
+    "createdAt": "2026-05-08T14:32:56.3173993",
+    "updatedAt": "2026-05-08T14:32:56.3173993"
+  },
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 100000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "image.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 0,
+    "id": "c0c3471b-4017-4cde-a0c6-8478f68fbd34",
+    "createdAt": "2026-05-08T14:32:57.0319522",
+    "updatedAt": "2026-05-08T14:32:57.0319522"
+  },
+  {
+    "name": "ip 15 pro",
+    "description": "zin 99%",
+    "startingPrice": 1000000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "image.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 0,
+    "id": "ef836b12-0b72-434a-a9ca-a50570cc367c",
+    "createdAt": "2026-05-08T14:34:11.3163694",
+    "updatedAt": "2026-05-08T14:34:11.3163694"
+  },
+  {
+    "name": "vinfast 9",
+    "description": "đểu",
+    "startingPrice": 5.0E8,
+    "type": "VEHICLE",
+    "sellerId": "2358a35f-e54f-4e91-87e4-f733cc8c7650",
+    "imageUrl": "xe.jpg",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "id": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
+    "createdAt": "2026-05-09T13:12:06.2308898",
+    "updatedAt": "2026-05-09T13:13:05.5277631"
+  },
+  {
+    "name": "Iphone 17 pro max",
+    "description": "Nát",
+    "startingPrice": 1.0E7,
+    "type": "ELECTRONICS",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "imageUrl": "fgfgrg",
+    "condition": "NEW",
+    "auctionCount": 3,
+    "id": "3924b4d1-662e-424c-ac1e-f828d582ebba",
+    "createdAt": "2026-05-10T00:50:40.1844946",
+    "updatedAt": "2026-05-16T23:03:18.7407404"
+  },
+  {
+    "name": "Iphone 19 Promax",
+    "description": "Nát bét",
+    "startingPrice": 6.9696969E7,
+    "type": "ELECTRONICS",
+    "sellerId": "510e1245-545b-4eb4-8768-233a97e447a3",
+    "imageUrl": "hentailz.net",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "extraFields": {
+      "brand": "appel",
+      "warrantyMonths": 0.0
+    },
+    "id": "bf3aca36-b652-484f-b326-502cd5ab322e",
+    "createdAt": "2026-05-16T20:48:07.0333939",
+    "updatedAt": "2026-05-16T20:48:56.946034"
+  }
+]

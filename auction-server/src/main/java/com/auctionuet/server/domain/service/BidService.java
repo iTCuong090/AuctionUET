@@ -24,12 +24,10 @@ import java.util.List;
 
 public class BidService {
     private static final double ESCROW_DEPOSIT_RATE = 0.10;
-    private static final Comparator<BidSchema> BID_HISTORY_ORDER =
-            Comparator.comparing(
-                            BidSchema::getTimestamp,
-                            Comparator.nullsLast(Comparator.naturalOrder()))
-                    .thenComparing(BidSchema::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                    .thenComparing(BidSchema::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+    private static final Comparator<BidSchema> BID_HISTORY_ORDER = Comparator
+            .comparing(BidSchema::getTimestamp, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(BidSchema::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(BidSchema::getId, Comparator.nullsFirst(Comparator.naturalOrder()));
 
     private final AuctionManager auctionManager;
     private final WalletService walletService;
@@ -55,9 +53,9 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
-        List<BidRecord> autoRecords = new ArrayList<>();
+        List<BidRecord> autoBidRecords = new ArrayList<>();
         try {
-            record = liveAuction.placeBid(bidder, amount, autoRecords::add);
+            record = liveAuction.placeBid(bidder, amount, autoBidRecords::add);
         } catch (Exception e) {
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
@@ -67,7 +65,7 @@ public class BidService {
 
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
-        saveAutoBidRecords(auctionId, autoRecords);
+        saveAutoBidRecords(auctionId, autoBidRecords);
 
         return toBidDTO(record, auctionId);
     }
@@ -109,11 +107,11 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
-        List<BidRecord> autoRecords = new ArrayList<>();
+        List<BidRecord> autoBidRecords = new ArrayList<>();
         try {
-            liveAuction.addAutoBid(config, autoRecords::add);
+            liveAuction.addAutoBid(config, autoBidRecords::add);
             syncAuctionState(auctionId, liveAuction);
-            saveAutoBidRecords(auctionId, autoRecords);
+            saveAutoBidRecords(auctionId, autoBidRecords);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
@@ -139,14 +137,14 @@ public class BidService {
 
         AutoBidStatus status;
         double protectedUntil = 0.0;
-        if (config.isActive() && bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
+        if (!config.isActive()) {
+            status = AutoBidStatus.INEFFECTIVE;
+        } else if (bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
             status = AutoBidStatus.PROTECTING;
             protectedUntil = config.getMaxBid();
-        } else if (config.isActive()) {
+        } else {
             status = AutoBidStatus.WAITING;
             protectedUntil = config.getMaxBid();
-        } else {
-            status = AutoBidStatus.INEFFECTIVE;
         }
 
         return new AutoBidConfigDTO(
@@ -193,9 +191,8 @@ public class BidService {
     }
 
     private void validateAutoBidParams(double maxBid, double increment, double currentHighestBid) {
-        if (increment <= 0 || maxBid <= currentHighestBid) {
-            throw new IllegalArgumentException(
-                    "Invalid autobid parameters: maxBid must be greater than current price and increment must be positive");
+        if (maxBid <= currentHighestBid || increment <= 0) {
+            throw new IllegalArgumentException("Invalid autobid parameters");
         }
     }
 
@@ -290,15 +287,15 @@ public class BidService {
         }
     }
 
-    private void saveAutoBidRecord(String auctionId, BidRecord autoRecord) {
-        BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
-        bidDAO.save(autoBidSchema);
-    }
-
     private void saveAutoBidRecords(String auctionId, List<BidRecord> autoRecords) {
         for (BidRecord autoRecord : autoRecords) {
             saveAutoBidRecord(auctionId, autoRecord);
         }
+    }
+
+    private void saveAutoBidRecord(String auctionId, BidRecord autoRecord) {
+        BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
+        bidDAO.save(autoBidSchema);
     }
 
     private BidSchema toBidSchema(String auctionId, BidRecord record) {

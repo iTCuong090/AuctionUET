@@ -142,7 +142,6 @@ public class LiveAuction {
     public void addAutoBid(AutoBidConfig config, Consumer<BidRecord> onAutoBidPlaced) {
         bidLock.lock();
         try {
-            validateAutoBidConfig(config);
             // Remove existing config for same bidder (update scenario)
             autoBidQueue.removeIf(c -> c.getBidderId().equals(config.getBidderId()));
             autoBidQueue.add(config);
@@ -151,17 +150,6 @@ public class LiveAuction {
             resolveAutoBids(onAutoBidPlaced);
         } finally {
             bidLock.unlock();
-        }
-    }
-
-    private void validateAutoBidConfig(AutoBidConfig config) {
-        if (config == null) {
-            throw new IllegalArgumentException("Invalid autobid parameters");
-        }
-        double currentPrice = getCurrentPrice();
-        if (config.getIncrement() <= 0 || config.getMaxBid() <= currentPrice) {
-            throw new IllegalArgumentException(
-                    "Invalid autobid parameters: maxBid must be greater than current price and increment must be positive");
         }
     }
 

@@ -155,7 +155,6 @@ public class BiddingController {
                 if (bid == null) return;
 
                 priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
-                leaderLabel.setText("Leader: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vua xong - " + formatBid(bid));
                 if (isCurrentUser(bid.getBidder())) {
                     currentUserDeposited = true;
@@ -163,6 +162,7 @@ public class BiddingController {
                     loadWalletInfo();
                 }
                 pendingAutoBidLossNotice = bid.getBidType() == BidType.AUTO && !isCurrentUser(bid.getBidder());
+                loadAuctionDetail();
                 checkAutoBidState();
                 return;
             }
@@ -417,18 +417,6 @@ public class BiddingController {
             return;
         }
 
-        if (status == AutoBidStatus.WAITING) {
-            enableAutoBidBtn.setDisable(true);
-            cancelAutoBidBtn.setDisable(false);
-            autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá khi cần tới "
-                    + formatMoney(state.getProtectedUntil()) + ".");
-            autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
-            lastAutoBidStatus = status;
-            autoBidStateLoaded = true;
-            pendingAutoBidLossNotice = false;
-            return;
-        }
-
         if (status == AutoBidStatus.INEFFECTIVE) {
             enableAutoBidBtn.setDisable(false);
             cancelAutoBidBtn.setDisable(false);
@@ -443,10 +431,11 @@ public class BiddingController {
             return;
         }
 
-        enableAutoBidBtn.setDisable(false);
+        enableAutoBidBtn.setDisable(true);
         cancelAutoBidBtn.setDisable(false);
-        autoBidStatusLabel.setText(AUTO_BID_INEFFECTIVE_NOTICE);
-        autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+        autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá tới "
+                + formatMoney(state.getProtectedUntil()) + " khi cần.");
+        autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
         lastAutoBidStatus = status;
         autoBidStateLoaded = true;
         pendingAutoBidLossNotice = false;

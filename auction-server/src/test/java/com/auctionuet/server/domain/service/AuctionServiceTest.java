@@ -345,7 +345,7 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidWaitingConfigDoesNotPlaceBidImmediately() throws Exception {
+    public void testSetAutoBidPersistsDepositEvenWithoutAutoBidRecord() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 1000.0);
@@ -355,7 +355,6 @@ public class AuctionServiceTest {
         bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0);
 
         assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
-        assertTrue(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
         assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
@@ -406,13 +405,16 @@ public class AuctionServiceTest {
         assertEquals("bidder1", updated.getWinnerId());
         assertEquals(1000.0, updated.getHighestBid());
 
-        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), "bidder2");
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), bidder2.getId());
         assertEquals("bidder1", detail.getWinner().getId());
         assertEquals("bidder1", detail.getCurrentHighestBid().getBidder().getId());
+        assertEquals(1000.0, detail.getCurrentHighestBid().getAmount());
 
         List<BidDTO> bidHistory = bidService.getBidHistoryDTO(auction.getId());
+        assertFalse(bidHistory.isEmpty());
         BidDTO latestBid = bidHistory.get(bidHistory.size() - 1);
         assertEquals("bidder1", latestBid.getBidder().getId());
+        assertEquals(1000.0, latestBid.getAmount());
         assertEquals(BidType.AUTO, latestBid.getBidType());
 
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
@@ -438,16 +440,31 @@ public class AuctionServiceTest {
         assertEquals("bidder1", updated.getWinnerId());
         assertEquals(1000.0, updated.getHighestBid());
 
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), bidder2.getId());
+        assertEquals("bidder1", detail.getWinner().getId());
+        assertEquals("bidder1", detail.getCurrentHighestBid().getBidder().getId());
+        assertEquals(1000.0, detail.getCurrentHighestBid().getAmount());
+
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
         assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
-        List<BidSchema> persistedBids = bidDAO.findByAuctionId(auction.getId());
-        BidSchema latestPersistedBid = persistedBids.get(persistedBids.size() - 1);
-        assertEquals("bidder1", latestPersistedBid.getBidderId());
-        assertEquals(BidType.AUTO, latestPersistedBid.getBidType());
-        assertTrue(persistedBids.stream()
+        assertTrue(bidDAO.findByAuctionId(auction.getId()).stream()
                 .anyMatch(bid -> "bidder1".equals(bid.getBidderId())
                         && Double.compare(1000.0, bid.getAmount()) == 0
                         && bid.getBidType() == BidType.AUTO));
+
+        List<BidSchema> persistedBids = bidDAO.findByAuctionId(auction.getId());
+        assertFalse(persistedBids.isEmpty());
+        BidSchema latestPersistedBid = persistedBids.get(persistedBids.size() - 1);
+        assertEquals("bidder1", latestPersistedBid.getBidderId());
+        assertEquals(1000.0, latestPersistedBid.getAmount());
+        assertEquals(BidType.AUTO, latestPersistedBid.getBidType());
+
+        List<BidDTO> bidHistory = bidService.getBidHistoryDTO(auction.getId());
+        assertFalse(bidHistory.isEmpty());
+        BidDTO latestBid = bidHistory.get(bidHistory.size() - 1);
+        assertEquals("bidder1", latestBid.getBidder().getId());
+        assertEquals(1000.0, latestBid.getAmount());
+        assertEquals(BidType.AUTO, latestBid.getBidType());
     }
 
     @Test

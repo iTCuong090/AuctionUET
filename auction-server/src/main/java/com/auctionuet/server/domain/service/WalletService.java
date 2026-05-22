@@ -195,7 +195,7 @@ public class WalletService {
         double balanceBefore = userSchema.getBalance();
         double frozenBefore = userSchema.getFrozenBalance();
         userSchema.setBalance(userSchema.getBalance() + amount);
-        userDAO.update(userSchema);mvn
+        userDAO.update(userSchema);
         recordTransaction(userSchema, TransactionType.SELLER_PAYOUT, amount, auctionId, null,
                 balanceBefore, userSchema.getBalance(), frozenBefore, userSchema.getFrozenBalance(),
                 description != null ? description : "Nhan tien tu phien dau gia");
