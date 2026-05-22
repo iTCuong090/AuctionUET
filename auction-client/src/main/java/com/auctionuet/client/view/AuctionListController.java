@@ -13,6 +13,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.geometry.Bounds;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,9 @@ import java.util.Locale;
 
 public class AuctionListController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final double CARD_GAP = 20.0;
+    private static final double MIN_CARD_WIDTH = 280.0;
+    private static final int MAX_CARD_COLUMNS = 4;
 
     @FXML private FlowPane auctionGrid;
     @FXML private ScrollPane auctionScrollPane;
@@ -30,6 +34,7 @@ public class AuctionListController {
     @FXML private TextField searchField;
 
     private List<AuctionDTO> allAuctions = new ArrayList<>();
+    private double currentCardWidth = 300.0;
 
     @FXML
     public void initialize() {
@@ -59,6 +64,24 @@ public class AuctionListController {
         auctionGrid.setPrefWidth(width);
         auctionGrid.setMaxWidth(width);
         auctionGrid.setPrefWrapLength(width);
+        currentCardWidth = calculateCardWidth(width);
+        auctionGrid.getChildren().forEach(node -> {
+            if (node instanceof Region region) {
+                applyCardWidth(region);
+            }
+        });
+    }
+
+    private double calculateCardWidth(double availableWidth) {
+        int columns = (int) ((availableWidth + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
+        columns = Math.max(1, Math.min(MAX_CARD_COLUMNS, columns));
+        return Math.floor((availableWidth - ((columns - 1) * CARD_GAP)) / columns);
+    }
+
+    private void applyCardWidth(Region card) {
+        card.setMinWidth(currentCardWidth);
+        card.setPrefWidth(currentCardWidth);
+        card.setMaxWidth(currentCardWidth);
     }
 
     private void loadAuctionsFromServer() {
@@ -126,12 +149,13 @@ public class AuctionListController {
         for (AuctionDTO item : auctions) {
             auctionGrid.getChildren().add(createAuctionCard(item));
         }
+        syncGridWidth(auctionScrollPane.getViewportBounds());
     }
 
     private VBox createAuctionCard(AuctionDTO item) {
         VBox card = new VBox(12);
         card.getStyleClass().add("auction-card");
-        card.setPrefWidth(250);
+        applyCardWidth(card);
 
         Label title = new Label(item.getTitle());
         title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
