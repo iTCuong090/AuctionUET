@@ -164,5 +164,31 @@
     "id": "c65e2106-af2a-47c8-93fe-a83407a2c3c5",
     "createdAt": "2026-05-22T18:13:02.4781785",
     "updatedAt": "2026-05-22T18:15:00.0167386"
+  },
+  {
+    "itemId": "b0f56b8f-15ac-425a-93e6-172534128d15",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "title": "Đấu giá: cảnh đẹp",
+    "description": "nhanh",
+    "startTime": "2026-05-22T22:10:00",
+    "endTime": "2026-05-22T22:15:00",
+    "status": "RUNNING",
+    "highestBid": 1.231213123131E12,
+    "winnerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "depositedBidderIds": [],
+    "depositRefs": [
+      {
+        "bidderId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+        "usernameSnapshot": "ccc456",
+        "amount": 12345.6,
+        "depositTransactionId": "bb691990-6c0c-4854-88c4-424ba243552c",
+        "depositedAt": "2026-05-22T22:12:58.7795448"
+      }
+    ],
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
+    "createdAt": "2026-05-22T22:07:44.8979281",
+    "updatedAt": "2026-05-22T22:12:58.7895735"
   }
 ]

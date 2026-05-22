@@ -29,11 +29,11 @@
     "passwordSalt": "47b2cb8010446034c03219029f07ca41",
     "email": "ccc@gmail.com",
     "role": "BIDDER",
-    "balance": 5.785435356583535E15,
-    "frozenBalance": 100000.0,
+    "balance": 5.785435356571189E15,
+    "frozenBalance": 112345.6,
     "id": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "createdAt": "2026-05-08T14:05:41.3492979",
-    "updatedAt": "2026-05-22T17:00:01.4503571"
+    "updatedAt": "2026-05-22T22:12:58.7775455"
   },
   {
     "username": "seller",

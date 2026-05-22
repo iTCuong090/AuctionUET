@@ -29,7 +29,7 @@ public class LoginController {
         String password = passwordField.getText();
 
         if (username.isBlank() || password.isBlank()) {
-            errorLabel.setText("Loi: Khong duoc de trong!");
+            errorLabel.setText("Lỗi: Không được để trống!");
             errorLabel.setVisible(true);
             return;
         }
@@ -39,12 +39,12 @@ public class LoginController {
         try {
             port = Integer.parseInt(serverPortField.getText().trim());
         } catch (NumberFormatException e) {
-            errorLabel.setText("Loi: Port phai la so!");
+            errorLabel.setText("Lỗi: Port phải là số!");
             errorLabel.setVisible(true);
             return;
         }
 
-        errorLabel.setText("Dang ket noi Server...");
+        errorLabel.setText("Đang kết nối Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         loginButton.setDisable(true);
@@ -63,7 +63,7 @@ public class LoginController {
                 });
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> {
-                    errorLabel.setText("Loi dang nhap: " + e.getMessage());
+                    errorLabel.setText("Lỗi đăng nhập: " + e.getMessage());
                     errorLabel.setStyle("-fx-text-fill: red;");
                     loginButton.setDisable(false);
                     e.printStackTrace();

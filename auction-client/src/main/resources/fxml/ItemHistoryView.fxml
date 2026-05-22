@@ -42,7 +42,7 @@
                         <Label fx:id="nameLabel" styleClass="text-accent" text="Vật phẩm: Đang tải...">
                            <font><Font name="System Bold" size="22.0" /></font>
                         </Label>
-                        <Label fx:id="ownerLabel" styleClass="text-secondary" text="Owner: --" />
+                        <Label fx:id="ownerLabel" styleClass="text-secondary" text="Chủ sở hữu: --" />
                         <Label fx:id="typeLabel" styleClass="text-secondary" text="🏷 Loại: --" />
                         <Label fx:id="specLabel" styleClass="text-detail" text="⚙ Thông số: --" wrapText="true" />
                         <Label fx:id="conditionLabel" styleClass="text-detail" text="✨ Tình trạng: --" />

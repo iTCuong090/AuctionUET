@@ -39,17 +39,17 @@ public class RegisterController {
         String selectedRole = roleComboBox.getValue();
 
         if (selectedRole == null) {
-            showError("Loi: Vui long chon vai tro.");
+            showError("Lỗi: Vui lòng chọn vai trò.");
             return;
         }
 
         if (username.isBlank() || password.isBlank() || email.isBlank()) {
-            showError("Loi: Vui long dien du thong tin!");
+            showError("Lỗi: Vui lòng điền đủ thông tin!");
             return;
         }
 
         if (!password.equals(confirm)) {
-            showError("Loi: Mat khau nhap lai khong khop!");
+            showError("Lỗi: Mật khẩu nhập lại không khớp!");
             return;
         }
 
@@ -58,12 +58,12 @@ public class RegisterController {
         try {
             port = Integer.parseInt(serverPortField.getText().trim());
         } catch (NumberFormatException e) {
-            showError("Loi: Port phai la so!");
+            showError("Lỗi: Port phải là số!");
             return;
         }
 
         String role = selectedRole.toUpperCase();
-        errorLabel.setText("Dang ket noi Server...");
+        errorLabel.setText("Đang kết nối Server...");
         errorLabel.setStyle("-fx-text-fill: blue;");
         errorLabel.setVisible(true);
         registerButton.setDisable(true);
@@ -76,7 +76,7 @@ public class RegisterController {
                 client.register(username, password, email, role);
 
                 javafx.application.Platform.runLater(() -> {
-                    errorLabel.setText("Dang ky thanh cong! Dang chuyen sang Dang nhap...");
+                    errorLabel.setText("Đăng ký thành công! Đang chuyển sang Đăng nhập...");
                     errorLabel.setStyle("-fx-text-fill: green;");
 
                     javafx.animation.PauseTransition pause =
@@ -91,7 +91,7 @@ public class RegisterController {
                 });
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> {
-                    errorLabel.setText("Loi dang ky: " + e.getMessage());
+                    errorLabel.setText("Lỗi đăng ký: " + e.getMessage());
                     errorLabel.setStyle("-fx-text-fill: red;");
                     registerButton.setDisable(false);
                     e.printStackTrace();

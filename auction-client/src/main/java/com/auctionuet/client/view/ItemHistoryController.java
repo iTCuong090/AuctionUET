@@ -48,32 +48,32 @@ public class ItemHistoryController {
 
     private void updateItemInfo(ItemDTO item) {
         if (item == null) {
-            statusLabel.setText("Khong tim thay vat pham.");
+            statusLabel.setText("Không tìm thấy vật phẩm.");
             return;
         }
 
         nameLabel.setText("Vật phẩm: " + item.getName());
-        ownerLabel.setText("Owner: " + usernameOf(item.getSeller()));
-        typeLabel.setText("Loai: " + item.getType());
-        conditionLabel.setText("Tinh trang: " + valueOrEmpty(item.getCondition()));
+        ownerLabel.setText("Chủ sở hữu: " + usernameOf(item.getSeller()));
+        typeLabel.setText("Loại: " + item.getType());
+        conditionLabel.setText("Tình trạng: " + valueOrEmpty(item.getCondition()));
         descriptionLabel.setText(nullToEmpty(item.getDescription()));
-        specLabel.setText("Thong so: " + formatExtraFields(item.getExtraFields()));
+        specLabel.setText("Thông số: " + formatExtraFields(item.getExtraFields()));
     }
 
     private void loadAuctionHistory() {
         String token = ClientSession.getInstance().getToken();
         if (token == null || currentItem == null) {
-            statusLabel.setText("Ban chua dang nhap.");
+            statusLabel.setText("Bạn chưa đăng nhập.");
             return;
         }
 
-        statusLabel.setText("Dang tai lich su vat pham...");
+        statusLabel.setText("Đang tải lịch sử vật phẩm...");
         new Thread(() -> {
             try {
                 List<AuctionDTO> history = itemClient.getItemAuctionHistory(token, currentItem.getId());
                 Platform.runLater(() -> renderAuctionHistory(history));
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi tai lich su vat pham: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi tải lịch sử vật phẩm: " + e.getMessage()));
             }
         }).start();
     }
@@ -88,7 +88,7 @@ public class ItemHistoryController {
     }
 
     private void setupPriceChart() {
-        priceSeries.setName("Gia phien");
+        priceSeries.setName("Giá phiên");
         priceChart.setAnimated(false);
         priceChart.setCreateSymbols(true);
         priceChart.getData().clear();
@@ -100,7 +100,7 @@ public class ItemHistoryController {
         priceSeries.getData().clear();
 
         if (history == null || history.isEmpty()) {
-            statusLabel.setText("Vat pham nay chua tung gan voi phien dau gia nao.");
+            statusLabel.setText("Vật phẩm này chưa từng gắn với phiên đấu giá nào.");
             return;
         }
 
@@ -114,7 +114,7 @@ public class ItemHistoryController {
             priceSeries.getData().add(new XYChart.Data<>(i + 1, auction.getCurrentPrice()));
         }
 
-        statusLabel.setText("Co " + sortedHistory.size() + " phien dau gia gan voi vat pham nay.");
+        statusLabel.setText("Có " + sortedHistory.size() + " phiên đấu giá gắn với vật phẩm này.");
     }
 
     private LocalDateTime historyTime(AuctionDTO auction) {
@@ -173,7 +173,7 @@ public class ItemHistoryController {
     }
 
     private String formatTime(LocalDateTime time) {
-        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+        return time != null ? time.format(DISPLAY_TIME) : "Chưa rõ";
     }
 
     private String nullToEmpty(String value) {
@@ -185,10 +185,10 @@ public class ItemHistoryController {
     }
 
     private String valueOrUnknown(String value) {
-        return value != null && !value.isBlank() ? value : "Chua ro";
+        return value != null && !value.isBlank() ? value : "Chưa rõ";
     }
 
     private String usernameOf(UserDTO user) {
-        return user != null ? user.getUsername() : "Chua ro";
+        return user != null ? user.getUsername() : "Chưa rõ";
     }
 }

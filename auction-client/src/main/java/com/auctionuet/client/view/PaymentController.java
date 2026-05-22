@@ -33,7 +33,7 @@ public class PaymentController {
     private void loadPendingPayments() {
         String token = ClientSession.getInstance().getToken();
         if (token == null) {
-            statusLabel.setText("Ban chua dang nhap.");
+            statusLabel.setText("Bạn chưa đăng nhập.");
             return;
         }
 
@@ -42,7 +42,7 @@ public class PaymentController {
                 List<AuctionDTO> auctions = auctionClient.getMyPendingPayments(token);
                 Platform.runLater(() -> renderPayments(auctions));
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi tai danh sach thanh toan: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi tải danh sách thanh toán: " + e.getMessage()));
             }
         }).start();
     }
@@ -50,11 +50,11 @@ public class PaymentController {
     private void renderPayments(List<AuctionDTO> auctions) {
         paymentGrid.getChildren().clear();
         if (auctions == null || auctions.isEmpty()) {
-            statusLabel.setText("Khong co phien dau gia nao dang cho thanh toan.");
+            statusLabel.setText("Không có phiên đấu giá nào đang chờ thanh toán.");
             return;
         }
 
-        statusLabel.setText("Co " + auctions.size() + " phien dang cho thanh toan.");
+        statusLabel.setText("Có " + auctions.size() + " phiên đang chờ thanh toán.");
         for (AuctionDTO auction : auctions) {
             paymentGrid.getChildren().add(createPaymentCard(auction));
         }
@@ -72,16 +72,16 @@ public class PaymentController {
 
         double deposit = auction.getDepositAmount();
         double remaining = Math.max(0, auction.getCurrentPrice() - deposit);
-        Label price = new Label(String.format("Con can tra: %,.0f VND", remaining));
+        Label price = new Label(String.format("Còn cần trả: %,.0f VND", remaining));
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
-        Label total = new Label(String.format("Gia thang: %,.0f VND | Coc: %,.0f VND",
+        Label total = new Label(String.format("Giá thắng: %,.0f VND | Cọc: %,.0f VND",
                 auction.getCurrentPrice(), deposit));
         total.getStyleClass().add("text-secondary");
         total.setWrapText(true);
 
-        Label deadline = new Label("Han: " + formatTime(auction.getPaymentDeadlineAt()));
+        Label deadline = new Label("Hạn: " + formatTime(auction.getPaymentDeadlineAt()));
         deadline.getStyleClass().add("text-secondary");
 
         Button payButton = new Button("Thanh toán");
@@ -108,11 +108,11 @@ public class PaymentController {
                 contentArea.getChildren().setAll(root);
             }
         } catch (Exception e) {
-            statusLabel.setText("Loi mo chi tiet phien dau gia: " + e.getMessage());
+            statusLabel.setText("Lỗi mở chi tiết phiên đấu giá: " + e.getMessage());
         }
     }
 
     private String formatTime(LocalDateTime time) {
-        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+        return time != null ? time.format(DISPLAY_TIME) : "Chưa rõ";
     }
 }

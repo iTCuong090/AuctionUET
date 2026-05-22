@@ -42,7 +42,7 @@ public class HomeController {
             statAuctionCount.setText("0");
             statRunningCount.setText("0");
             statFinishedCount.setText("0");
-            endingSoonPlaceholder.setText("Vui long dang nhap de xem du lieu.");
+            endingSoonPlaceholder.setText("Vui lòng đăng nhập để xem dữ liệu.");
             return;
         }
 
@@ -74,11 +74,11 @@ public class HomeController {
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    System.out.println("Loi tai trang chu: " + e.getMessage());
+                    System.out.println("Lỗi tải trang chủ: " + e.getMessage());
                     statAuctionCount.setText("-");
                     statRunningCount.setText("-");
                     statFinishedCount.setText("-");
-                    endingSoonPlaceholder.setText("Khong the tai du lieu.");
+                    endingSoonPlaceholder.setText("Không thể tải dữ liệu.");
                 });
             }
         }).start();
@@ -88,7 +88,7 @@ public class HomeController {
         endingSoonBox.getChildren().clear();
 
         if (endingSoon.isEmpty()) {
-            Label empty = new Label("Hien chua co phien dau gia nao dang dien ra.");
+            Label empty = new Label("Hiện chưa có phiên đấu giá nào đang diễn ra.");
             empty.setStyle("-fx-font-style: italic; -fx-font-size: 16px;");
             empty.getStyleClass().add("text-secondary");
             endingSoonBox.getChildren().add(empty);
@@ -112,7 +112,7 @@ public class HomeController {
             "-fx-border-width: 1;"
         );
 
-        Label title = new Label(auction.getTitle() != null ? auction.getTitle() : "Khong co tieu de");
+        Label title = new Label(auction.getTitle() != null ? auction.getTitle() : "Không có tiêu đề");
         title.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
@@ -121,16 +121,16 @@ public class HomeController {
         price.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 
-        Label timeLabel = new Label("Ket thuc: " + formatTime(auction.getEndTime()));
+        Label timeLabel = new Label("Kết thúc: " + formatTime(auction.getEndTime()));
         timeLabel.setStyle("-fx-font-size: 13px;");
         timeLabel.getStyleClass().add("text-detail");
 
-        String seller = auction.getSeller() != null ? auction.getSeller().getUsername() : "Chua ro";
+        String seller = auction.getSeller() != null ? auction.getSeller().getUsername() : "Chưa rõ";
         Label sellerLabel = new Label("Seller: " + seller);
         sellerLabel.setStyle("-fx-font-size: 13px;");
         sellerLabel.getStyleClass().add("text-secondary");
 
-        Button btnDetail = new Button("Xem chi tiet");
+        Button btnDetail = new Button("Xem chi tiết");
         btnDetail.setMaxWidth(Double.MAX_VALUE);
         btnDetail.setStyle(
             "-fx-background-color: #4ecdc4; " +
@@ -155,7 +155,7 @@ public class HomeController {
                     ((javafx.scene.layout.BorderPane) currentRoot).setCenter(detailRoot);
                 }
             } catch (Exception ex) {
-                System.out.println("Loi chuyen trang chi tiet: " + ex.getMessage());
+                System.out.println("Lỗi chuyển trang chi tiết: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
@@ -165,7 +165,7 @@ public class HomeController {
     }
 
     private String formatTime(LocalDateTime time) {
-        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+        return time != null ? time.format(DISPLAY_TIME) : "Chưa rõ";
     }
 
     private void openAuctionList() {
@@ -183,7 +183,7 @@ public class HomeController {
                 ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
             }
         } catch (Exception e) {
-            System.out.println("Loi chuyen sang danh sach dau gia: " + e.getMessage());
+            System.out.println("Lỗi chuyển sang danh sách đấu giá: " + e.getMessage());
         }
     }
 }

@@ -45,9 +45,9 @@ public class ProfileController {
                 roleLabel.setStyle("-fx-background-color: #3498db; -fx-background-radius: 10; -fx-padding: 6 18;");
             }
 
-            balanceLabel.setText("Dang tai...");
+            balanceLabel.setText("Đang tải...");
         } else {
-            usernameLabel.setText("Chua dang nhap");
+            usernameLabel.setText("Chưa đăng nhập");
             roleLabel.setText("N/A");
             balanceLabel.setText("0 VND");
         }
@@ -67,7 +67,7 @@ public class ProfileController {
                 double balance = walletInfo != null ? walletInfo.getBalance() : 0.0;
                 Platform.runLater(() -> balanceLabel.setText(String.format("%,.0f VND", balance)));
             } catch (Exception e) {
-                Platform.runLater(() -> balanceLabel.setText("Loi"));
+                Platform.runLater(() -> balanceLabel.setText("Lỗi"));
             }
         }).start();
     }
@@ -87,7 +87,7 @@ public class ProfileController {
                 ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
             }
         } catch (Exception e) {
-            System.err.println("Loi chuyen sang vi: " + e.getMessage());
+            System.err.println("Lỗi chuyển sang ví: " + e.getMessage());
         }
     }
 
@@ -131,7 +131,7 @@ public class ProfileController {
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    System.out.println("Loi tai thong ke Profile: " + e.getMessage());
+                    System.out.println("Lỗi tải thống kê Profile: " + e.getMessage());
                     setStatsDefault();
                 });
             }

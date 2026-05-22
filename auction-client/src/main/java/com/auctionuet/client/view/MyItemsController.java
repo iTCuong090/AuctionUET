@@ -24,7 +24,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MyItemsController {
-    private static final String NO_AUCTION_STATUS = "Not listed";
+    private static final String ALL_STATUS = "Tất cả";
+    private static final String NO_AUCTION_STATUS = "NOT_LISTED";
 
     @FXML private FlowPane itemGrid;
     @FXML private Label statusLabel;
@@ -49,12 +50,12 @@ public class MyItemsController {
     }
 
     private void setupFilters() {
-        filterComboBox.getItems().add("Tat ca");
+        filterComboBox.getItems().add(ALL_STATUS);
         filterComboBox.getItems().add(NO_AUCTION_STATUS);
         for (AuctionStatus status : AuctionStatus.values()) {
             filterComboBox.getItems().add(status.name());
         }
-        filterComboBox.setValue("Tat ca");
+        filterComboBox.setValue(ALL_STATUS);
         filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
@@ -66,7 +67,7 @@ public class MyItemsController {
                 Parent form = FXMLLoader.load(getClass().getResource("/fxml/CreateItemView.fxml"));
                 createItemHost.getChildren().setAll(form);
             } catch (Exception e) {
-                statusLabel.setText("Loi mo form tao vat pham: " + e.getMessage());
+                statusLabel.setText("Lỗi mở form tạo vật phẩm: " + e.getMessage());
                 return;
             }
         }
@@ -80,7 +81,7 @@ public class MyItemsController {
     private void loadMyItems() {
         String token = ClientSession.getInstance().getToken();
         if (token == null) {
-            statusLabel.setText("Ban chua dang nhap.");
+            statusLabel.setText("Bạn chưa đăng nhập.");
             return;
         }
 
@@ -93,7 +94,7 @@ public class MyItemsController {
                     applyFilters();
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi tai vat pham: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi tải vật phẩm: " + e.getMessage()));
             }
         }).start();
     }
@@ -144,7 +145,7 @@ public class MyItemsController {
     }
 
     private boolean matchesStatus(ItemCardData item, String selectedStatus) {
-        if (selectedStatus == null || selectedStatus.equals("Tat ca")) {
+        if (selectedStatus == null || selectedStatus.equals(ALL_STATUS)) {
             return true;
         }
         return selectedStatus.equals(item.auctionStatus());
@@ -170,7 +171,7 @@ public class MyItemsController {
     private void renderItems(List<ItemCardData> items) {
         itemGrid.getChildren().clear();
         if (items == null || items.isEmpty()) {
-            statusLabel.setText(allItems.isEmpty() ? "Ban chua co vat pham nao." : "Khong co vat pham phu hop.");
+            statusLabel.setText(allItems.isEmpty() ? "Bạn chưa có vật phẩm nào." : "Không có vật phẩm phù hợp.");
             return;
         }
 
@@ -195,12 +196,12 @@ public class MyItemsController {
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
-        Label type = new Label("Loai: " + item.getType());
+        Label type = new Label("Loại: " + item.getType());
         type.getStyleClass().add("text-secondary");
         type.setWrapText(true);
         type.setStyle("-fx-font-size: 13px;");
 
-        Label condition = new Label("Tinh trang: " + item.getCondition());
+        Label condition = new Label("Tình trạng: " + item.getCondition());
         condition.getStyleClass().add("text-secondary");
         condition.setWrapText(true);
         condition.setStyle("-fx-font-size: 13px;");
@@ -241,7 +242,7 @@ public class MyItemsController {
     }
 
     private String formatAuctionStatusBadge(String auctionStatus) {
-        return NO_AUCTION_STATUS.equals(auctionStatus) ? "NOT LISTED" : auctionStatus;
+        return auctionStatus;
     }
 
     private void applyAuctionStatusStyle(Label badge, String auctionStatus) {
@@ -318,11 +319,11 @@ public class MyItemsController {
             try {
                 itemClient.deleteItem(token, item.getId());
                 Platform.runLater(() -> {
-                    statusLabel.setText("Da go vat pham: " + item.getName());
+                    statusLabel.setText("Đã gỡ vật phẩm: " + item.getName());
                     loadMyItems();
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi go vat pham: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi gỡ vật phẩm: " + e.getMessage()));
             }
         }).start();
     }
@@ -342,7 +343,7 @@ public class MyItemsController {
                 contentArea.getChildren().setAll(root);
             }
         } catch (Exception e) {
-            statusLabel.setText("Loi mo lich su vat pham: " + e.getMessage());
+            statusLabel.setText("Lỗi mở lịch sử vật phẩm: " + e.getMessage());
         }
     }
 
@@ -361,7 +362,7 @@ public class MyItemsController {
                 contentArea.getChildren().setAll(root);
             }
         } catch (Exception e) {
-            statusLabel.setText("Loi mo man tao phien: " + e.getMessage());
+            statusLabel.setText("Lỗi mở màn tạo phiên: " + e.getMessage());
         }
     }
 

@@ -38,12 +38,12 @@ public class CreateAuctionController {
 
         itemComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                previewName.setText("Ten: " + newVal.getName());
-                previewPrice.setText(String.format("Gia khoi diem: %,.0f VND", newVal.getStartingPrice()));
-                previewType.setText("Loai: " + newVal.getType());
+                previewName.setText("Tên: " + newVal.getName());
+                previewPrice.setText(String.format("Giá khởi điểm: %,.0f VND", newVal.getStartingPrice()));
+                previewType.setText("Loại: " + newVal.getType());
 
                 if (titleField.getText().isEmpty()) {
-                    titleField.setText("Dau gia: " + newVal.getName());
+                    titleField.setText("Đấu giá: " + newVal.getName());
                 }
             }
         });
@@ -70,20 +70,20 @@ public class CreateAuctionController {
         LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
 
         if (start == null || end == null) {
-            durationLabel.setText("Thoi luong: Vui long chon du ngay gio.");
+            durationLabel.setText("Thời lượng: Vui lòng chọn đủ ngày giờ.");
             durationLabel.setStyle("-fx-text-fill: #f39c12;");
             return;
         }
 
         if (!end.isAfter(start)) {
-            durationLabel.setText("Loi: Thoi gian ket thuc phai sau thoi gian bat dau.");
+            durationLabel.setText("Lỗi: Thời gian kết thúc phải sau thời gian bắt đầu.");
             durationLabel.setStyle("-fx-text-fill: #e94560;");
             return;
         }
 
         Duration duration = Duration.between(start, end);
         durationLabel.setText(String.format(
-                "Thoi luong du kien: %d ngay, %d gio, %d phut",
+                "Thời lượng dự kiến: %d ngày, %d giờ, %d phút",
                 duration.toDays(),
                 duration.toHoursPart(),
                 duration.toMinutesPart()));
@@ -104,11 +104,11 @@ public class CreateAuctionController {
         LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
 
         if (selectedItem == null || title.isBlank() || start == null || end == null) {
-            showError("Vui long dien day du thong tin bat buoc.");
+            showError("Vui lòng điền đầy đủ thông tin bắt buộc.");
             return;
         }
         if (!end.isAfter(start)) {
-            showError("Thoi gian ket thuc khong hop le.");
+            showError("Thời gian kết thúc không hợp lệ.");
             return;
         }
 
@@ -122,17 +122,17 @@ public class CreateAuctionController {
                 extensionSec = Integer.parseInt(antiSnipingExtensionField.getText().trim());
             }
         } catch (NumberFormatException ex) {
-            showError("Anti-Sniping phai la so nguyen.");
+            showError("Anti-Sniping phải là số nguyên.");
             return;
         }
 
         String token = ClientSession.getInstance().getToken();
         if (token == null || token.isEmpty()) {
-            showError("Vui long dang nhap lai.");
+            showError("Vui lòng đăng nhập lại.");
             return;
         }
 
-        statusLabel.setText("Dang xu ly...");
+        statusLabel.setText("Đang xử lý...");
         statusLabel.setStyle("-fx-text-fill: #f39c12;");
 
         final int finalWindowSec = windowSec;
@@ -151,17 +151,17 @@ public class CreateAuctionController {
                         finalExtSec);
 
                 Platform.runLater(() -> {
-                    statusLabel.setText("Tao phien dau gia thanh cong.");
+                    statusLabel.setText("Tạo phiên đấu giá thành công.");
                     statusLabel.setStyle("-fx-text-fill: #2ecc71;");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Loi tu server: " + e.getMessage()));
+                Platform.runLater(() -> showError("Lỗi từ server: " + e.getMessage()));
             }
         }).start();
     }
 
     private void showError(String msg) {
-        statusLabel.setText("Loi: " + msg);
+        statusLabel.setText("Lỗi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
@@ -173,7 +173,7 @@ public class CreateAuctionController {
     private void loadMyItems() {
         String token = ClientSession.getInstance().getToken();
         if (token == null || token.isEmpty()) {
-            System.err.println("[CreateAuction] Chua dang nhap, khong the tai item.");
+            System.err.println("[CreateAuction] Chưa đăng nhập, không thể tải item.");
             return;
         }
 
@@ -184,13 +184,13 @@ public class CreateAuctionController {
                     itemComboBox.setItems(FXCollections.observableArrayList(items));
                     selectInitialItemIfLoaded();
                     if (items.isEmpty()) {
-                        statusLabel.setText("Ban chua co san pham nao. Hay tao san pham truoc.");
+                        statusLabel.setText("Bạn chưa có sản phẩm nào. Hãy tạo sản phẩm trước.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Khong the tai danh sach san pham: " + e.getMessage()));
-                System.err.println("[CreateAuction] Loi tai item: " + e.getMessage());
+                Platform.runLater(() -> showError("Không thể tải danh sách sản phẩm: " + e.getMessage()));
+                System.err.println("[CreateAuction] Lỗi tải item: " + e.getMessage());
             }
         }).start();
     }

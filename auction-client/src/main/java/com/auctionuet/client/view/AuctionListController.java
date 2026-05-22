@@ -9,7 +9,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.geometry.Bounds;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
@@ -23,6 +25,7 @@ public class AuctionListController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @FXML private FlowPane auctionGrid;
+    @FXML private ScrollPane auctionScrollPane;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
 
@@ -30,13 +33,32 @@ public class AuctionListController {
 
     @FXML
     public void initialize() {
-        filterComboBox.getItems().addAll("Tat ca", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
-        filterComboBox.setValue("Tat ca");
+        filterComboBox.getItems().addAll("Tất cả", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
+        filterComboBox.setValue("Tất cả");
         filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
+        setupStableGridWidth();
 
         loadAuctionsFromServer();
+    }
+
+    private void setupStableGridWidth() {
+        auctionScrollPane.viewportBoundsProperty().addListener((obs, oldBounds, newBounds) ->
+                syncGridWidth(newBounds));
+        Platform.runLater(() -> syncGridWidth(auctionScrollPane.getViewportBounds()));
+    }
+
+    private void syncGridWidth(Bounds viewportBounds) {
+        if (viewportBounds == null || viewportBounds.getWidth() <= 0) {
+            return;
+        }
+
+        double width = viewportBounds.getWidth();
+        auctionGrid.setMinWidth(width);
+        auctionGrid.setPrefWidth(width);
+        auctionGrid.setMaxWidth(width);
+        auctionGrid.setPrefWrapLength(width);
     }
 
     private void loadAuctionsFromServer() {
@@ -52,7 +74,7 @@ public class AuctionListController {
                     applyFilters();
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> System.out.println("Loi tai danh sach dau gia: " + e.getMessage()));
+                Platform.runLater(() -> System.out.println("Lỗi tải danh sách đấu giá: " + e.getMessage()));
             }
         }).start();
     }
@@ -76,7 +98,7 @@ public class AuctionListController {
     }
 
     private boolean matchesStatus(AuctionDTO auction, String selectedStatus) {
-        if (selectedStatus == null || selectedStatus.equals("Tat ca")) {
+        if (selectedStatus == null || selectedStatus.equals("Tất cả")) {
             return true;
         }
         return auction.getStatus() != null && selectedStatus.equals(auction.getStatus().name());
@@ -133,7 +155,7 @@ public class AuctionListController {
         }
 
         VBox infoBox = new VBox(5);
-        Label timeLabel = new Label("Ket thuc: " + formatTime(item.getEndTime()));
+        Label timeLabel = new Label("Kết thúc: " + formatTime(item.getEndTime()));
         Label sellerLabel = new Label("Seller: " + valueOrUnknown(item.getSeller() != null ? item.getSeller().getUsername() : null));
 
         String subStyle = "-fx-font-size: 13px;";
@@ -144,7 +166,7 @@ public class AuctionListController {
 
         infoBox.getChildren().addAll(timeLabel, sellerLabel);
 
-        Button btnDetail = new Button("Xem chi tiet");
+        Button btnDetail = new Button("Xem chi tiết");
         btnDetail.getStyleClass().add("button");
         btnDetail.setMaxWidth(Double.MAX_VALUE);
 
@@ -183,16 +205,16 @@ public class AuctionListController {
                 System.out.println("Dashboard layout khong khop.");
             }
         } catch (Exception ex) {
-            System.out.println("Loi chuyen man hinh: " + ex.getMessage());
+            System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
 
     private String formatTime(LocalDateTime time) {
-        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+        return time != null ? time.format(DISPLAY_TIME) : "Chưa rõ";
     }
 
     private String valueOrUnknown(String value) {
-        return value != null ? value : "Chua ro";
+        return value != null ? value : "Chưa rõ";
     }
 }

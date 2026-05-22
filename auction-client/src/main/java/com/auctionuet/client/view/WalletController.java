@@ -51,7 +51,7 @@ public class WalletController {
                     statusLabel.setText("");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi tai vi: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi tải ví: " + e.getMessage()));
             }
         }).start();
     }
@@ -65,7 +65,7 @@ public class WalletController {
                 List<TransactionDTO> transactions = walletClient.getMyTransactions(token);
                 Platform.runLater(() -> renderTransactions(transactions));
             } catch (Exception e) {
-                Platform.runLater(() -> transactionListView.getItems().setAll("Loi tai lich su: " + e.getMessage()));
+                Platform.runLater(() -> transactionListView.getItems().setAll("Lỗi tải lịch sử: " + e.getMessage()));
             }
         }).start();
     }
@@ -74,14 +74,14 @@ public class WalletController {
     private void handleGenerateQr() {
         String amountText = depositAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("Vui long nhap so tien can nap.");
+            statusLabel.setText("Vui lòng nhập số tiền cần nạp.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("So tien phai lon hon 0.");
+                statusLabel.setText("Số tiền phải lớn hơn 0.");
                 return;
             }
 
@@ -92,10 +92,10 @@ public class WalletController {
             generateQrBtn.setVisible(false);
             generateQrBtn.setManaged(false);
 
-            statusLabel.setText("Vui long quet ma QR, sau do nhan Xac nhan.");
+            statusLabel.setText("Vui lòng quét mã QR, sau đó nhấn Xác nhận.");
             statusLabel.setStyle("-fx-text-fill: #22c55e;");
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
         }
     }
 
@@ -111,7 +111,7 @@ public class WalletController {
                     WalletResponseDTO newWallet = walletClient.deposit(token, amount);
                     Platform.runLater(() -> {
                         renderWallet(newWallet);
-                        statusLabel.setText("Nap tien thanh cong!");
+                        statusLabel.setText("Nạp tiền thành công!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
 
                         depositAmountField.clear();
@@ -125,13 +125,13 @@ public class WalletController {
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("Loi nap tien: " + e.getMessage());
+                        statusLabel.setText("Lỗi nạp tiền: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -140,14 +140,14 @@ public class WalletController {
     private void handleWithdraw() {
         String amountText = withdrawAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("Vui long nhap so tien can rut.");
+            statusLabel.setText("Vui lòng nhập số tiền cần rút.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("So tien phai lon hon 0.");
+                statusLabel.setText("Số tiền phải lớn hơn 0.");
                 return;
             }
 
@@ -158,20 +158,20 @@ public class WalletController {
                     WalletResponseDTO newWallet = walletClient.withdraw(token, amount);
                     Platform.runLater(() -> {
                         renderWallet(newWallet);
-                        statusLabel.setText("Rut tien thanh cong!");
+                        statusLabel.setText("Rút tiền thành công!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
                         withdrawAmountField.clear();
                         loadTransactionHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("Loi rut tien: " + e.getMessage());
+                        statusLabel.setText("Lỗi rút tiền: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -189,14 +189,14 @@ public class WalletController {
     private void renderTransactions(List<TransactionDTO> transactions) {
         transactionListView.getItems().clear();
         if (transactions == null || transactions.isEmpty()) {
-            transactionListView.getItems().add("Chua co giao dich nao.");
+            transactionListView.getItems().add("Chưa có giao dịch nào.");
             return;
         }
 
         for (TransactionDTO transaction : transactions) {
             String time = transaction.getCreatedAt() != null
                     ? transaction.getCreatedAt().format(DISPLAY_TIME)
-                    : "Chua ro";
+                    : "Chưa rõ";
             String auctionText = transaction.getAuctionId() != null
                     ? " | Auction: " + transaction.getAuctionId()
                     : "";

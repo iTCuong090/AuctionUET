@@ -185,5 +185,24 @@
     "id": "25676425-e800-4b22-aa03-6d5ebcdf2b0c",
     "createdAt": "2026-05-22T18:12:25.5558137",
     "updatedAt": "2026-05-22T18:13:02.4801559"
+  },
+  {
+    "name": "cảnh đẹp",
+    "description": "xấu",
+    "startingPrice": 123456.0,
+    "type": "ART",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "imageUrl": "anh.jpg",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "artist": "congcao",
+      "year": 2022.0,
+      "medium": "sơn dầu"
+    },
+    "id": "b0f56b8f-15ac-425a-93e6-172534128d15",
+    "createdAt": "2026-05-22T22:06:44.9601122",
+    "updatedAt": "2026-05-22T22:07:44.900924"
   }
 ]

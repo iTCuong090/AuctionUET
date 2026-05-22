@@ -97,7 +97,7 @@ public class BiddingController {
                     renderAuctionDeposit();
 
                     if (auction.getCurrentHighestBid() != null) {
-                        leaderLabel.setText("Leader: " + usernameOf(auction.getCurrentHighestBid().getBidder()));
+                        leaderLabel.setText("Người dẫn đầu: " + usernameOf(auction.getCurrentHighestBid().getBidder()));
                     }
 
                     if (auction.getEndTime() != null) {
@@ -106,7 +106,7 @@ public class BiddingController {
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> titleLabel.setText("Loi tai chi tiet: " + e.getMessage()));
+                Platform.runLater(() -> titleLabel.setText("Lỗi tải chi tiết: " + e.getMessage()));
             }
         }).start();
     }
@@ -120,7 +120,7 @@ public class BiddingController {
                 WalletResponseDTO wallet = walletClient.getWallet(token);
                 Platform.runLater(() -> renderWallet(wallet));
             } catch (Exception e) {
-                Platform.runLater(() -> balanceLabel.setText("Loi tai vi"));
+                Platform.runLater(() -> balanceLabel.setText("Lỗi tải ví"));
             }
         }).start();
     }
@@ -138,11 +138,11 @@ public class BiddingController {
                         }
 
                         BidDTO latest = history.get(history.size() - 1);
-                        leaderLabel.setText("Leader: " + usernameOf(latest.getBidder()));
+                        leaderLabel.setText("Người dẫn đầu: " + usernameOf(latest.getBidder()));
                     }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> bidHistoryList.getItems().add("Loi tai lich su"));
+                Platform.runLater(() -> bidHistoryList.getItems().add("Lỗi tải lịch sử"));
             }
         }).start();
     }
@@ -158,8 +158,8 @@ public class BiddingController {
                 if (bid == null) return;
 
                 priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
-                leaderLabel.setText("Leader: " + usernameOf(bid.getBidder()));
-                bidHistoryList.getItems().add(0, "Vua xong - " + formatBid(bid));
+                leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
+                bidHistoryList.getItems().add(0, "Vừa xong - " + formatBid(bid));
                 if (isCurrentUser(bid.getBidder())) {
                     currentUserDeposited = true;
                     renderAuctionDeposit();
@@ -186,12 +186,12 @@ public class BiddingController {
                 if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
 
                 if (countdownTimeline != null) countdownTimeline.stop();
-                timeLeftLabel.setText("Da ket thuc");
-                statusBadge.setText("DA KET THUC");
+                timeLeftLabel.setText("Đã kết thúc");
+                statusBadge.setText("ĐÃ KẾT THÚC");
                 statusBadge.getStyleClass().remove("status-badge-running");
                 statusBadge.getStyleClass().add("status-badge-finished");
-                leaderLabel.setText("Winner: " + usernameOf(data.getWinner())
-                        + " (Gia: " + String.format("%,.0f VND", data.getFinalPrice()) + ")");
+                leaderLabel.setText("Người thắng: " + usernameOf(data.getWinner())
+                        + " (Giá: " + String.format("%,.0f VND", data.getFinalPrice()) + ")");
                 currentUserDeposited = currentUserDeposited && isCurrentUser(data.getWinner());
                 renderAuctionDeposit();
                 loadWalletInfo();
@@ -209,7 +209,7 @@ public class BiddingController {
             try {
                 bidClient.subscribe(ClientSession.getInstance().getToken(), auctionId);
             } catch (Exception e) {
-                Platform.runLater(() -> bidStatusLabel.setText("Loi subscribe: " + e.getMessage()));
+                Platform.runLater(() -> bidStatusLabel.setText("Lỗi subscribe: " + e.getMessage()));
             }
         }).start();
     }
@@ -227,13 +227,13 @@ public class BiddingController {
         countdownTimeline = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
             long secs = Duration.between(LocalDateTime.now(), endDateTime).getSeconds();
             if (secs <= 0) {
-                timeLeftLabel.setText("Da ket thuc");
+                timeLeftLabel.setText("Đã kết thúc");
                 countdownTimeline.stop();
             } else {
                 long h = secs / 3600;
                 long m = (secs % 3600) / 60;
                 long s = secs % 60;
-                timeLeftLabel.setText(String.format("Con: %02d:%02d:%02d", h, m, s));
+                timeLeftLabel.setText(String.format("Còn: %02d:%02d:%02d", h, m, s));
             }
         }));
         countdownTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
@@ -267,7 +267,7 @@ public class BiddingController {
     private void handlePlaceBid() {
         String amountText = bidAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            bidStatusLabel.setText("Vui long nhap so tien.");
+            bidStatusLabel.setText("Vui lòng nhập số tiền.");
             return;
         }
 
@@ -275,14 +275,14 @@ public class BiddingController {
             double amount = Double.parseDouble(amountText);
             String token = ClientSession.getInstance().getToken();
 
-            bidStatusLabel.setText("Dang xu ly...");
+            bidStatusLabel.setText("Đang xử lý...");
             bidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
 
             new Thread(() -> {
                 try {
                     bidClient.placeBid(token, currentAuctionId, amount);
                     Platform.runLater(() -> {
-                        bidStatusLabel.setText("Dat gia thanh cong!");
+                        bidStatusLabel.setText("Đặt giá thành công!");
                         bidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
                         bidAmountField.clear();
                         currentUserDeposited = true;
@@ -291,13 +291,13 @@ public class BiddingController {
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        bidStatusLabel.setText("Loi: " + e.getMessage());
+                        bidStatusLabel.setText("Lỗi: " + e.getMessage());
                         bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            bidStatusLabel.setText("So tien khong hop le.");
+            bidStatusLabel.setText("Số tiền không hợp lệ.");
             bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -308,7 +308,7 @@ public class BiddingController {
         String incText = incrementField.getText().replace(",", "").trim();
 
         if (maxText.isEmpty() || incText.isEmpty()) {
-            autoBidStatusLabel.setText("Vui long nhap du thong tin.");
+            autoBidStatusLabel.setText("Vui lòng nhập đủ thông tin.");
             return;
         }
 
@@ -317,7 +317,7 @@ public class BiddingController {
             double increment = Double.parseDouble(incText);
             String token = ClientSession.getInstance().getToken();
 
-            autoBidStatusLabel.setText("Dang thiet lap...");
+            autoBidStatusLabel.setText("Đang thiết lập...");
 
             new Thread(() -> {
                 try {
@@ -330,13 +330,13 @@ public class BiddingController {
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        autoBidStatusLabel.setText("Loi: " + e.getMessage());
+                        autoBidStatusLabel.setText("Lỗi: " + e.getMessage());
                         autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            autoBidStatusLabel.setText("So tien khong hop le.");
+            autoBidStatusLabel.setText("Số tiền không hợp lệ.");
         }
     }
 
@@ -347,14 +347,14 @@ public class BiddingController {
             try {
                 bidClient.cancelAutoBid(token, currentAuctionId);
                 Platform.runLater(() -> {
-                    autoBidStatusLabel.setText("Da huy Auto-Bid.");
+                    autoBidStatusLabel.setText("Đã hủy Auto-Bid.");
                     autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
                     enableAutoBidBtn.setDisable(false);
                     cancelAutoBidBtn.setDisable(true);
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    autoBidStatusLabel.setText("Loi huy Auto-Bid: " + e.getMessage());
+                    autoBidStatusLabel.setText("Lỗi hủy Auto-Bid: " + e.getMessage());
                     autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
                 });
             }
@@ -450,6 +450,6 @@ public class BiddingController {
     }
 
     private String usernameOf(UserDTO user) {
-        return user != null ? user.getUsername() : "Chua ro";
+        return user != null ? user.getUsername() : "Chưa rõ";
     }
 }
