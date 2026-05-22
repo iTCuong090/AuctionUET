@@ -1,8 +1,10 @@
 package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.enums.AutoBidStatus;
 import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.protocol.enums.BidType;
 import com.auctionuet.protocol.enums.ItemCondition;
@@ -36,6 +38,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -297,6 +300,10 @@ public class AuctionServiceTest {
         List<BidSchema> bids = bidDAO.findByAuctionId(auction.getId());
         assertEquals(1, bids.size());
         assertEquals(BidType.AUTO, bids.get(0).getBidType());
+
+        AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
+        assertEquals(AutoBidStatus.PROTECTING, state.getStatus());
+        assertEquals(1000.0, state.getProtectedUntil());
     }
 
     @Test
@@ -352,6 +359,96 @@ public class AuctionServiceTest {
         UserSchema bidderSchema = userDAO.findById("bidder1");
         assertEquals(950.0, bidderSchema.getBalance());
         assertEquals(50.0, bidderSchema.getFrozenBalance());
+
+        AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
+        assertEquals(AutoBidStatus.WAITING, state.getStatus());
+        assertEquals(520.0, state.getProtectedUntil());
+    }
+
+    @Test
+    public void testCheckAutoBidReturnsInactiveForOutbidConfig() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder1, auction.getId(), 900.0, 50.0);
+        bidService.setAutoBid(bidder2, auction.getId(), 1000.0, 50.0);
+
+        AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
+        AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
+
+        assertEquals(AutoBidStatus.INEFFECTIVE, bidder1State.getStatus());
+        assertEquals(0.0, bidder1State.getProtectedUntil());
+        assertEquals(AutoBidStatus.PROTECTING, bidder2State.getStatus());
+        assertEquals(1000.0, bidder2State.getProtectedUntil());
+    }
+
+    @Test
+    public void testSetAutoBidEqualMaxKeepsEarlierBidderAsWinner() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
+        bidService.setAutoBid(bidder2, auction.getId(), 1000.0, 50.0);
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals("bidder1", updated.getWinnerId());
+        assertEquals(1000.0, updated.getHighestBid());
+
+        AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
+        AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
+        assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
+        assertEquals(AutoBidStatus.INEFFECTIVE, bidder2State.getStatus());
+    }
+
+    @Test
+    public void testManualBidAtAutoBidMaxKeepsEarlierAutoBidderAsWinner() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
+        bidService.placeBid(bidder2, auction.getId(), 1000.0);
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals("bidder1", updated.getWinnerId());
+        assertEquals(1000.0, updated.getHighestBid());
+
+        AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
+        assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
+        assertTrue(bidDAO.findByAuctionId(auction.getId()).stream()
+                .anyMatch(bid -> "bidder1".equals(bid.getBidderId())
+                        && Double.compare(1000.0, bid.getAmount()) == 0
+                        && bid.getBidType() == BidType.AUTO));
+    }
+
+    @Test
+    public void testCheckAutoBidReturnsNullWhenMissingOrCanceled() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        assertNull(bidService.getAutoBidConfigDTO(bidder, auction.getId()));
+
+        bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0);
+        bidService.cancelAutoBid(bidder, auction.getId());
+
+        assertNull(bidService.getAutoBidConfigDTO(bidder, auction.getId()));
     }
 
     @Test
