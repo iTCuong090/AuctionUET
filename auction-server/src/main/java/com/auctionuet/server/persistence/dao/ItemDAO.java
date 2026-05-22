@@ -68,7 +68,7 @@ public class ItemDAO implements GenericDAO<ItemSchema> {
         List<ItemSchema> list = JsonFileHelper.readList(filePath, ItemSchema.class);
         List<ItemSchema> result = new java.util.ArrayList<>();
         for (ItemSchema entity : list) {
-            if (sellerId.equals(entity.getSellerId())) {
+            if (sellerId.equals(entity.getSellerId()) && !entity.isArchived()) {
                 result.add(entity);
             }
         }

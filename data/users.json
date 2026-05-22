@@ -29,11 +29,11 @@
     "passwordSalt": "47b2cb8010446034c03219029f07ca41",
     "email": "ccc@gmail.com",
     "role": "BIDDER",
-    "balance": 0.0,
-    "frozenBalance": 0.0,
+    "balance": 5.785435356583535E15,
+    "frozenBalance": 100000.0,
     "id": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "createdAt": "2026-05-08T14:05:41.3492979",
-    "updatedAt": "2026-05-08T14:05:41.3492979"
+    "updatedAt": "2026-05-22T17:00:01.4503571"
   },
   {
     "username": "seller",
@@ -94,5 +94,17 @@
     "id": "49e3c73c-e9da-4067-8c37-8bf82613fe3b",
     "createdAt": "2026-05-16T21:19:04.2341887",
     "updatedAt": "2026-05-18T16:45:25.1957209"
+  },
+  {
+    "username": "ccc777",
+    "hashedPassword": "feec2a67ea242dac728c6851f9c072430472b8b6790682005ccb9347416c2332",
+    "passwordSalt": "c099b54e7c644ac11931eed6b6677673",
+    "email": "congcao@gmail.com",
+    "role": "SELLER",
+    "balance": 1.3221323212332131E17,
+    "frozenBalance": 0.0,
+    "id": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "createdAt": "2026-05-22T16:55:28.1620134",
+    "updatedAt": "2026-05-22T18:14:02.373713"
   }
 ]

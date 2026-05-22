@@ -30,6 +30,7 @@ public class CreateAuctionController {
 
     private final ItemClient itemClient = new ItemClient();
     private final AuctionClient auctionClient = new AuctionClient();
+    private String initialItemId;
 
     @FXML
     public void initialize() {
@@ -164,6 +165,11 @@ public class CreateAuctionController {
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
+    public void setInitialItemId(String itemId) {
+        this.initialItemId = itemId;
+        selectInitialItemIfLoaded();
+    }
+
     private void loadMyItems() {
         String token = ClientSession.getInstance().getToken();
         if (token == null || token.isEmpty()) {
@@ -176,6 +182,7 @@ public class CreateAuctionController {
                 List<ItemDTO> items = itemClient.getMyItems(token);
                 Platform.runLater(() -> {
                     itemComboBox.setItems(FXCollections.observableArrayList(items));
+                    selectInitialItemIfLoaded();
                     if (items.isEmpty()) {
                         statusLabel.setText("Ban chua co san pham nao. Hay tao san pham truoc.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
@@ -186,5 +193,17 @@ public class CreateAuctionController {
                 System.err.println("[CreateAuction] Loi tai item: " + e.getMessage());
             }
         }).start();
+    }
+
+    private void selectInitialItemIfLoaded() {
+        if (initialItemId == null || itemComboBox.getItems() == null) {
+            return;
+        }
+        for (ItemDTO item : itemComboBox.getItems()) {
+            if (initialItemId.equals(item.getId())) {
+                itemComboBox.getSelectionModel().select(item);
+                return;
+            }
+        }
     }
 }

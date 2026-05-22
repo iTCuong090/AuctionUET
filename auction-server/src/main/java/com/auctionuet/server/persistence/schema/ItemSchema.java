@@ -16,6 +16,7 @@ public class ItemSchema extends BaseSchema {
     private String imageUrl;
     private ItemCondition condition;
     private int auctionCount;
+    private boolean archived;
     private Map<String, Object> extraFields;
 
     protected ItemSchema() {
@@ -62,6 +63,8 @@ public class ItemSchema extends BaseSchema {
     public void setCondition(ItemCondition condition) { this.condition = condition; }
     public int getAuctionCount() { return auctionCount; }
     public void setAuctionCount(int auctionCount) { this.auctionCount = auctionCount; }
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
     public Map<String, Object> getExtraFields() { return extraFields; }
     public void setExtraFields(Map<String, Object> extraFields) {
         this.extraFields = extraFields != null ? new LinkedHashMap<>(extraFields) : new LinkedHashMap<>();

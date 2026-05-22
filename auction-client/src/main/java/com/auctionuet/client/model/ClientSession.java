@@ -39,4 +39,8 @@ public class ClientSession {
     public boolean isSeller() {
         return currentUser != null && currentUser.getRole() == UserRole.SELLER;
     }
+
+    public boolean isBidder() {
+        return currentUser != null && currentUser.getRole() == UserRole.BIDDER;
+    }
 }

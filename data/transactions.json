@@ -42,5 +42,48 @@
     "id": "055f0383-89c9-4b41-9e2c-83923ec95e9c",
     "createdAt": "2026-05-18T16:46:36.4679385",
     "updatedAt": "2026-05-18T16:46:36.4679385"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "WALLET_DEPOSIT",
+    "amount": 5.785435356683535E15,
+    "balanceBefore": 0.0,
+    "balanceAfter": 5.785435356683535E15,
+    "frozenBalanceBefore": 0.0,
+    "frozenBalanceAfter": 0.0,
+    "description": "Nap tien vao vi",
+    "id": "4ebb2b2f-8809-4701-95c5-b1301bb47722",
+    "createdAt": "2026-05-22T16:59:52.6200164",
+    "updatedAt": "2026-05-22T16:59:52.6200164"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_HOLD",
+    "amount": 100000.0,
+    "auctionId": "3de192e1-5c73-4f29-b1e1-5f9805307506",
+    "balanceBefore": 5.785435356683535E15,
+    "balanceAfter": 5.785435356583535E15,
+    "frozenBalanceBefore": 0.0,
+    "frozenBalanceAfter": 100000.0,
+    "description": "Giu tien coc phien dau gia 3de192e1-5c73-4f29-b1e1-5f9805307506",
+    "id": "013eb84a-73c5-4c7f-b361-25124208f149",
+    "createdAt": "2026-05-22T17:00:01.4523554",
+    "updatedAt": "2026-05-22T17:00:01.4523554"
+  },
+  {
+    "userId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "usernameSnapshot": "ccc777",
+    "type": "WALLET_DEPOSIT",
+    "amount": 1.3221323212332131E17,
+    "balanceBefore": 0.0,
+    "balanceAfter": 1.3221323212332131E17,
+    "frozenBalanceBefore": 0.0,
+    "frozenBalanceAfter": 0.0,
+    "description": "Nap tien vao vi",
+    "id": "cdcb24bf-e3c8-493e-ae86-31a053291d05",
+    "createdAt": "2026-05-22T18:14:02.3747134",
+    "updatedAt": "2026-05-22T18:14:02.3747134"
   }
 ]

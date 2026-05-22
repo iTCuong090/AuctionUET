@@ -12,6 +12,7 @@ public class Seller extends User {
     public boolean hasPermission(Permission action) {
         return switch (action) {
             case CREATE_ITEM, UPDATE_ITEM, DELETE_ITEM, GET_MY_ITEMS,
+                 GET_ITEM_AUCTION_HISTORY,
                  CREATE_AUCTION, START_AUCTION,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
                  GET_PROFILE, UPDATE_PROFILE,

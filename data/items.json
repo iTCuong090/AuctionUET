@@ -8,6 +8,7 @@
     "imageUrl": "anhnen.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 0,
+    "archived": false,
     "id": "17a4d966-4858-46e0-8812-c80971311038",
     "createdAt": "2026-05-08T14:07:50.8037016",
     "updatedAt": "2026-05-08T14:07:50.8037016"
@@ -21,6 +22,7 @@
     "imageUrl": "image.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 1,
+    "archived": false,
     "id": "96ff3093-8265-43da-95bb-7a3e7c36ee2a",
     "createdAt": "2026-05-08T14:23:24.8080647",
     "updatedAt": "2026-05-08T14:35:14.2488791"
@@ -34,6 +36,7 @@
     "imageUrl": "image.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 0,
+    "archived": false,
     "id": "c44833af-c31a-47bd-93f9-a5f4876b50f9",
     "createdAt": "2026-05-08T14:23:26.2404182",
     "updatedAt": "2026-05-08T14:23:26.2404182"
@@ -47,6 +50,7 @@
     "imageUrl": "image.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 0,
+    "archived": false,
     "id": "b9517f74-d3dc-40bf-bfbc-3012eb35a9f0",
     "createdAt": "2026-05-08T14:32:56.3173993",
     "updatedAt": "2026-05-08T14:32:56.3173993"
@@ -60,6 +64,7 @@
     "imageUrl": "image.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 0,
+    "archived": false,
     "id": "c0c3471b-4017-4cde-a0c6-8478f68fbd34",
     "createdAt": "2026-05-08T14:32:57.0319522",
     "updatedAt": "2026-05-08T14:32:57.0319522"
@@ -73,6 +78,7 @@
     "imageUrl": "image.jpg",
     "condition": "LIKE_NEW",
     "auctionCount": 0,
+    "archived": false,
     "id": "ef836b12-0b72-434a-a9ca-a50570cc367c",
     "createdAt": "2026-05-08T14:34:11.3163694",
     "updatedAt": "2026-05-08T14:34:11.3163694"
@@ -86,6 +92,7 @@
     "imageUrl": "xe.jpg",
     "condition": "NEW",
     "auctionCount": 1,
+    "archived": false,
     "id": "1be7d26d-112f-4fa5-a1d4-b39e010225aa",
     "createdAt": "2026-05-09T13:12:06.2308898",
     "updatedAt": "2026-05-09T13:13:05.5277631"
@@ -99,6 +106,7 @@
     "imageUrl": "fgfgrg",
     "condition": "NEW",
     "auctionCount": 3,
+    "archived": false,
     "id": "3924b4d1-662e-424c-ac1e-f828d582ebba",
     "createdAt": "2026-05-10T00:50:40.1844946",
     "updatedAt": "2026-05-16T23:03:18.7407404"
@@ -112,6 +120,7 @@
     "imageUrl": "hentailz.net",
     "condition": "GOOD",
     "auctionCount": 1,
+    "archived": false,
     "extraFields": {
       "brand": "appel",
       "warrantyMonths": 0.0
@@ -119,5 +128,62 @@
     "id": "bf3aca36-b652-484f-b326-502cd5ab322e",
     "createdAt": "2026-05-16T20:48:07.0333939",
     "updatedAt": "2026-05-16T20:48:56.946034"
+  },
+  {
+    "name": "vin",
+    "description": "cũ",
+    "startingPrice": 1000000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "imageUrl": "xe.jpg",
+    "condition": "LIKE_NEW",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "brand": "vinfast",
+      "warrantyMonths": 12.0
+    },
+    "id": "c5673194-230f-4a9d-9eda-10fd1cff2c08",
+    "createdAt": "2026-05-22T16:57:42.7143448",
+    "updatedAt": "2026-05-22T16:58:34.6610302"
+  },
+  {
+    "name": "wave",
+    "description": "",
+    "startingPrice": 999999.0,
+    "type": "VEHICLE",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "imageUrl": "123.jpg",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "make": "honda",
+      "model": "alpha",
+      "mileage": 0.0,
+      "vehicleYear": 2025.0
+    },
+    "id": "dd9b3984-29c0-4713-8834-5bf2e4ae94e5",
+    "createdAt": "2026-05-22T18:06:37.5179073",
+    "updatedAt": "2026-05-22T18:07:32.0164298"
+  },
+  {
+    "name": "gái đẹp",
+    "description": "ngon",
+    "startingPrice": 277353.0,
+    "type": "ART",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "imageUrl": "18.jpg",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "artist": "rule36",
+      "year": 2008.0,
+      "medium": "asian"
+    },
+    "id": "25676425-e800-4b22-aa03-6d5ebcdf2b0c",
+    "createdAt": "2026-05-22T18:12:25.5558137",
+    "updatedAt": "2026-05-22T18:13:02.4801559"
   }
 ]

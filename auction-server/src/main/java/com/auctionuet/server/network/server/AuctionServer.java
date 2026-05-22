@@ -61,7 +61,7 @@ public class AuctionServer {
             AuthService authService = new AuthService(userDAO, userService);
             AppLogger.logInit("AuthService", null);
 
-            ItemService itemService = new ItemService(itemDAO, userService);
+            ItemService itemService = new ItemService(itemDAO, userService, auctionDAO);
             AppLogger.logInit("ItemService", null);
 
             TransactionService transactionService = new TransactionService(transactionDAO);

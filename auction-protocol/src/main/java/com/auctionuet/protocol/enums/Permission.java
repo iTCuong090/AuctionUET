@@ -16,6 +16,7 @@ public enum Permission {
     UPDATE_ITEM,
     DELETE_ITEM,
     GET_MY_ITEMS,
+    GET_ITEM_AUCTION_HISTORY,
     CREATE_AUCTION,
     START_AUCTION,
     DEPOSIT,
@@ -23,6 +24,7 @@ public enum Permission {
     GET_WALLET,
     GET_MY_TRANSACTIONS,
     PAY_AUCTION,
+    GET_MY_PENDING_PAYMENTS,
     SET_AUTO_BID,
     CANCEL_AUTO_BID
 

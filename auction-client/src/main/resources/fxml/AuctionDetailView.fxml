@@ -82,7 +82,7 @@
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
                         <LineChart fx:id="priceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;">
-                           <xAxis><CategoryAxis label="Thời gian" side="BOTTOM" /></xAxis>
+                           <xAxis><NumberAxis autoRanging="true" label="Lượt bid" side="BOTTOM" /></xAxis>
                            <yAxis><NumberAxis label="Giá (VNĐ)" side="LEFT" /></yAxis>
                         </LineChart>
                      </children>
@@ -123,6 +123,14 @@
                   </Label>
                </children>
             </HBox>
+
+            <VBox fx:id="paymentArea" managed="false" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;" visible="false">
+               <children>
+                  <Label fx:id="paymentInfoLabel" styleClass="text-primary" text="Thông tin thanh toán" />
+                  <Button fx:id="btnPayAuction" mnemonicParsing="false" prefHeight="42.0" prefWidth="180.0" style="-fx-background-color: #22c55e; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;" text="Thanh toán" />
+                  <Label fx:id="paymentErrorLabel" styleClass="error-label" text="" />
+               </children>
+            </VBox>
          </children>
       </VBox>
    </content>

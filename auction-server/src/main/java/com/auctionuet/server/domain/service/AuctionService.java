@@ -51,6 +51,9 @@ public class AuctionService {
             int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) throws AuctionException {
         requireCreateAuctionPermission(seller);
         ItemSchema item = requireItem(itemId);
+        if (item.isArchived()) {
+            throw new AuctionException("Item da bi go khoi danh sach dau gia");
+        }
         requireItemOwner(seller, item);
         validateAuctionTimeRange(startTime, endTime);
         requireFutureStartTime(startTime);
@@ -101,12 +104,16 @@ public class AuctionService {
                 continue;
             }
 
-            if (hasInvalidAuctionTime(schema) || !schema.getEndTime().isAfter(now)) {
-                cancelStaleAuction(schema, "Huy phien dau gia qua han khi dong bo du lieu");
+            if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
+                reconcilePaymentDeadline(schema);
                 continue;
             }
 
             if (schema.getStatus() == AuctionStatus.OPEN) {
+                if (hasInvalidAuctionTime(schema) || !schema.getEndTime().isAfter(now)) {
+                    cancelStaleAuction(schema, "Huy phien dau gia qua han khi dong bo du lieu");
+                    continue;
+                }
                 if (!schema.getStartTime().isAfter(now)) {
                     startAuctionNow(schema);
                 } else {
@@ -116,12 +123,13 @@ public class AuctionService {
             }
 
             if (schema.getStatus() == AuctionStatus.RUNNING) {
-                hydrateRunningAuction(schema);
-                continue;
-            }
-
-            if (schema.getStatus() == AuctionStatus.WAITING_PAYMENT) {
-                reconcilePaymentDeadline(schema);
+                if (hasInvalidAuctionTime(schema)) {
+                    cancelStaleAuction(schema, "Huy phien dau gia co thoi gian khong hop le");
+                } else if (!schema.getEndTime().isAfter(now)) {
+                    endAuction(schema.getId());
+                } else {
+                    hydrateRunningAuction(schema);
+                }
                 continue;
             }
 
@@ -230,6 +238,7 @@ public class AuctionService {
                     "Ap tien coc vao thanh toan phien dau gia");
             walletService.payoutSeller(schema.getSellerId(), totalPrice, auctionId,
                     "Nhan tien tu nguoi thang dau gia");
+            itemService.transferOwnership(schema.getItemId(), winner.getId());
             clearDepositParticipation(schema, null, winner.getId());
 
             schema.setStatus(AuctionStatus.PAID);
@@ -249,6 +258,14 @@ public class AuctionService {
         return toAuctionDTOList(auctionDAO.findByStatus(status));
     }
 
+    public List<AuctionDTO> getPendingPaymentsForWinner(String winnerId) {
+        return auctionDAO.findByStatus(AuctionStatus.WAITING_PAYMENT).stream()
+                .filter(schema -> winnerId.equals(schema.getWinnerId()))
+                .map(schema -> toAuctionDTO(schema, winnerId))
+                .filter(dto -> dto != null)
+                .toList();
+    }
+
     public AuctionDTO getAuctionById(String id) {
         return getAuctionById(id, null);
     }
@@ -263,6 +280,14 @@ public class AuctionService {
 
     public List<AuctionDTO> getAuctionsBySeller(String sellerId) {
         return toAuctionDTOList(auctionDAO.findBySellerId(sellerId));
+    }
+
+    public List<AuctionDTO> getItemAuctionHistory(User user, String itemId) throws AuctionException {
+        ItemSchema item = requireItem(itemId);
+        if (!user.getId().equals(item.getSellerId())) {
+            throw new AuctionException("Ban khong phai chu so huu cua item nay");
+        }
+        return toAuctionDTOList(auctionDAO.findByItemId(itemId));
     }
 
     private synchronized void startAuctionNow(AuctionSchema schema) {
@@ -370,6 +395,7 @@ public class AuctionService {
                 schema.getDescription(),
                 schema.getStartTime(),
                 schema.getEndTime(),
+                schema.getPaymentDeadlineAt(),
                 schema.getStatus(),
                 schema.getAntiSnipingWindowSeconds(),
                 schema.getAntiSnipingExtensionSeconds(),

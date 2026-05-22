@@ -104,5 +104,65 @@
     "id": "28645faa-c781-485b-b46f-ea384a5df123",
     "createdAt": "2026-05-16T23:03:18.7377145",
     "updatedAt": "2026-05-18T16:45:25.2007859"
+  },
+  {
+    "itemId": "c5673194-230f-4a9d-9eda-10fd1cff2c08",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "title": "Dau gia: vin",
+    "description": "chiến",
+    "startTime": "2026-05-22T17:00:00",
+    "endTime": "2026-05-23T09:45:00",
+    "status": "RUNNING",
+    "highestBid": 2000000.0,
+    "winnerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "depositedBidderIds": [],
+    "depositRefs": [
+      {
+        "bidderId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+        "usernameSnapshot": "ccc456",
+        "amount": 100000.0,
+        "depositTransactionId": "013eb84a-73c5-4c7f-b361-25124208f149",
+        "depositedAt": "2026-05-22T17:00:01.4543611"
+      }
+    ],
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "3de192e1-5c73-4f29-b1e1-5f9805307506",
+    "createdAt": "2026-05-22T16:58:34.6560306",
+    "updatedAt": "2026-05-22T17:00:01.4713231"
+  },
+  {
+    "itemId": "dd9b3984-29c0-4713-8834-5bf2e4ae94e5",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "title": "Dau gia: wave",
+    "description": "",
+    "startTime": "2026-05-22T18:10:00",
+    "endTime": "2026-05-22T18:15:00",
+    "status": "CANCELED",
+    "highestBid": 0.0,
+    "depositedBidderIds": [],
+    "depositRefs": [],
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "0724b2c3-2f37-43d3-81f1-f58db303a6e4",
+    "createdAt": "2026-05-22T18:07:32.0134283",
+    "updatedAt": "2026-05-22T18:15:00.0197396"
+  },
+  {
+    "itemId": "25676425-e800-4b22-aa03-6d5ebcdf2b0c",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "title": "Dau gia: gái đẹp",
+    "description": "",
+    "startTime": "2026-05-22T18:15:00",
+    "endTime": "2026-05-23T09:45:00",
+    "status": "RUNNING",
+    "highestBid": 0.0,
+    "depositedBidderIds": [],
+    "depositRefs": [],
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "c65e2106-af2a-47c8-93fe-a83407a2c3c5",
+    "createdAt": "2026-05-22T18:13:02.4781785",
+    "updatedAt": "2026-05-22T18:15:00.0167386"
   }
 ]

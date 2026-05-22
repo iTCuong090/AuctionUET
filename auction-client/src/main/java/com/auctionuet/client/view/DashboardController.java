@@ -17,7 +17,7 @@ public class DashboardController {
     @FXML private StackPane contentArea;
 
     // Các nút trên Sidebar
-    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnProfile, btnLogout, btnWallet;
+    @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnPayments, btnProfile, btnLogout, btnWallet;
     @FXML private Button btnToggleTheme;
 
     @FXML
@@ -47,7 +47,7 @@ public class DashboardController {
         });
 
         btnMyItems.setOnAction(e -> {
-            loadView("/fxml/CreateItemView.fxml"); // Đổi thành CreateItemView tạm vì MyItemsView chưa làm
+            loadView("/fxml/MyItemsView.fxml");
             setActiveButton(btnMyItems);
         });
 
@@ -60,6 +60,13 @@ public class DashboardController {
             loadView("/fxml/AuctionListView.fxml");
             setActiveButton(btnAuctionList);
         });
+
+        if (btnPayments != null) {
+            btnPayments.setOnAction(e -> {
+                loadView("/fxml/PaymentView.fxml");
+                setActiveButton(btnPayments);
+            });
+        }
 
         if (btnWallet != null) {
             btnWallet.setOnAction(e -> {
@@ -87,11 +94,14 @@ public class DashboardController {
     private void setupPermissions() {
         // Sử dụng hàm isSeller() siêu tiện lợi trong ClientSession
         boolean isSeller = ClientSession.getInstance().isSeller();
+        boolean isBidder = ClientSession.getInstance().isBidder();
 
         if (!isSeller) {
             // Nếu KHÔNG phải Seller (tức là BIDDER hoặc GUEST) -> Ẩn các nút tạo hàng
-            hideButton(btnMyItems);
             hideButton(btnCreateAuction);
+        }
+        if (!isBidder) {
+            hideButton(btnPayments);
         }
         // Nếu là Seller -> Các nút vẫn hiển thị bình thường (do FXML mặc định là visible)
     }
@@ -123,6 +133,7 @@ public class DashboardController {
         if (btnMyItems != null) btnMyItems.getStyleClass().remove("active");
         if (btnCreateAuction != null) btnCreateAuction.getStyleClass().remove("active");
         if (btnAuctionList != null) btnAuctionList.getStyleClass().remove("active");
+        if (btnPayments != null) btnPayments.getStyleClass().remove("active");
         if (btnWallet != null) btnWallet.getStyleClass().remove("active");
         if (btnProfile != null) btnProfile.getStyleClass().remove("active");
 
