@@ -18,11 +18,18 @@ import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class BidService {
     private static final double ESCROW_DEPOSIT_RATE = 0.10;
+    private static final Comparator<BidSchema> BID_HISTORY_ORDER =
+            Comparator.comparing(
+                            BidSchema::getTimestamp,
+                            Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(BidSchema::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(BidSchema::getId, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final AuctionManager auctionManager;
     private final WalletService walletService;
@@ -48,8 +55,9 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
+        List<BidRecord> autoRecords = new ArrayList<>();
         try {
-            record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+            record = liveAuction.placeBid(bidder, amount, autoRecords::add);
         } catch (Exception e) {
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
@@ -59,6 +67,7 @@ public class BidService {
 
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
+        saveAutoBidRecords(auctionId, autoRecords);
 
         return toBidDTO(record, auctionId);
     }
@@ -69,6 +78,7 @@ public class BidService {
 
     public List<BidDTO> getBidHistoryDTO(String auctionId) {
         return getBidHistory(auctionId).stream()
+                .sorted(BID_HISTORY_ORDER)
                 .map(this::toBidDTO)
                 .toList();
     }
@@ -93,16 +103,17 @@ public class BidService {
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
-        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice(),
-                bidder.getId().equals(liveAuction.getCurrentWinnerId()));
+        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
+        List<BidRecord> autoRecords = new ArrayList<>();
         try {
-            liveAuction.addAutoBid(config, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+            liveAuction.addAutoBid(config, autoRecords::add);
             syncAuctionState(auctionId, liveAuction);
+            saveAutoBidRecords(auctionId, autoRecords);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
@@ -130,6 +141,9 @@ public class BidService {
         double protectedUntil = 0.0;
         if (config.isActive() && bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
             status = AutoBidStatus.PROTECTING;
+            protectedUntil = config.getMaxBid();
+        } else if (config.isActive()) {
+            status = AutoBidStatus.WAITING;
             protectedUntil = config.getMaxBid();
         } else {
             status = AutoBidStatus.INEFFECTIVE;
@@ -178,18 +192,10 @@ public class BidService {
         return itemSchema;
     }
 
-    private void validateAutoBidParams(
-            double maxBid,
-            double increment,
-            double currentHighestBid,
-            boolean bidderIsCurrentWinner) {
+    private void validateAutoBidParams(double maxBid, double increment, double currentHighestBid) {
         if (increment <= 0 || maxBid <= currentHighestBid) {
             throw new IllegalArgumentException(
                     "Invalid autobid parameters: maxBid must be greater than current price and increment must be positive");
-        }
-        if (!bidderIsCurrentWinner && maxBid < currentHighestBid + increment) {
-            throw new IllegalArgumentException(
-                    "Invalid autobid parameters: maxBid must be at least current price plus increment");
         }
     }
 
@@ -287,6 +293,12 @@ public class BidService {
     private void saveAutoBidRecord(String auctionId, BidRecord autoRecord) {
         BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
         bidDAO.save(autoBidSchema);
+    }
+
+    private void saveAutoBidRecords(String auctionId, List<BidRecord> autoRecords) {
+        for (BidRecord autoRecord : autoRecords) {
+            saveAutoBidRecord(auctionId, autoRecord);
+        }
     }
 
     private BidSchema toBidSchema(String auctionId, BidRecord record) {

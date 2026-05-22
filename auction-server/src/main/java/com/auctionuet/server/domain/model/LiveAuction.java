@@ -163,11 +163,6 @@ public class LiveAuction {
             throw new IllegalArgumentException(
                     "Invalid autobid parameters: maxBid must be greater than current price and increment must be positive");
         }
-        if (!config.getBidderId().equals(currentWinnerId)
-                && config.getMaxBid() < currentPrice + config.getIncrement()) {
-            throw new IllegalArgumentException(
-                    "Invalid autobid parameters: maxBid must be at least current price plus increment");
-        }
     }
 
     public void removeAutoBid(String bidderId) {

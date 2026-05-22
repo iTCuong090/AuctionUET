@@ -134,16 +134,16 @@ class DomainModelTest {
     }
 
     @Test
-    void testAutoBidRejectsConfigThatCannotPlaceNextBid() {
+    void testAutoBidWaitingConfigRemainsActive() {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0)));
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0));
 
         assertEquals(500.0, auction.getCurrentHighestBid());
-        assertNull(auction.getAutoBidConfig("bid1"));
+        assertNull(auction.getCurrentWinnerId());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(0, auction.getBidHistory().size());
     }
 
     @Test

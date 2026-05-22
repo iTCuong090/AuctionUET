@@ -136,9 +136,6 @@ public class BiddingController {
                         for (BidDTO entry : history) {
                             bidHistoryList.getItems().add(formatBid(entry));
                         }
-
-                        BidDTO latest = history.get(history.size() - 1);
-                        leaderLabel.setText("Leader: " + usernameOf(latest.getBidder()));
                     }
                 });
             } catch (Exception e) {
@@ -288,6 +285,8 @@ public class BiddingController {
                         currentUserDeposited = true;
                         renderAuctionDeposit();
                         loadWalletInfo();
+                        loadAuctionDetail();
+                        loadBidHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -326,6 +325,8 @@ public class BiddingController {
                         currentUserDeposited = true;
                         renderAuctionDeposit();
                         loadWalletInfo();
+                        loadAuctionDetail();
+                        loadBidHistory();
                         checkAutoBidState();
                     });
                 } catch (Exception e) {
@@ -410,6 +411,18 @@ public class BiddingController {
             autoBidStatusLabel.setText("Bạn đang dẫn đầu. Auto-Bid sẽ bảo vệ tới "
                     + formatMoney(state.getProtectedUntil()) + ".");
             autoBidStatusLabel.setStyle("-fx-text-fill: #22c55e;");
+            lastAutoBidStatus = status;
+            autoBidStateLoaded = true;
+            pendingAutoBidLossNotice = false;
+            return;
+        }
+
+        if (status == AutoBidStatus.WAITING) {
+            enableAutoBidBtn.setDisable(true);
+            cancelAutoBidBtn.setDisable(false);
+            autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá khi cần tới "
+                    + formatMoney(state.getProtectedUntil()) + ".");
+            autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
             lastAutoBidStatus = status;
             autoBidStateLoaded = true;
             pendingAutoBidLossNotice = false;

@@ -2,6 +2,7 @@ package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.bid.AutoBidConfigDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AutoBidStatus;
@@ -344,27 +345,26 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidRejectsConfigThatCannotPlaceNextBid() throws Exception {
+    public void testSetAutoBidWaitingConfigDoesNotPlaceBidImmediately() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 1000.0);
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0));
+        bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0);
 
         assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
-        assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
-        assertFalse(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+        assertTrue(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
-        assertEquals(1000.0, bidderSchema.getBalance());
-        assertEquals(0.0, bidderSchema.getFrozenBalance());
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
 
         AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
-        assertNull(state);
+        assertEquals(AutoBidStatus.WAITING, state.getStatus());
+        assertEquals(520.0, state.getProtectedUntil());
     }
 
     @Test
@@ -406,6 +406,15 @@ public class AuctionServiceTest {
         assertEquals("bidder1", updated.getWinnerId());
         assertEquals(1000.0, updated.getHighestBid());
 
+        AuctionDTO detail = auctionService.getAuctionById(auction.getId(), "bidder2");
+        assertEquals("bidder1", detail.getWinner().getId());
+        assertEquals("bidder1", detail.getCurrentHighestBid().getBidder().getId());
+
+        List<BidDTO> bidHistory = bidService.getBidHistoryDTO(auction.getId());
+        BidDTO latestBid = bidHistory.get(bidHistory.size() - 1);
+        assertEquals("bidder1", latestBid.getBidder().getId());
+        assertEquals(BidType.AUTO, latestBid.getBidType());
+
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
         AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
         assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
@@ -431,7 +440,11 @@ public class AuctionServiceTest {
 
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
         assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
-        assertTrue(bidDAO.findByAuctionId(auction.getId()).stream()
+        List<BidSchema> persistedBids = bidDAO.findByAuctionId(auction.getId());
+        BidSchema latestPersistedBid = persistedBids.get(persistedBids.size() - 1);
+        assertEquals("bidder1", latestPersistedBid.getBidderId());
+        assertEquals(BidType.AUTO, latestPersistedBid.getBidType());
+        assertTrue(persistedBids.stream()
                 .anyMatch(bid -> "bidder1".equals(bid.getBidderId())
                         && Double.compare(1000.0, bid.getAmount()) == 0
                         && bid.getBidType() == BidType.AUTO));
