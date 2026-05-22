@@ -6,7 +6,7 @@
 - Nhánh gốc dùng để so sánh: `main`
 - Commit gốc: `51e14eb` - `Merge pull request #42 from iTCuong090/develop/week6-cuong`
 - Trạng thái trước khi viết lại tài liệu: worktree sạch
-- Phạm vi chính: hoàn thiện auto-bid theo hướng proxy bidding, bổ sung trạng thái auto-bid cho client, và sửa tie-break khi nhiều người cùng trần tiền.
+- Phạm vi chính: hoàn thiện auto-bid theo hướng proxy bidding, bổ sung trạng thái auto-bid cho client, sửa tie-break khi nhiều người cùng trần tiền, và loại bỏ trạng thái `WAITING`.
 
 ## 2. Các commit trong nhánh
 
@@ -49,18 +49,18 @@ Mục tiêu sau thay đổi:
 - Auto-bid có `maxBid` cao hơn được ưu tiên thắng.
 - Nếu `maxBid` bằng nhau, bidder bật auto-bid sớm hơn được ưu tiên.
 - Giá thắng chỉ tăng tới mức cần thiết để vượt đối thủ, không tự động nhảy thẳng lên toàn bộ `maxBid` nếu chưa cần.
+- Server reject ngay config không đủ để tạo bước đặt giá hợp lệ.
 - Khi auto-bid bị vượt trần, server vẫn giữ config inactive để client có thể hiển thị trạng thái `INEFFECTIVE`.
-- Client biết auto-bid đang bảo vệ, đang chờ, hoặc đã mất hiệu lực.
+- Client chỉ cần biết auto-bid đang bảo vệ hoặc đã mất hiệu lực.
 - Luồng đặt giá thủ công không được phá quyền ưu tiên của auto-bid đã đặt trước ở cùng trần tiền.
 
 ## 5. Thay đổi trong protocol
 
 ### AutoBidStatus
 
-Thêm enum `AutoBidStatus` với 3 trạng thái:
+Thêm enum `AutoBidStatus` với 2 trạng thái:
 
 - `PROTECTING`: auto-bid còn hiệu lực và bidder đang dẫn đầu.
-- `WAITING`: auto-bid còn hiệu lực nhưng bidder chưa dẫn đầu.
 - `INEFFECTIVE`: auto-bid đã bị vượt trần hoặc không còn khả năng bảo vệ.
 
 ### AutoBidConfigDTO
@@ -68,12 +68,11 @@ Thêm enum `AutoBidStatus` với 3 trạng thái:
 `AutoBidConfigDTO` được mở rộng thêm:
 
 - `status`: trạng thái hiện tại của auto-bid.
-- `protectedUntil`: mức trần mà auto-bid đang bảo vệ hoặc đang chờ tới.
+- `protectedUntil`: mức trần mà auto-bid đang bảo vệ.
 
 Quy ước hiện tại:
 
 - `PROTECTING`: `protectedUntil = maxBid`.
-- `WAITING`: `protectedUntil = maxBid`.
 - `INEFFECTIVE`: `protectedUntil = 0.0`.
 
 DTO vẫn implement `ValidatableDTO` và validate các trường chính: `auctionId`, `bidder`, `maxBid`, `increment`, `status`, `protectedUntil`.
@@ -106,10 +105,11 @@ Constructor đầy đủ nhận thêm `startingPrice`. Constructor cũ vẫn cò
 
 `LiveAuction.addAutoBid(...)` chạy dưới `bidLock`:
 
-1. Xóa config cũ của cùng bidder khỏi `autoBidQueue`.
-2. Thêm config mới vào `autoBidQueue`.
-3. Lưu config vào `autoBids` để tra cứu theo bidder.
-4. Gọi `resolveAutoBids(...)`.
+1. Validate config phải có `increment > 0`, `maxBid > currentPrice`, và nếu bidder chưa dẫn đầu thì `maxBid >= currentPrice + increment`.
+2. Xóa config cũ của cùng bidder khỏi `autoBidQueue`.
+3. Thêm config mới vào `autoBidQueue`.
+4. Lưu config vào `autoBids` để tra cứu theo bidder.
+5. Gọi `resolveAutoBids(...)`.
 
 `autoBidQueue` chỉ dùng cho các config active đang cạnh tranh. `autoBids` giữ cả config inactive để `CHECK_AUTO_BID` vẫn có thể trả trạng thái cho client.
 
@@ -167,7 +167,7 @@ Sau khi resolve xong, `deactivateExhaustedAutoBids()` mới loại các config k
 `BidService.setAutoBid(...)` vẫn chịu trách nhiệm:
 
 1. Lấy `LiveAuction`.
-2. Validate `maxBid > currentPrice` và `increment > 0`.
+2. Validate `increment > 0`, `maxBid > currentPrice`, và nếu bidder chưa dẫn đầu thì `maxBid >= currentPrice + increment`.
 3. Tính và giữ tiền cọc.
 4. Tạo `AutoBidConfig`.
 5. Gọi `liveAuction.addAutoBid(...)`.
@@ -177,15 +177,14 @@ Sau khi resolve xong, `deactivateExhaustedAutoBids()` mới loại các config k
 `BidService.getAutoBidConfigDTO(...)` được cập nhật để trả trạng thái:
 
 - Config null: trả `null`.
-- Config inactive: trả `INEFFECTIVE`, `protectedUntil = 0.0`.
-- Config active và bidder là current winner: trả `PROTECTING`.
-- Config active nhưng bidder chưa dẫn đầu: trả `WAITING`.
+- Config active và bidder là current winner: trả `PROTECTING`, `protectedUntil = maxBid`.
+- Config inactive hoặc bidder không còn dẫn đầu: trả `INEFFECTIVE`, `protectedUntil = 0.0`.
 
 Business logic vẫn nằm trong service/domain, controller chỉ parse DTO, check auth/permission và gọi service.
 
 ## 8. Thay đổi trong client
 
-`BiddingController` được cập nhật để client phản ánh trạng thái auto-bid rõ hơn.
+`BiddingController` được cập nhật để client phản ánh hai trạng thái auto-bid còn lại.
 
 ### Khi nào client gọi CHECK_AUTO_BID
 
@@ -205,11 +204,6 @@ Khi server trả:
   - Disable nút bật auto-bid.
   - Enable nút hủy.
   - Hiển thị thông báo bidder đang dẫn đầu và auto-bid bảo vệ tới `protectedUntil`.
-
-- `WAITING`:
-  - Disable nút bật auto-bid.
-  - Enable nút hủy.
-  - Hiển thị thông báo auto-bid đang chờ và sẽ tự đặt giá khi cần.
 
 - `INEFFECTIVE`:
   - Enable nút bật lại auto-bid.
@@ -241,7 +235,7 @@ Các case chính:
 - Manual bid thấp hơn `maxBid` nhưng `increment` bị vượt trần vẫn cho auto-bid dùng đúng trần để bảo vệ.
 - Auto-bid có `maxBid` cao hơn được ưu tiên.
 - Giá proxy dùng `increment` của người thắng.
-- Auto-bid đang chờ vẫn active.
+- Config auto-bid không đủ tạo bước giá kế tiếp bị reject.
 - Auto-bid inactive có thể được bật lại bằng config mới.
 
 ### AuctionServiceTest
@@ -251,7 +245,7 @@ Các case chính:
 - Set auto-bid thành công thì giữ tiền cọc và tạo bid auto nếu đủ điều kiện.
 - Không đủ tiền cọc thì không tạo config hoặc bid.
 - Manual bid không hợp lệ rollback tiền cọc.
-- Auto-bid thấp hơn nhưng chưa đủ để đặt bid vẫn lưu tiền cọc và ở trạng thái `WAITING`.
+- Auto-bid có `maxBid < currentPrice + increment` bị reject và không giữ tiền cọc.
 - Auto-bid bị vượt trần trả `INEFFECTIVE`.
 - Auto-bid đang dẫn đầu trả `PROTECTING`.
 - Hai bidder set auto-bid cùng trần thì bidder set trước vẫn là winner.

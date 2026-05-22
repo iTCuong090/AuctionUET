@@ -12,10 +12,6 @@ public class AutoBidConfigDTO implements ValidatableDTO {
     private final AutoBidStatus status;
     private final double protectedUntil;
 
-    public AutoBidConfigDTO(String auctionId, UserDTO bidder, double maxBid, double increment) {
-        this(auctionId, bidder, maxBid, increment, AutoBidStatus.WAITING, maxBid);
-    }
-
     public AutoBidConfigDTO(
             String auctionId,
             UserDTO bidder,

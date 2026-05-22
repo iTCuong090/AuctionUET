@@ -93,7 +93,8 @@ public class BidService {
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
-        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
+        validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice(),
+                bidder.getId().equals(liveAuction.getCurrentWinnerId()));
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
@@ -127,14 +128,11 @@ public class BidService {
 
         AutoBidStatus status;
         double protectedUntil = 0.0;
-        if (!config.isActive()) {
-            status = AutoBidStatus.INEFFECTIVE;
-        } else if (bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
+        if (config.isActive() && bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
             status = AutoBidStatus.PROTECTING;
             protectedUntil = config.getMaxBid();
         } else {
-            status = AutoBidStatus.WAITING;
-            protectedUntil = config.getMaxBid();
+            status = AutoBidStatus.INEFFECTIVE;
         }
 
         return new AutoBidConfigDTO(
@@ -180,9 +178,18 @@ public class BidService {
         return itemSchema;
     }
 
-    private void validateAutoBidParams(double maxBid, double increment, double currentHighestBid) {
-        if (maxBid <= currentHighestBid || increment <= 0) {
-            throw new IllegalArgumentException("Invalid autobid parameters");
+    private void validateAutoBidParams(
+            double maxBid,
+            double increment,
+            double currentHighestBid,
+            boolean bidderIsCurrentWinner) {
+        if (increment <= 0 || maxBid <= currentHighestBid) {
+            throw new IllegalArgumentException(
+                    "Invalid autobid parameters: maxBid must be greater than current price and increment must be positive");
+        }
+        if (!bidderIsCurrentWinner && maxBid < currentHighestBid + increment) {
+            throw new IllegalArgumentException(
+                    "Invalid autobid parameters: maxBid must be at least current price plus increment");
         }
     }
 

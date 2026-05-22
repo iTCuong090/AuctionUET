@@ -344,25 +344,27 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidPersistsDepositEvenWithoutAutoBidRecord() throws Exception {
+    public void testSetAutoBidRejectsConfigThatCannotPlaceNextBid() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 1000.0);
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
-        bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0));
 
         assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
-        assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
+        assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
+        assertFalse(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
-        assertEquals(950.0, bidderSchema.getBalance());
-        assertEquals(50.0, bidderSchema.getFrozenBalance());
+        assertEquals(1000.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
 
         AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
-        assertEquals(AutoBidStatus.WAITING, state.getStatus());
-        assertEquals(520.0, state.getProtectedUntil());
+        assertNull(state);
     }
 
     @Test

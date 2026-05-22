@@ -430,11 +430,10 @@ public class BiddingController {
             return;
         }
 
-        enableAutoBidBtn.setDisable(true);
+        enableAutoBidBtn.setDisable(false);
         cancelAutoBidBtn.setDisable(false);
-        autoBidStatusLabel.setText("Auto-Bid đang chờ. Hệ thống sẽ tự đặt giá tới "
-                + formatMoney(state.getProtectedUntil()) + " khi cần.");
-        autoBidStatusLabel.setStyle("-fx-text-fill: #f39c12;");
+        autoBidStatusLabel.setText(AUTO_BID_INEFFECTIVE_NOTICE);
+        autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
         lastAutoBidStatus = status;
         autoBidStateLoaded = true;
         pendingAutoBidLossNotice = false;
