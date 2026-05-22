@@ -24,7 +24,7 @@
             <children>
                 <ComboBox fx:id="filterComboBox" prefWidth="150.0" promptText="Lọc trạng thái..." styleClass="combo-box" />
                 <TextField fx:id="searchField" promptText="Tìm kiếm tên sản phẩm..." styleClass="text-field" HBox.hgrow="ALWAYS" />
-                <Button mnemonicParsing="false" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e;" text="🔍 Tìm" />
+                <Button mnemonicParsing="false" onAction="#handleSearch" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e;" text="🔍 Tìm" />
             </children>
         </HBox>
 
@@ -34,14 +34,5 @@
             </content>
         </ScrollPane>
 
-        <HBox alignment="CENTER" spacing="10.0">
-            <children>
-                <Button mnemonicParsing="false" styleClass="pagination-button" text="&lt;" />
-                <Button mnemonicParsing="false" styleClass="pagination-button, active" text="1" />
-                <Button mnemonicParsing="false" styleClass="pagination-button" text="2" />
-                <Button mnemonicParsing="false" styleClass="pagination-button" text="3" />
-                <Button mnemonicParsing="false" styleClass="pagination-button" text="&gt;" />
-            </children>
-        </HBox>
     </children>
 </VBox>

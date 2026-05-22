@@ -15,7 +15,9 @@ import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AuctionListController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -24,10 +26,15 @@ public class AuctionListController {
     @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
 
+    private List<AuctionDTO> allAuctions = new ArrayList<>();
+
     @FXML
     public void initialize() {
         filterComboBox.getItems().addAll("Tat ca", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
         filterComboBox.setValue("Tat ca");
+        filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        searchField.setOnAction(e -> applyFilters());
 
         loadAuctionsFromServer();
     }
@@ -40,11 +47,56 @@ public class AuctionListController {
             try {
                 AuctionClient client = new AuctionClient();
                 List<AuctionDTO> list = client.getAuctions(currentToken);
-                Platform.runLater(() -> renderGrid(list));
+                Platform.runLater(() -> {
+                    allAuctions = list != null ? list : new ArrayList<>();
+                    applyFilters();
+                });
             } catch (Exception e) {
                 Platform.runLater(() -> System.out.println("Loi tai danh sach dau gia: " + e.getMessage()));
             }
         }).start();
+    }
+
+    @FXML
+    private void handleSearch() {
+        applyFilters();
+    }
+
+    private void applyFilters() {
+        String selectedStatus = filterComboBox.getValue();
+        String keyword = searchField.getText() != null
+                ? searchField.getText().trim().toLowerCase(Locale.ROOT)
+                : "";
+
+        List<AuctionDTO> filtered = allAuctions.stream()
+                .filter(auction -> matchesStatus(auction, selectedStatus))
+                .filter(auction -> matchesKeyword(auction, keyword))
+                .toList();
+        renderGrid(filtered);
+    }
+
+    private boolean matchesStatus(AuctionDTO auction, String selectedStatus) {
+        if (selectedStatus == null || selectedStatus.equals("Tat ca")) {
+            return true;
+        }
+        return auction.getStatus() != null && selectedStatus.equals(auction.getStatus().name());
+    }
+
+    private boolean matchesKeyword(AuctionDTO auction, String keyword) {
+        if (keyword.isEmpty()) {
+            return true;
+        }
+
+        String title = auction.getTitle() != null ? auction.getTitle() : "";
+        String itemName = auction.getItem() != null && auction.getItem().getName() != null
+                ? auction.getItem().getName()
+                : "";
+        String seller = auction.getSeller() != null && auction.getSeller().getUsername() != null
+                ? auction.getSeller().getUsername()
+                : "";
+        return title.toLowerCase(Locale.ROOT).contains(keyword)
+                || itemName.toLowerCase(Locale.ROOT).contains(keyword)
+                || seller.toLowerCase(Locale.ROOT).contains(keyword);
     }
 
     private void renderGrid(List<AuctionDTO> auctions) {
@@ -104,12 +156,13 @@ public class AuctionListController {
 
     private void openAuctionView(Button source, AuctionDTO item, AuctionStatus status) {
         try {
-            String fxmlPath = status == AuctionStatus.RUNNING ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
+            boolean openBidding = status == AuctionStatus.RUNNING && !ClientSession.getInstance().isSeller();
+            String fxmlPath = openBidding ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
 
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource(fxmlPath));
             javafx.scene.Parent root = loader.load();
 
-            if (status == AuctionStatus.RUNNING) {
+            if (openBidding) {
                 BiddingController biddingController = loader.getController();
                 biddingController.setAuctionId(item.getId());
             } else {

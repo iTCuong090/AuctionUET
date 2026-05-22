@@ -5,7 +5,9 @@ import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -26,9 +28,11 @@ public class HomeController {
 
     @FXML private HBox endingSoonBox;
     @FXML private Label endingSoonPlaceholder;
+    @FXML private Button btnExplore;
 
     @FXML
     public void initialize() {
+        btnExplore.setOnAction(e -> openAuctionList());
         loadHomeData();
     }
 
@@ -162,5 +166,24 @@ public class HomeController {
 
     private String formatTime(LocalDateTime time) {
         return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+    }
+
+    private void openAuctionList() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AuctionListView.fxml"));
+            Parent root = loader.load();
+
+            Parent currentRoot = btnExplore.getScene().getRoot();
+            if (currentRoot instanceof HBox) {
+                VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
+                javafx.scene.layout.StackPane contentArea =
+                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+                contentArea.getChildren().setAll(root);
+            } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+                ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
+            }
+        } catch (Exception e) {
+            System.out.println("Loi chuyen sang danh sach dau gia: " + e.getMessage());
+        }
     }
 }

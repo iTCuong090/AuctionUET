@@ -26,7 +26,7 @@
                                 <Label text="Hàng nghìn sản phẩm đang chờ bạn khám phá. Đừng bỏ lỡ!" textFill="#e0e0e0">
                                     <font><Font size="16.0" /></font>
                                 </Label>
-                                <Button mnemonicParsing="false" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 12 30; -fx-font-size: 16px;" text="Khám phá ngay" />
+                                <Button fx:id="btnExplore" mnemonicParsing="false" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 12 30; -fx-font-size: 16px;" text="Khám phá ngay" />
                             </children>
                         </VBox>
                     </children>

@@ -1,5 +1,6 @@
 package com.auctionuet.client.view;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -7,13 +8,16 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 
 import java.io.IOException;
 
 public class DashboardController {
 
     @FXML private Label userNameLabel;
+    @FXML private Label walletBalanceLabel;
     @FXML private StackPane contentArea;
 
     // Các nút trên Sidebar
@@ -36,6 +40,7 @@ public class DashboardController {
 
         // 2. Phân quyền: Ẩn các nút dựa trên Role (Test D.1, D.2)
         setupPermissions();
+        loadHeaderWalletBalance();
 
         // 3. Mặc định vừa vào thì hiện màn hình Danh sách đấu giá
         loadView("/fxml/AuctionListView.fxml");
@@ -104,6 +109,24 @@ public class DashboardController {
             hideButton(btnPayments);
         }
         // Nếu là Seller -> Các nút vẫn hiển thị bình thường (do FXML mặc định là visible)
+    }
+
+    private void loadHeaderWalletBalance() {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null || walletBalanceLabel == null) {
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                WalletResponseDTO wallet = new WalletClient().getWallet(token);
+                Platform.runLater(() -> walletBalanceLabel.setText(String.format(
+                        "TK: %,.0f VND",
+                        wallet != null ? wallet.getBalance() : 0.0)));
+            } catch (Exception e) {
+                Platform.runLater(() -> walletBalanceLabel.setText("TK: -- VND"));
+            }
+        }).start();
     }
 
     // Tuyệt chiêu ẩn nút mà không để lại khoảng trống
