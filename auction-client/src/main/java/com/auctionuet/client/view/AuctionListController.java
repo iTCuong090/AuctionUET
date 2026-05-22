@@ -25,7 +25,7 @@ import java.util.Locale;
 public class AuctionListController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final double CARD_GAP = 20.0;
-    private static final double MIN_CARD_WIDTH = 280.0;
+    private static final double MIN_CARD_WIDTH = 220.0;
     private static final int MAX_CARD_COLUMNS = 4;
 
     @FXML private FlowPane auctionGrid;
@@ -75,7 +75,7 @@ public class AuctionListController {
     private double calculateCardWidth(double availableWidth) {
         int columns = (int) ((availableWidth + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
         columns = Math.max(1, Math.min(MAX_CARD_COLUMNS, columns));
-        return Math.floor((availableWidth - ((columns - 1) * CARD_GAP)) / columns);
+        return Math.floor((availableWidth - ((columns - 1) * CARD_GAP) - 2) / columns);
     }
 
     private void applyCardWidth(Region card) {

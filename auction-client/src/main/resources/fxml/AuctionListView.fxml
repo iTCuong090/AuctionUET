@@ -28,7 +28,7 @@
             </children>
         </HBox>
 
-        <ScrollPane fx:id="auctionScrollPane" fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+        <ScrollPane fx:id="auctionScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
                 <FlowPane fx:id="auctionGrid" hgap="20.0" vgap="20.0" />
             </content>

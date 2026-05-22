@@ -75,10 +75,10 @@
                         </Label>
                         <TableView fx:id="auctionHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;">
                            <columns>
-                              <TableColumn fx:id="titleCol" prefWidth="110.0" text="Phiên" />
-                              <TableColumn fx:id="priceCol" prefWidth="95.0" text="Giá (VNĐ)" />
-                              <TableColumn fx:id="statusCol" prefWidth="85.0" text="Trạng thái" />
-                              <TableColumn fx:id="timeCol" prefWidth="88.0" text="Kết thúc" />
+                              <TableColumn fx:id="titleCol" prefWidth="170.0" text="Phiên" />
+                              <TableColumn fx:id="priceCol" prefWidth="150.0" text="Giá (VNĐ)" />
+                              <TableColumn fx:id="statusCol" prefWidth="110.0" text="Trạng thái" />
+                              <TableColumn fx:id="timeCol" prefWidth="165.0" text="Kết thúc" />
                            </columns>
                         </TableView>
                      </children>
