@@ -81,7 +81,7 @@ public class ItemHistoryController {
     private void setupAuctionHistoryTable() {
         titleCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(valueOrUnknown(cell.getValue().getTitle())));
         priceCol.setCellValueFactory(cell ->
-                new ReadOnlyStringWrapper(String.format("%,.0f VND", cell.getValue().getCurrentPrice())));
+                new ReadOnlyStringWrapper(CurrencyFormatter.format(cell.getValue().getCurrentPrice())));
         statusCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
                 cell.getValue().getStatus() != null ? cell.getValue().getStatus().name() : "UNKNOWN"));
         timeCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(formatTime(cell.getValue().getEndTime())));

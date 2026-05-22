@@ -104,7 +104,7 @@ public class AuctionDetailController {
         this.currentAuction = dto;
         nameLabel.setText(dto.getTitle());
         sellerLabel.setText("Seller: " + usernameOf(dto.getSeller()));
-        currentPriceLabel.setText(String.format("Giá hiện tại: %,.0f VND", dto.getCurrentPrice()));
+        currentPriceLabel.setText("Giá hiện tại: " + CurrencyFormatter.format(dto.getCurrentPrice()));
 
         AuctionStatus status = dto.getStatus();
         String currentStatus = status != null ? status.name() : "UNKNOWN";
@@ -228,7 +228,7 @@ public class AuctionDetailController {
         bidderCol.setCellValueFactory(cell ->
                 new ReadOnlyStringWrapper(usernameOf(cell.getValue().getBidder())));
         amountCol.setCellValueFactory(cell ->
-                new ReadOnlyStringWrapper(String.format("%,.0f VND", cell.getValue().getAmount())));
+                new ReadOnlyStringWrapper(CurrencyFormatter.format(cell.getValue().getAmount())));
         timeCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(formatTime(cell.getValue().getTimestamp())));
     }
 
@@ -269,7 +269,7 @@ public class AuctionDetailController {
         bidHistoryTable.getItems().add(bid);
         chartPointIndex++;
         priceSeries.getData().add(new XYChart.Data<>(chartPointIndex, bid.getAmount()));
-        currentPriceLabel.setText(String.format("Giá hiện tại: %,.0f VND", bid.getAmount()));
+        currentPriceLabel.setText("Giá hiện tại: " + CurrencyFormatter.format(bid.getAmount()));
         leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
     }
 
@@ -290,9 +290,9 @@ public class AuctionDetailController {
         double deposit = dto.getDepositAmount();
         double remaining = Math.max(0, dto.getCurrentPrice() - deposit);
         paymentInfoLabel.setText(String.format(
-                "Cần thanh toán: %,.0f VND | Cọc đã giữ: %,.0f VND | Hạn: %s",
-                remaining,
-                deposit,
+                "Cần thanh toán: %s | Cọc đã giữ: %s | Hạn: %s",
+                CurrencyFormatter.format(remaining),
+                CurrencyFormatter.format(deposit),
                 formatTime(dto.getPaymentDeadlineAt())));
     }
 

@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.WalletClient;
@@ -120,9 +121,11 @@ public class DashboardController {
         new Thread(() -> {
             try {
                 WalletResponseDTO wallet = new WalletClient().getWallet(token);
-                Platform.runLater(() -> walletBalanceLabel.setText(String.format(
-                        "TK: %,.0f VND",
-                        wallet != null ? wallet.getBalance() : 0.0)));
+                double balance = wallet != null ? wallet.getBalance() : 0.0;
+                Platform.runLater(() -> {
+                    walletBalanceLabel.setText("TK: " + CurrencyFormatter.format(balance));
+                    walletBalanceLabel.setTooltip(new Tooltip("Tài khoản: " + CurrencyFormatter.formatFull(balance)));
+                });
             } catch (Exception e) {
                 Platform.runLater(() -> walletBalanceLabel.setText("TK: -- VND"));
             }

@@ -89,7 +89,7 @@ public class BiddingController {
                 Platform.runLater(() -> {
                     titleLabel.setText(auction.getTitle());
                     sellerLabel.setText("Seller: " + usernameOf(auction.getSeller()));
-                    priceLabel.setText(String.format("%,.0f VND", auction.getCurrentPrice()));
+                    priceLabel.setText(CurrencyFormatter.format(auction.getCurrentPrice()));
                     auctionDepositAmount = auction.getDepositAmount() > 0
                             ? auction.getDepositAmount()
                             : auction.getItem() != null ? auction.getItem().getStartingPrice() * 0.10 : 0;
@@ -157,7 +157,7 @@ public class BiddingController {
                 BidDTO bid = data.getBid();
                 if (bid == null) return;
 
-                priceLabel.setText(String.format("%,.0f VND", bid.getAmount()));
+                priceLabel.setText(CurrencyFormatter.format(bid.getAmount()));
                 leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vừa xong - " + formatBid(bid));
                 if (isCurrentUser(bid.getBidder())) {
@@ -191,7 +191,7 @@ public class BiddingController {
                 statusBadge.getStyleClass().remove("status-badge-running");
                 statusBadge.getStyleClass().add("status-badge-finished");
                 leaderLabel.setText("Người thắng: " + usernameOf(data.getWinner())
-                        + " (Giá: " + String.format("%,.0f VND", data.getFinalPrice()) + ")");
+                        + " (Giá: " + CurrencyFormatter.format(data.getFinalPrice()) + ")");
                 currentUserDeposited = currentUserDeposited && isCurrentUser(data.getWinner());
                 renderAuctionDeposit();
                 loadWalletInfo();
@@ -383,17 +383,18 @@ public class BiddingController {
     private String formatBid(BidDTO bid) {
         String time = bid.getTimestamp() != null ? bid.getTimestamp().format(DISPLAY_TIME) : "";
         String type = bid.getBidType() != null ? " - " + bid.getBidType().name() : "";
-        return time + " - " + usernameOf(bid.getBidder()) + " - " + String.format("%,.0f VND", bid.getAmount()) + type;
+        return time + " - " + usernameOf(bid.getBidder()) + " - "
+                + CurrencyFormatter.format(bid.getAmount()) + type;
     }
 
     private void renderWallet(WalletResponseDTO wallet) {
         double balance = wallet != null ? wallet.getBalance() : 0.0;
-        balanceLabel.setText(String.format("%,.0f VND", balance));
+        CurrencyFormatter.setMoneyText(balanceLabel, balance);
     }
 
     private void renderAuctionDeposit() {
         double deposit = currentUserDeposited ? auctionDepositAmount : 0.0;
-        depositLabel.setText(String.format("%,.0f VND", deposit));
+        CurrencyFormatter.setMoneyText(depositLabel, deposit);
     }
 
     private void renderAutoBidState(AutoBidConfigDTO state) {
@@ -441,7 +442,7 @@ public class BiddingController {
     }
 
     private String formatMoney(double amount) {
-        return String.format("%,.0f VND", amount);
+        return CurrencyFormatter.format(amount);
     }
 
     private boolean isCurrentUser(UserDTO user) {

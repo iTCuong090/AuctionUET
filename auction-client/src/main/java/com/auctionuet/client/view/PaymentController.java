@@ -72,12 +72,12 @@ public class PaymentController {
 
         double deposit = auction.getDepositAmount();
         double remaining = Math.max(0, auction.getCurrentPrice() - deposit);
-        Label price = new Label(String.format("Còn cần trả: %,.0f VND", remaining));
+        Label price = new Label("Còn cần trả: " + CurrencyFormatter.format(remaining));
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
-        Label total = new Label(String.format("Giá thắng: %,.0f VND | Cọc: %,.0f VND",
-                auction.getCurrentPrice(), deposit));
+        Label total = new Label("Giá thắng: " + CurrencyFormatter.format(auction.getCurrentPrice())
+                + " | Cọc: " + CurrencyFormatter.format(deposit));
         total.getStyleClass().add("text-secondary");
         total.setWrapText(true);
 

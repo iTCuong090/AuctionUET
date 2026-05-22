@@ -39,7 +39,7 @@ public class CreateAuctionController {
         itemComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 previewName.setText("Tên: " + newVal.getName());
-                previewPrice.setText(String.format("Giá khởi điểm: %,.0f VND", newVal.getStartingPrice()));
+                previewPrice.setText("Giá khởi điểm: " + CurrencyFormatter.format(newVal.getStartingPrice()));
                 previewType.setText("Loại: " + newVal.getType());
 
                 if (titleField.getText().isEmpty()) {

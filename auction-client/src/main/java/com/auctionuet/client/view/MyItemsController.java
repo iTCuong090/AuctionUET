@@ -192,7 +192,7 @@ public class MyItemsController {
         title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
         title.setWrapText(true);
 
-        Label price = new Label(String.format("%,.0f VND", item.getStartingPrice()));
+        Label price = new Label(CurrencyFormatter.format(item.getStartingPrice()));
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 

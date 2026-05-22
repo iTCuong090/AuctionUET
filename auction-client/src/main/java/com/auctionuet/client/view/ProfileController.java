@@ -65,7 +65,7 @@ public class ProfileController {
                 WalletClient walletClient = new WalletClient();
                 WalletResponseDTO walletInfo = walletClient.getWallet(token);
                 double balance = walletInfo != null ? walletInfo.getBalance() : 0.0;
-                Platform.runLater(() -> balanceLabel.setText(String.format("%,.0f VND", balance)));
+                Platform.runLater(() -> CurrencyFormatter.setMoneyText(balanceLabel, balance));
             } catch (Exception e) {
                 Platform.runLater(() -> balanceLabel.setText("Lỗi"));
             }

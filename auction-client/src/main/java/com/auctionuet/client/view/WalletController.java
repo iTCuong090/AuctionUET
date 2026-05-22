@@ -181,9 +181,9 @@ public class WalletController {
         double frozen = wallet != null ? wallet.getFrozenBalance() : 0.0;
         double total = wallet != null ? wallet.getTotalBalance() : 0.0;
 
-        balanceLabel.setText(String.format("%,.0f VND", balance));
-        frozenLabel.setText(String.format("%,.0f VND", frozen));
-        totalLabel.setText(String.format("%,.0f VND", total));
+        CurrencyFormatter.setMoneyText(balanceLabel, balance);
+        CurrencyFormatter.setMoneyText(frozenLabel, frozen);
+        CurrencyFormatter.setMoneyText(totalLabel, total);
     }
 
     private void renderTransactions(List<TransactionDTO> transactions) {
@@ -202,10 +202,10 @@ public class WalletController {
                     : "";
             String description = transaction.getDescription() != null ? " | " + transaction.getDescription() : "";
             transactionListView.getItems().add(String.format(
-                    "%s | %s | %,.0f VND%s%s",
+                    "%s | %s | %s%s%s",
                     time,
                     transaction.getType(),
-                    transaction.getAmount(),
+                    CurrencyFormatter.format(transaction.getAmount()),
                     auctionText,
                     description));
         }
