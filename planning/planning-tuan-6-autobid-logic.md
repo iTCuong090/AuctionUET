@@ -1,217 +1,310 @@
 # Planning tuần 6: Hoàn thiện logic Auto-Bid
 
-## Thông tin nhánh
+## 1. Thông tin nhánh
 
 - Nhánh: `khanh-hoan-thien-auto-bid`
-- Điểm bắt đầu so với `main`: commit `51e14eb`
-- Thời điểm chuyển sang nhánh theo reflog: `2026-05-20 19:22:06 +0700`
-- Trạng thái worktree khi lập tài liệu: sạch
+- Nhánh gốc dùng để so sánh: `main`
+- Commit gốc: `51e14eb` - `Merge pull request #42 from iTCuong090/develop/week6-cuong`
+- Trạng thái trước khi viết lại tài liệu: worktree sạch
+- Phạm vi chính: hoàn thiện auto-bid theo hướng proxy bidding, bổ sung trạng thái auto-bid cho client, và sửa tie-break khi nhiều người cùng trần tiền.
 
-## Các commit đã thực hiện
+## 2. Các commit trong nhánh
 
-1. `9ec15b8` - Implement proxy autobid pricing
-2. `1afffa8` - Add autobid status reporting and UI feedback
-3. `17314c8` - Notify when auto-bid loses effectiveness
+1. `9ec15b8` - `Implement proxy autobid pricing`
+2. `1afffa8` - `Add autobid status reporting and UI feedback`
+3. `17314c8` - `Notify when auto-bid loses effectiveness`
+4. `2b84d4f` - `Them file md`
+5. `c52e827` - `Fix auto-bid tie-break at equal max bids`
 
-## Phạm vi thay đổi
+Commit `2b84d4f` chủ yếu thêm tài liệu planning ban đầu. Các thay đổi logic nằm ở bốn commit còn lại.
 
-Các thay đổi tập trung vào logic auto-bid từ server domain, protocol contract, service response, UI client và test regression.
+## 3. File thay đổi theo layer
 
-Các file chính đã thay đổi:
+### Protocol
 
-- `auction-server/src/main/java/com/auctionuet/server/domain/model/LiveAuction.java`
-- `auction-server/src/main/java/com/auctionuet/server/domain/model/AutoBidConfig.java`
-- `auction-server/src/main/java/com/auctionuet/server/domain/service/BidService.java`
-- `auction-protocol/src/main/java/com/auctionuet/protocol/dto/response/bid/AutoBidConfigDTO.java`
 - `auction-protocol/src/main/java/com/auctionuet/protocol/enums/AutoBidStatus.java`
+- `auction-protocol/src/main/java/com/auctionuet/protocol/dto/response/bid/AutoBidConfigDTO.java`
+
+### Server domain/service
+
+- `auction-server/src/main/java/com/auctionuet/server/domain/model/AutoBidConfig.java`
+- `auction-server/src/main/java/com/auctionuet/server/domain/model/LiveAuction.java`
+- `auction-server/src/main/java/com/auctionuet/server/domain/service/BidService.java`
+
+### Client UI
+
 - `auction-client/src/main/java/com/auctionuet/client/view/BiddingController.java`
+
+### Test
+
 - `auction-server/src/test/java/com/auctionuet/server/JUnitTest/DomainModelTest.java`
 - `auction-server/src/test/java/com/auctionuet/server/domain/service/AuctionServiceTest.java`
 
-## Mục tiêu logic
+## 4. Mục tiêu nghiệp vụ
 
-Trước thay đổi, auto-bid hoạt động gần giống cơ chế phản hồi từng bước: sau mỗi bid, hệ thống tìm auto-bid đủ điều kiện rồi tăng thêm một increment. Cách này dễ tạo nhiều vòng xử lý và chưa thể hiện rõ logic proxy bidding.
+Trước nhánh này, auto-bid chưa thể hiện rõ mô hình proxy bidding. Sau mỗi bid, hệ thống tăng giá theo từng bước, nhưng chưa xử lý đầy đủ các tình huống cạnh tranh giữa nhiều auto-bid, đặc biệt là khi hai bidder có cùng `maxBid`.
 
-Sau thay đổi, auto-bid được chuyển sang hướng proxy bidding:
+Mục tiêu sau thay đổi:
 
-- Người có `maxBid` cao nhất được ưu tiên thắng.
-- Nếu nhiều người có cùng `maxBid`, người bật auto-bid sớm hơn được ưu tiên.
-- Giá thắng không nhất thiết bằng toàn bộ `maxBid` của người thắng.
-- Giá thắng được đẩy tới mức đủ vượt đối thủ mạnh nhất, theo công thức gần đúng: `maxBid` của đối thủ mạnh nhất cộng `increment` của người thắng.
-- Giá thắng không vượt quá `maxBid` của người thắng.
+- Auto-bid có `maxBid` cao hơn được ưu tiên thắng.
+- Nếu `maxBid` bằng nhau, bidder bật auto-bid sớm hơn được ưu tiên.
+- Giá thắng chỉ tăng tới mức cần thiết để vượt đối thủ, không tự động nhảy thẳng lên toàn bộ `maxBid` nếu chưa cần.
+- Khi auto-bid bị vượt trần, server vẫn giữ config inactive để client có thể hiển thị trạng thái `INEFFECTIVE`.
+- Client biết auto-bid đang bảo vệ, đang chờ, hoặc đã mất hiệu lực.
+- Luồng đặt giá thủ công không được phá quyền ưu tiên của auto-bid đã đặt trước ở cùng trần tiền.
 
-## Luồng xử lý Auto-Bid
+## 5. Thay đổi trong protocol
 
-### 1. Người dùng bật Auto-Bid
+### AutoBidStatus
 
-Client gọi network adapter để gửi request bật auto-bid. Server đi vào `BidService.setAutoBid(...)`.
+Thêm enum `AutoBidStatus` với 3 trạng thái:
 
-Service xử lý:
+- `PROTECTING`: auto-bid còn hiệu lực và bidder đang dẫn đầu.
+- `WAITING`: auto-bid còn hiệu lực nhưng bidder chưa dẫn đầu.
+- `INEFFECTIVE`: auto-bid đã bị vượt trần hoặc không còn khả năng bảo vệ.
 
-1. Lấy `LiveAuction` đang chạy.
-2. Validate `maxBid > currentPrice` và `increment > 0`.
-3. Tính tiền cọc dựa trên giá khởi điểm item.
-4. Đảm bảo bidder đã được giữ tiền cọc.
-5. Tạo `AutoBidConfig`.
-6. Gọi `liveAuction.addAutoBid(...)`.
-7. Đồng bộ lại trạng thái auction xuống persistence.
-
-Nếu thêm auto-bid thất bại, service rollback phần tiền cọc vừa giữ nếu cần.
-
-### 2. LiveAuction thêm hoặc cập nhật Auto-Bid
-
-`LiveAuction.addAutoBid(...)` làm việc dưới `bidLock`.
-
-Các bước chính:
-
-1. Xóa config cũ của cùng bidder khỏi queue.
-2. Thêm config mới vào queue.
-3. Lưu config vào map `autoBids` để tra cứu nhanh theo bidder.
-4. Gọi `resolveAutoBids(...)` để cập nhật giá và người thắng nếu config mới đủ mạnh.
-
-Map `autoBids` vẫn giữ được config inactive để client còn kiểm tra trạng thái `INEFFECTIVE`.
-
-### 3. Chọn Auto-Bid mạnh nhất
-
-`AutoBidConfig.comparePriority(...)` định nghĩa thứ tự ưu tiên:
-
-1. `maxBid` cao hơn đứng trước.
-2. Nếu `maxBid` bằng nhau, `registeredAt` sớm hơn đứng trước.
-
-`LiveAuction.findBestAutoBidConfig(...)` chỉ xét các config đang active.
-
-### 4. Tính giá proxy
-
-`LiveAuction.calculateProxyAutoBidAmount(...)` xử lý các trường hợp:
-
-- Nếu người thắng proxy hiện cũng là `currentWinnerId`:
-  - Không có đối thủ active khác: giữ nguyên giá hiện tại.
-  - Có đối thủ active khác: tăng tới `min(winner.maxBid, competitor.maxBid + winner.increment)`.
-
-- Nếu người thắng proxy chưa phải current winner:
-  - Có đối thủ active khác: lấy giá cần vượt là max giữa giá hiện tại và `maxBid` của đối thủ mạnh nhất, rồi cộng increment của người thắng.
-  - Không có đối thủ active khác: tăng từ giá hiện tại thêm increment nếu chưa vượt `maxBid`.
-
-Sau khi tính được giá mới:
-
-1. Nếu giá mới không lớn hơn giá hiện tại thì không tạo bid mới.
-2. Nếu giá mới hợp lệ, tạo `BidRecord` loại `BidType.AUTO`.
-3. Cập nhật `currentHighestBid`.
-4. Cập nhật `currentWinnerId`.
-5. Thêm record vào `bidHistory`.
-6. Gọi callback để lưu bid auto xuống DB.
-7. Áp dụng anti-sniping nếu bid xảy ra gần cuối phiên.
-8. Vô hiệu hóa các auto-bid đã bị vượt trần.
-9. Notify observers để client nhận push realtime.
-
-### 5. Vô hiệu hóa Auto-Bid bị vượt trần
-
-`LiveAuction.deactivateExhaustedAutoBids(...)` tìm các config:
-
-- Đang active.
-- Không thuộc về người đang thắng.
-- Có `maxBid <= currentPrice`.
-
-Các config này sẽ bị:
-
-- `markInactive()`
-- Xóa khỏi queue active
-- Vẫn còn trong map `autoBids`
-
-Việc giữ lại trong map là quan trọng vì client có thể gọi `CHECK_AUTO_BID` và biết auto-bid của mình đã thành `INEFFECTIVE`.
-
-## Trạng thái Auto-Bid trong protocol
-
-Enum mới `AutoBidStatus` gồm:
-
-- `PROTECTING`: auto-bid còn hiệu lực và người dùng đang dẫn đầu.
-- `WAITING`: auto-bid còn hiệu lực nhưng người dùng chưa dẫn đầu.
-- `INEFFECTIVE`: auto-bid đã bị vượt trần, không còn khả năng bảo vệ.
+### AutoBidConfigDTO
 
 `AutoBidConfigDTO` được mở rộng thêm:
 
-- `status`
-- `protectedUntil`
+- `status`: trạng thái hiện tại của auto-bid.
+- `protectedUntil`: mức trần mà auto-bid đang bảo vệ hoặc đang chờ tới.
 
-Ý nghĩa `protectedUntil`:
+Quy ước hiện tại:
 
-- Với `PROTECTING`: mức trần mà auto-bid đang bảo vệ tới.
-- Với `WAITING`: mức trần còn đang chờ kích hoạt.
-- Với `INEFFECTIVE`: trả `0.0`.
+- `PROTECTING`: `protectedUntil = maxBid`.
+- `WAITING`: `protectedUntil = maxBid`.
+- `INEFFECTIVE`: `protectedUntil = 0.0`.
 
-## Luồng hiển thị ở client
+DTO vẫn implement `ValidatableDTO` và validate các trường chính: `auctionId`, `bidder`, `maxBid`, `increment`, `status`, `protectedUntil`.
 
-`BiddingController` được cập nhật để gọi `checkAutoBidState()` sau khi:
+## 6. Thay đổi trong server domain
+
+### AutoBidConfig
+
+`AutoBidConfig` hiện là nơi định nghĩa thứ tự ưu tiên giữa các auto-bid.
+
+Thứ tự so sánh trong `comparePriority(...)`:
+
+1. `maxBid` cao hơn được ưu tiên.
+2. Nếu `maxBid` bằng nhau, `registeredAt` sớm hơn được ưu tiên.
+3. Nếu thời gian đăng ký trùng nhau, `registrationOrder` nhỏ hơn được ưu tiên.
+
+`registrationOrder` dùng `AtomicLong` để tie-break ổn định hơn trong trường hợp hai config được tạo quá sát nhau và `LocalDateTime.now()` không đủ khác biệt.
+
+### LiveAuction và startingPrice
+
+`LiveAuction` có thêm `startingPrice` để `getCurrentPrice()` trả đúng giá khởi điểm khi chưa có bid thật:
+
+```java
+return currentHighestBid > 0 ? currentHighestBid : startingPrice;
+```
+
+Constructor đầy đủ nhận thêm `startingPrice`. Constructor cũ vẫn còn để giữ tương thích với các test/call site cũ, và tự gọi sang constructor đầy đủ bằng `this(...)`.
+
+### Luồng thêm auto-bid
+
+`LiveAuction.addAutoBid(...)` chạy dưới `bidLock`:
+
+1. Xóa config cũ của cùng bidder khỏi `autoBidQueue`.
+2. Thêm config mới vào `autoBidQueue`.
+3. Lưu config vào `autoBids` để tra cứu theo bidder.
+4. Gọi `resolveAutoBids(...)`.
+
+`autoBidQueue` chỉ dùng cho các config active đang cạnh tranh. `autoBids` giữ cả config inactive để `CHECK_AUTO_BID` vẫn có thể trả trạng thái cho client.
+
+### Luồng resolve auto-bid
+
+`LiveAuction.resolveAutoBids(...)` xử lý theo mô hình proxy:
+
+1. Vô hiệu hóa các auto-bid có `maxBid < currentPrice`.
+2. Tìm config tốt nhất bằng `findBestAutoBidConfig()`.
+3. Tính giá auto-bid mới bằng `calculateProxyAutoBidAmount(...)`.
+4. Kiểm tra giá mới có được áp dụng bằng `canApplyAutoBid(...)`.
+5. Nếu hợp lệ, tạo `BidRecord` loại `BidType.AUTO`.
+6. Cập nhật `currentHighestBid` và `currentWinnerId`.
+7. Lưu bid auto qua callback từ `BidService`.
+8. Áp dụng anti-sniping nếu cần.
+9. Vô hiệu hóa các auto-bid đã hết hiệu lực.
+10. Notify observer để client nhận push realtime.
+
+Điểm quan trọng là bước đầu chỉ loại `maxBid < currentPrice`, chưa loại `maxBid == currentPrice`. Điều này cho phép auto-bid đặt trước vẫn có cơ hội giữ quyền ưu tiên khi người khác bid thủ công đúng bằng trần của nó.
+
+### Tính giá proxy
+
+`calculateProxyAutoBidAmount(...)` xử lý các nhóm tình huống:
+
+- Nếu config tốt nhất đã là `currentWinnerId`:
+  - Không có đối thủ active khác: giữ nguyên giá hiện tại.
+  - Có đối thủ active khác: giá mới là `min(winner.maxBid, competitor.maxBid + winner.increment)`.
+
+- Nếu config tốt nhất chưa phải `currentWinnerId`:
+  - Có đối thủ active khác: lấy mức cần vượt là `max(currentPrice, competitor.maxBid)`, rồi cộng `winner.increment`, nhưng không vượt `winner.maxBid`.
+  - Không có đối thủ active khác: tăng từ giá hiện tại thêm `increment` nếu còn trong trần; nếu increment bị vượt trần nhưng đã có current winner, dùng đúng `winner.maxBid`.
+
+Cách này giúp auto-bid có thể dùng đúng trần cuối cùng để bảo vệ bidder, thay vì bỏ cuộc chỉ vì `currentPrice + increment > maxBid`.
+
+### Tie-break khi bằng trần tiền
+
+Lỗi đã sửa ở commit `c52e827`:
+
+- Người A bật auto-bid với `maxBid = 1000`.
+- Người B đặt giá thủ công `1000`.
+- Trước khi sửa, hệ thống có thể để B thắng vì auto-bid của A bị xem là exhausted khi `maxBid <= currentPrice`.
+- Sau khi sửa, A vẫn thắng vì A đã đăng ký auto-bid trước và cùng trần tiền.
+
+Các hàm liên quan:
+
+- `deactivateAutoBidsBelowCurrentPrice()`: chỉ loại config có `maxBid < currentPrice` trước khi resolve.
+- `canApplyAutoBid(...)`: cho phép auto-bid tạo bid ở cùng giá hiện tại nếu đang xử lý tie-break hợp lệ.
+- `canClaimCurrentPriceTie(...)`: kiểm tra auto-bid có được quyền giữ mức giá hòa hiện tại hay không.
+- `findCurrentWinningBidRecord()`: tìm bid hiện đang giữ winner ở mức giá hiện tại để so thời điểm với auto-bid.
+
+Sau khi resolve xong, `deactivateExhaustedAutoBids()` mới loại các config không thắng có `maxBid <= currentPrice`.
+
+## 7. Thay đổi trong BidService
+
+`BidService.setAutoBid(...)` vẫn chịu trách nhiệm:
+
+1. Lấy `LiveAuction`.
+2. Validate `maxBid > currentPrice` và `increment > 0`.
+3. Tính và giữ tiền cọc.
+4. Tạo `AutoBidConfig`.
+5. Gọi `liveAuction.addAutoBid(...)`.
+6. Đồng bộ auction state xuống JSON.
+7. Rollback tiền cọc nếu thêm auto-bid thất bại.
+
+`BidService.getAutoBidConfigDTO(...)` được cập nhật để trả trạng thái:
+
+- Config null: trả `null`.
+- Config inactive: trả `INEFFECTIVE`, `protectedUntil = 0.0`.
+- Config active và bidder là current winner: trả `PROTECTING`.
+- Config active nhưng bidder chưa dẫn đầu: trả `WAITING`.
+
+Business logic vẫn nằm trong service/domain, controller chỉ parse DTO, check auth/permission và gọi service.
+
+## 8. Thay đổi trong client
+
+`BiddingController` được cập nhật để client phản ánh trạng thái auto-bid rõ hơn.
+
+### Khi nào client gọi CHECK_AUTO_BID
+
+Client gọi `checkAutoBidState()` khi:
 
 - Mở màn hình bidding.
-- Nhận push bid mới.
 - Bật auto-bid thành công.
+- Nhận push `BID_UPDATE`.
 
-Khi nhận trạng thái:
+Các request vẫn chạy trong background thread, UI update bằng `Platform.runLater`.
 
-- `PROTECTING`: disable nút bật auto-bid, enable nút hủy, hiển thị thông báo màu xanh.
-- `WAITING`: disable nút bật auto-bid, enable nút hủy, hiển thị thông báo màu vàng/cam.
-- `INEFFECTIVE`: enable nút bật lại auto-bid, vẫn cho phép hủy config cũ, hiển thị thông báo màu đỏ.
+### Hiển thị trạng thái
 
-Client còn có biến `pendingAutoBidLossNotice`. Khi nhận push `BidType.AUTO` từ người khác, biến này được bật. Nếu sau đó `CHECK_AUTO_BID` trả về `INEFFECTIVE`, lịch sử bid sẽ thêm thông báo:
+Khi server trả:
 
-`Auto-Bid của bạn không còn hiệu lực vì đã bị Auto-Bid khác vượt trần.`
+- `PROTECTING`:
+  - Disable nút bật auto-bid.
+  - Enable nút hủy.
+  - Hiển thị thông báo bidder đang dẫn đầu và auto-bid bảo vệ tới `protectedUntil`.
 
-## Các case đã được test
+- `WAITING`:
+  - Disable nút bật auto-bid.
+  - Enable nút hủy.
+  - Hiển thị thông báo auto-bid đang chờ và sẽ tự đặt giá khi cần.
+
+- `INEFFECTIVE`:
+  - Enable nút bật lại auto-bid.
+  - Vẫn cho phép hủy config cũ.
+  - Hiển thị thông báo auto-bid không còn hiệu lực.
+
+### Thông báo khi mất hiệu lực
+
+Client có thêm `pendingAutoBidLossNotice`.
+
+Khi nhận push `BidType.AUTO` từ người khác, client đánh dấu cần kiểm tra lại auto-bid của mình. Nếu lần `CHECK_AUTO_BID` sau đó trả `INEFFECTIVE`, lịch sử bid sẽ thêm thông báo:
+
+```text
+Auto-Bid của bạn không còn hiệu lực vì đã bị Auto-Bid khác vượt trần.
+```
+
+## 9. Các case đã được test
 
 ### DomainModelTest
 
-Đã thêm test cho các case:
+Các case chính:
 
-- Hai auto-bid có cùng `maxBid` thì người bật sớm hơn thắng.
+- Manual bid hợp lệ cập nhật winner và current highest bid.
+- Bid thấp hơn hoặc bằng giá hiện tại bị reject.
+- Seller không được tự bid.
+- Auction đã đóng không cho bid.
+- Hai auto-bid cùng `maxBid` thì người bật trước thắng.
+- Manual bid đúng bằng `maxBid` của auto-bid trước đó không cướp winner.
+- Manual bid thấp hơn `maxBid` nhưng `increment` bị vượt trần vẫn cho auto-bid dùng đúng trần để bảo vệ.
 - Auto-bid có `maxBid` cao hơn được ưu tiên.
-- Giá cuối dùng `increment` của người thắng.
-- Auto-bid có trần thấp nhưng vẫn chưa bị vượt giá hiện tại thì còn `active`.
+- Giá proxy dùng `increment` của người thắng.
+- Auto-bid đang chờ vẫn active.
 - Auto-bid inactive có thể được bật lại bằng config mới.
 
 ### AuctionServiceTest
 
-Đã thêm hoặc cập nhật test cho các case:
+Các case chính:
 
-- Sau khi set auto-bid thành công, trạng thái trả về là `PROTECTING`.
-- Auto-bid chưa dẫn đầu nhưng còn hiệu lực trả `WAITING`.
-- Auto-bid bị vượt trần trả `INEFFECTIVE` và `protectedUntil = 0.0`.
-- Không có auto-bid hoặc đã cancel thì trả `null`.
+- Set auto-bid thành công thì giữ tiền cọc và tạo bid auto nếu đủ điều kiện.
+- Không đủ tiền cọc thì không tạo config hoặc bid.
+- Manual bid không hợp lệ rollback tiền cọc.
+- Auto-bid thấp hơn nhưng chưa đủ để đặt bid vẫn lưu tiền cọc và ở trạng thái `WAITING`.
+- Auto-bid bị vượt trần trả `INEFFECTIVE`.
+- Auto-bid đang dẫn đầu trả `PROTECTING`.
+- Hai bidder set auto-bid cùng trần thì bidder set trước vẫn là winner.
+- Manual bid đúng bằng trần auto-bid không cướp winner của bidder set trước.
+- Cancel hoặc chưa có auto-bid thì `CHECK_AUTO_BID` trả `null`.
 
-## Kết quả kiểm tra
+## 10. Kết quả kiểm tra
 
-Đã chạy:
+Đã chạy nhóm test trực tiếp cho auto-bid:
 
 ```powershell
-mvn -pl auction-server -am "-Dtest=DomainModelTest,AuctionServiceTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+mvn "-pl" "auction-server" "-am" "-Dtest=DomainModelTest,AuctionServiceTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
 ```
 
 Kết quả:
 
-- `AuctionServiceTest`: 24 tests pass
-- `DomainModelTest`: 9 tests pass
-- Tổng cộng: 33 tests pass, 0 failures, 0 errors
+- `AuctionServiceTest`: 26 tests pass.
+- `DomainModelTest`: 11 tests pass.
+- Tổng: 37 tests pass, 0 failures, 0 errors.
 
-## Nhận xét kỹ thuật
+Đã chạy full test server:
 
-Thiết kế hiện tại bám đúng kiến trúc contract-first:
+```powershell
+mvn "-pl" "auction-server" "-am" test
+```
 
-- Protocol thay đổi ở `auction-protocol`.
-- Business logic nằm trong `LiveAuction` và `BidService`.
-- JavaFX controller chỉ gọi API và render trạng thái.
-- Không tạo DTO riêng ở client/server.
-- Test được bổ sung ở cả domain model và service.
+Kết quả:
 
-Một điểm cần theo dõi là trạng thái `WAITING`: hiện tại chỉ cần `maxBid > currentPrice` và `increment > 0` là có thể bật auto-bid. Nếu `currentPrice + increment > maxBid`, config vẫn có thể ở trạng thái chờ nhưng chưa chắc đặt được bid kế tiếp. Có thể xử lý theo một trong hai hướng:
+- Tổng: 92 tests pass, 0 failures, 0 errors.
 
-1. Siết validate thành `maxBid >= currentPrice + increment`.
-2. Giữ logic hiện tại nhưng chỉnh text UI để không hứa chắc hệ thống sẽ đặt giá khi cần.
+Maven vẫn có warning sẵn có về thiếu version của `maven-compiler-plugin` và khuyến nghị dùng `--release 21`, nhưng không làm fail test.
 
-Một điểm khác là `checkAutoBidState()` ở client đang bỏ qua exception. Nếu request fail đúng lúc auto-bid mất hiệu lực, thông báo UI có thể bị trễ hoặc bị mất. Có thể cải thiện bằng retry nhẹ hoặc hiển thị lỗi không chặn luồng bidding.
+## 11. Nhận xét kỹ thuật
 
-## Đề xuất bước tiếp theo
+Thiết kế hiện tại bám theo kiến trúc contract-first:
 
-1. Chạy full test của server trước khi merge.
-2. Kiểm tra thủ công luồng client với 2 bidder cùng tham gia một phiên.
-3. Xác nhận wording UI cho `WAITING` và `INEFFECTIVE`.
-4. Nếu cần độ tin cậy cao hơn, thêm push event riêng cho auto-bid bị mất hiệu lực thay vì client suy luận từ bid push rồi gọi lại `CHECK_AUTO_BID`.
+- Trạng thái auto-bid dùng enum/DTO trong `auction-protocol`.
+- Server controller không chứa business logic.
+- Logic cạnh tranh auto-bid nằm trong `LiveAuction`.
+- Logic tiền cọc, persistence và mapping DTO nằm trong `BidService`.
+- Client không tạo DTO riêng, chỉ dùng DTO từ protocol.
+- Network call trên client vẫn chạy background thread.
+
+Một số điểm cần lưu ý sau nhánh này:
+
+- Config auto-bid hiện là runtime state trong `LiveAuction`; bid auto được lưu vào `bids.json`, nhưng chưa có persistence riêng cho config auto-bid sau restart.
+- Constructor cũ của `LiveAuction` vẫn public để giữ tương thích, nhưng code mới nên ưu tiên constructor có `startingPrice` để tránh sai `getCurrentPrice()` khi chưa có bid.
+- `checkAutoBidState()` ở client đang bỏ qua exception. Nếu request check trạng thái fail đúng lúc auto-bid mất hiệu lực, thông báo UI có thể bị trễ.
+- Thông báo mất hiệu lực hiện được client suy luận từ push bid auto của người khác rồi gọi lại `CHECK_AUTO_BID`; nếu muốn chắc hơn, có thể bổ sung push event riêng cho auto-bid bị mất hiệu lực.
+
+## 12. Đề xuất sau khi merge
+
+1. Kiểm thử thủ công với 2 bidder bật auto-bid cùng `maxBid`.
+2. Kiểm thử thủ công case bidder thứ hai bid thủ công đúng bằng trần auto-bid của bidder thứ nhất.
+3. Cân nhắc persistence riêng cho auto-bid config nếu cần khôi phục sau server restart.
+4. Cân nhắc thêm push event riêng cho trạng thái auto-bid để client không phải suy luận từ bid history.
