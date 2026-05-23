@@ -13,8 +13,6 @@ import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 
-import java.io.IOException;
-
 public class DashboardController {
 
     @FXML private Label userNameLabel;
@@ -146,9 +144,13 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
             contentArea.getChildren().setAll(root);
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Lỗi load màn hình: " + fxmlPath);
             e.printStackTrace();
+            Label errorLabel = new Label("Không thể mở màn hình này: " + e.getMessage());
+            errorLabel.getStyleClass().add("error-label");
+            errorLabel.setWrapText(true);
+            contentArea.getChildren().setAll(errorLabel);
         }
     }
 

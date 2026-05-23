@@ -232,5 +232,21 @@
     "id": "ef103606-6271-4d2b-b600-252be8a345df",
     "createdAt": "2026-05-23T09:03:45.0843929",
     "updatedAt": "2026-05-23T09:03:45.0843929"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "amount": 100000.0,
+    "auctionId": "0be25183-c889-480e-ac6d-8d9f9731718e",
+    "relatedTransactionId": "ef103606-6271-4d2b-b600-252be8a345df",
+    "balanceBefore": 1.2345645614251425E98,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 227735.3,
+    "frozenBalanceAfter": 127735.29999999999,
+    "description": "Tich thu tien coc do qua han thanh toan",
+    "id": "0b5e2df4-71be-47f2-84ac-87eafd667c4c",
+    "createdAt": "2026-05-23T09:16:02.6661824",
+    "updatedAt": "2026-05-23T09:16:02.6661824"
   }
 ]
