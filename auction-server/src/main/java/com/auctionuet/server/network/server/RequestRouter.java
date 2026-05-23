@@ -55,6 +55,10 @@ public class RequestRouter {
 
             case GET_MY_ITEMS:
                 return itemController.handleGetMyItems(request);
+            case DELETE_ITEM:
+                return itemController.handleDeleteItem(request);
+            case GET_ITEM_AUCTION_HISTORY:
+                return auctionController.handleGetItemAuctionHistory(request);
 
             // ── Auction Management ──
             case CREATE_AUCTION:
@@ -99,6 +103,8 @@ public class RequestRouter {
             // ── Payment ──
             case PAY_AUCTION:
                 return auctionController.handlePayAuction(request);
+            case GET_MY_PENDING_PAYMENTS:
+                return auctionController.handleGetMyPendingPayments(request);
             // ── Utils ──
             case PING:
                 if (request.getToken() != null && !request.getToken().isEmpty()) {

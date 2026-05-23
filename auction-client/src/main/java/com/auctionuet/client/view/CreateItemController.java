@@ -33,6 +33,12 @@ public class CreateItemController {
     @FXML private TextField artistField, artYearField, mediumField;
     @FXML private TextField makeField, modelField, mileageField, vehicleYearField;
 
+    private Runnable successCallback;
+
+    public void setSuccessCallback(Runnable successCallback) {
+        this.successCallback = successCallback;
+    }
+
     @FXML
     public void initialize() {
         for (ItemType type : ItemType.values()) {
@@ -67,7 +73,7 @@ public class CreateItemController {
         String priceStr = priceField.getText();
 
         if (typeValue == null || name.isBlank() || priceStr.isBlank()) {
-            showError("Vui long nhap ten, gia va chon loai san pham.");
+            showError("Vui lòng nhập tên, giá và chọn loại sản phẩm.");
             return;
         }
 
@@ -76,7 +82,7 @@ public class CreateItemController {
             price = Double.parseDouble(priceStr);
             if (price <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            showError("Gia tien phai la so lon hon 0.");
+            showError("Giá tiền phải là số lớn hơn 0.");
             return;
         }
 
@@ -84,7 +90,7 @@ public class CreateItemController {
         try {
             type = ItemType.valueOf(typeValue);
         } catch (IllegalArgumentException e) {
-            showError("Loai san pham khong hop le.");
+            showError("Loại sản phẩm không hợp lệ.");
             return;
         }
 
@@ -99,12 +105,12 @@ public class CreateItemController {
 
         String currentToken = ClientSession.getInstance().getToken();
         if (currentToken == null || currentToken.isEmpty()) {
-            showError("Ban chua dang nhap.");
+            showError("Bạn chưa đăng nhập.");
             return;
         }
 
         submitBtn.setDisable(true);
-        statusLabel.setText("Dang gui du lieu len Server...");
+        statusLabel.setText("Đang gửi dữ liệu lên Server...");
         statusLabel.setStyle("-fx-text-fill: #f39c12;");
 
         new Thread(() -> {
@@ -113,12 +119,15 @@ public class CreateItemController {
                 ItemDTO result = client.createItem(currentToken, request);
 
                 Platform.runLater(() -> {
-                    statusLabel.setText("Dang san pham thanh cong! ID: " + result.getId());
+                    statusLabel.setText("Đăng sản phẩm thành công! ID: " + result.getId());
                     statusLabel.setStyle("-fx-text-fill: #2ecc71;");
 
                     nameField.clear();
                     priceField.clear();
                     descArea.clear();
+                    if (successCallback != null) {
+                        successCallback.run();
+                    }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> showError(e.getMessage()));
@@ -151,7 +160,7 @@ public class CreateItemController {
     }
 
     private void showError(String msg) {
-        statusLabel.setText("Loi: " + msg);
+        statusLabel.setText("Lỗi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 }

@@ -87,7 +87,7 @@
                         <VBox alignment="CENTER" styleClass="card-bg" style="-fx-background-radius: 12;" GridPane.columnIndex="1" GridPane.rowIndex="0">
                             <children>
                                 <Label fx:id="statSoldLabel" styleClass="text-primary" text="..."><font><Font name="System Bold" size="36.0" /></font></Label>
-                                <Label styleClass="text-secondary" text="Sản phẩm đã bán"><font><Font size="16.0" /></font></Label>
+                                <Label fx:id="statSecondTitleLabel" styleClass="text-secondary" text="Sản phẩm đã bán"><font><Font size="16.0" /></font></Label>
                             </children>
                         </VBox>
                         <VBox alignment="CENTER" styleClass="card-bg" style="-fx-background-radius: 12;" GridPane.columnIndex="0" GridPane.rowIndex="1">

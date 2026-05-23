@@ -21,18 +21,16 @@
         <VBox spacing="5.0">
             <children>
                 <Label styleClass="text-secondary" text="Chọn sản phẩm (*)" />
-                <ComboBox fx:id="itemComboBox" maxWidth="1.999999999" promptText="-- Bấm để chọn sản phẩm của bạn --" styleClass="combo-box" />
+                <ComboBox fx:id="itemComboBox" maxWidth="Infinity" prefWidth="320.0" promptText="-- Bấm để chọn sản phẩm của bạn --" styleClass="combo-box" />
             </children>
         </VBox>
 
-        <VBox fx:id="itemPreviewBox" spacing="8.0" styleClass="card-bg" style="-fx-border-color: #0f3460; -fx-border-radius: 8; -fx-padding: 15; -fx-background-radius: 8;">
+        <VBox fx:id="itemPreviewBox" spacing="10.0" styleClass="card-bg" style="-fx-border-color: #0f3460; -fx-border-radius: 8; -fx-padding: 18; -fx-background-radius: 8;">
             <children>
-                <Label styleClass="text-accent" text="┌─ Thông tin SP đã chọn ─────────" />
-                <Label fx:id="previewName" styleClass="text-primary" text="Tên: (Chưa chọn)">
+                <Label styleClass="text-accent" text="Thông tin sản phẩm đã chọn">
                     <font><Font name="System Bold" size="14.0" /></font>
                 </Label>
-                <Label fx:id="previewPrice" styleClass="text-detail" text="Giá khởi điểm: 0 VNĐ" />
-                <Label fx:id="previewType" styleClass="text-detail" text="Loại: N/A" />
+                <VBox fx:id="previewContentBox" maxWidth="Infinity" spacing="9.0" />
             </children>
         </VBox>
 

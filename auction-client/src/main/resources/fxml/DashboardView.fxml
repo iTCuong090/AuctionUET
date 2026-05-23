@@ -3,6 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -22,9 +24,11 @@
         <children>
             <!-- Logo / Tên App trên cùng Sidebar -->
             <HBox alignment="CENTER" spacing="10.0">
-                <Label text="🏛" textFill="WHITE">
-                    <font><Font size="28.0" /></font>
-                </Label>
+                <ImageView fitHeight="42.0" fitWidth="42.0" preserveRatio="true">
+                    <image>
+                        <Image url="@../images/UET-circle.png" />
+                    </image>
+                </ImageView>
                 <Label text="AuctionUET" styleClass="sidebar-title-text">
                     <font><Font name="System Bold" size="24.0" /></font>
                 </Label>
@@ -36,9 +40,10 @@
             <VBox spacing="10.0">
                 <children>
                     <Button fx:id="btnHome" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="🏠   Trang chủ" alignment="BASELINE_LEFT" />
-                    <Button fx:id="btnMyItems" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="📦   Hoạt động" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnMyItems" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="📦   Vật phẩm" alignment="BASELINE_LEFT" />
                     <Button fx:id="btnCreateAuction" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="⚡   Tạo phiên mới" alignment="BASELINE_LEFT" />
                     <Button fx:id="btnAuctionList" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="🏛   Danh sách đấu giá" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnPayments" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="💳   Thanh toán" alignment="BASELINE_LEFT" />
                     <Button fx:id="btnWallet" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="💰   Ví tiền" alignment="BASELINE_LEFT" />
                 </children>
             </VBox>

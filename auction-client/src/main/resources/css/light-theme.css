@@ -76,6 +76,10 @@
 .status-badge-open { -fx-background-color: #f59e0b; -fx-text-fill: white; }
 .status-badge-finished { -fx-background-color: #94a3b8; -fx-text-fill: white; }
 .status-badge-canceled { -fx-background-color: #ef4444; -fx-text-fill: white; }
+.item-type-badge { -fx-background-color: #0374B5; -fx-text-fill: white; }
+.detail-price-label { -fx-text-fill: #0374B5; }
+.detail-leader-label { -fx-text-fill: #d97706; }
+.detail-time-label { -fx-text-fill: #ea580c; }
 
 .header-bar { -fx-background-color: #2d3b45; }
 .content-area { -fx-background-color: #f5f5f5; }
@@ -124,6 +128,12 @@
 .main-form-right {
     -fx-background-color: #ffffff;
 }
+.auth-form-scroll,
+.auth-form-scroll .viewport,
+.auth-form-scroll .content {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
 .main-login-btn {
     -fx-background-color: linear-gradient(to right, #0374B5, #0261a1);
     -fx-text-fill: white;
@@ -163,4 +173,135 @@
 /* === WALLET CARD === */
 .wallet-card {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0.1, 0, 5);
+}
+
+.payment-filter-chip {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #0374B5;
+    -fx-border-color: #c7cdd1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0.12, 0, 2);
+}
+.payment-filter-chip:hover {
+    -fx-background-color: #eef7fd;
+    -fx-border-color: #0374B5;
+}
+.payment-filter-chip.active {
+    -fx-background-color: #0374B5;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #0374B5;
+}
+
+.payment-method-card,
+.payment-info-card,
+.payment-action-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 14, 0.12, 0, 4);
+}
+
+.payment-card-title {
+    -fx-text-fill: #2d3b45;
+}
+
+.payment-method-row {
+    -fx-background-color: #f8fbff;
+    -fx-border-color: #dce8f3;
+}
+
+.payment-method-row:hover,
+.payment-method-row.selected {
+    -fx-background-color: #eef7fd;
+    -fx-border-color: #0374B5;
+}
+
+.payment-method-check {
+    -fx-background-color: #0374B5;
+    -fx-border-color: #0374B5;
+    -fx-text-fill: #ffffff;
+}
+
+.payment-method-option .payment-method-check {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #b9c7d4;
+}
+
+.payment-method-option.selected .payment-method-check {
+    -fx-background-color: #0374B5;
+    -fx-border-color: #0374B5;
+    -fx-text-fill: #ffffff;
+}
+
+.payment-brand-vietqr {
+    -fx-text-fill: #e11d48;
+}
+
+.payment-brand-cash {
+    -fx-text-fill: #0374B5;
+}
+
+.payment-info-label {
+    -fx-text-fill: #6b7780;
+}
+
+.payment-info-value {
+    -fx-text-fill: #2d3b45;
+}
+
+.payment-total-row .payment-info-value,
+.payment-action-amount {
+    -fx-text-fill: #0374B5;
+}
+
+.payment-divider {
+    -fx-background-color: #e2e8f0;
+}
+
+.payment-qr-brand {
+    -fx-text-fill: #ef233c;
+}
+
+.payment-qr-grid {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0.08, 0, 3);
+}
+
+.payment-qr-cell-dark {
+    -fx-background-color: #111827;
+}
+
+.payment-qr-cell-light {
+    -fx-background-color: #ffffff;
+}
+
+.payment-cash-box {
+    -fx-background-color: #f8fbff;
+    -fx-border-color: #dce8f3;
+}
+
+.payment-message.success {
+    -fx-text-fill: #16a34a;
+}
+
+.payment-message.error {
+    -fx-text-fill: #dc2626;
+}
+
+.payment-confirm-button {
+    -fx-background-color: #0374B5;
+    -fx-text-fill: #ffffff;
+}
+
+.payment-confirm-button:hover {
+    -fx-background-color: #0261a1;
+}
+
+.payment-back-button {
+    -fx-background-color: #eef2f6;
+    -fx-text-fill: #2d3b45;
+    -fx-border-color: #c7cdd1;
+}
+
+.payment-back-button:hover {
+    -fx-background-color: #e2e8f0;
 }

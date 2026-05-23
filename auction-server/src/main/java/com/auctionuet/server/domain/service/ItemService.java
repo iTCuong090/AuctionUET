@@ -5,9 +5,12 @@ import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.protocol.enums.Permission;
+import com.auctionuet.protocol.enums.AuctionStatus;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
+import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
+import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
@@ -22,10 +25,16 @@ public class ItemService {
 
     private final ItemDAO itemDAO;
     private final UserService userService;
+    private final AuctionDAO auctionDAO;
 
     public ItemService(ItemDAO itemDAO, UserService userService) {
+        this(itemDAO, userService, new AuctionDAO());
+    }
+
+    public ItemService(ItemDAO itemDAO, UserService userService, AuctionDAO auctionDAO) {
         this.itemDAO = itemDAO;
         this.userService = userService;
+        this.auctionDAO = auctionDAO;
     }
 
     public ItemDTO createItem(
@@ -62,6 +71,10 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
+    public List<ItemDTO> getItemsByOwnerId(String ownerId) {
+        return getItemsBySellerId(ownerId);
+    }
+
     public ItemDTO getItemById(String itemId) {
         ItemSchema schema = getItemSchemaById(itemId);
         if (schema == null) {
@@ -78,8 +91,53 @@ public class ItemService {
         itemDAO.update(item);
     }
 
+    public void transferOwnership(String itemId, String newOwnerId) throws AuctionException {
+        ItemSchema item = requireItemSchema(itemId);
+        userService.getUserSchemaById(newOwnerId);
+        item.setSellerId(newOwnerId);
+        item.setArchived(false);
+        itemDAO.update(item);
+    }
+
+    public void archiveItem(User owner, String itemId) throws AuctionException {
+        if (!owner.hasPermission(Permission.DELETE_ITEM)) {
+            throw new AuctionException("Khong co quyen DELETE_ITEM");
+        }
+
+        ItemSchema item = requireItemSchema(itemId);
+        if (!owner.getId().equals(item.getSellerId())) {
+            throw new AuctionException("Ban khong phai chu so huu cua item nay");
+        }
+        if (hasActiveAuction(itemId)) {
+            throw new AuctionException("Khong the go vat pham dang co phien dau gia active");
+        }
+
+        item.setArchived(true);
+        itemDAO.update(item);
+    }
+
+    private boolean hasActiveAuction(String itemId) {
+        for (AuctionSchema auction : auctionDAO.findByItemId(itemId)) {
+            AuctionStatus status = auction.getStatus();
+            if (status == AuctionStatus.OPEN
+                    || status == AuctionStatus.RUNNING
+                    || status == AuctionStatus.WAITING_PAYMENT) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private ItemDTO toItemDTO(ItemSchema schema) {
         return toItemDTO(schema, userService.getUserDTOById(schema.getSellerId()));
+    }
+
+    private ItemSchema requireItemSchema(String itemId) throws AuctionException {
+        ItemSchema item = itemDAO.findById(itemId);
+        if (item == null) {
+            throw new AuctionException("Item khong ton tai");
+        }
+        return item;
     }
 
     private ItemDTO toItemDTO(ItemSchema schema, UserDTO seller) {

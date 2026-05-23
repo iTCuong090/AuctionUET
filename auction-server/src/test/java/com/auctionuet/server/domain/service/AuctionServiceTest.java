@@ -71,7 +71,7 @@ public class AuctionServiceTest {
         transactionDAO = new TransactionDAO(transactionFile);
 
         UserService userService = new UserService(userDAO);
-        itemService = new ItemService(itemDAO, userService);
+        itemService = new ItemService(itemDAO, userService, auctionDAO);
         TransactionService transactionService = new TransactionService(transactionDAO);
         walletService = new WalletService(userDAO, userService, transactionService);
         bidService = new BidService(
@@ -103,7 +103,9 @@ public class AuctionServiceTest {
 
         @Override
         public boolean hasPermission(Permission action) {
-            if (action == Permission.CREATE_ITEM || action == Permission.CREATE_AUCTION) {
+            if (action == Permission.CREATE_ITEM
+                    || action == Permission.CREATE_AUCTION
+                    || action == Permission.DELETE_ITEM) {
                 return isSeller;
             }
             return false;
@@ -202,6 +204,56 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testCreateAuctionRejectsItemWithActiveAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
+
+        assertThrows(AuctionException.class, () ->
+                auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(10),
+                        LocalDateTime.now().plusDays(2), "Auction 2", "Desc", 60, 120));
+    }
+
+    @Test
+    public void testCreateAuctionAllowsCanceledPreviousAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        AuctionDTO firstAuction = auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1),
+                "Auction 1",
+                "Desc",
+                60,
+                120);
+        auctionService.startAuction(seller, firstAuction.getId());
+        auctionService.endAuction(firstAuction.getId());
+
+        AuctionDTO secondAuction = auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(10),
+                LocalDateTime.now().plusDays(2),
+                "Auction 2",
+                "Desc",
+                60,
+                120);
+
+        assertNotNull(secondAuction);
+        assertEquals(AuctionStatus.CANCELED, auctionDAO.findById(firstAuction.getId()).getStatus());
+        assertEquals(AuctionStatus.OPEN, auctionDAO.findById(secondAuction.getId()).getStatus());
+        assertEquals(2, auctionDAO.findByItemId(item.getId()).size());
+    }
+
+    @Test
     public void testCreateAuctionWrongOwner() throws Exception {
         User seller1 = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User seller2 = new MockUser("seller2", "seller2", UserRole.SELLER, true);
@@ -247,15 +299,12 @@ public class AuctionServiceTest {
     public void testGetAuctions() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
-                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
-
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 2", "Desc", 60, 120);
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 3", "Desc", 60, 120);
+        for (int i = 1; i <= 3; i++) {
+            ItemDTO item = itemService.createItem(seller, dto.getName() + " " + i, dto.getDescription(),
+                    dto.getStartingPrice(), dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+            auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
+                    LocalDateTime.now().plusDays(1), "Auction " + i, "Desc", 60, 120);
+        }
 
         List<AuctionDTO> auctions = auctionService.getAuctions();
         assertEquals(3, auctions.size());
@@ -679,11 +728,155 @@ public class AuctionServiceTest {
         AuctionSchema updated = auctionDAO.findById(auction.getId());
         assertEquals(AuctionStatus.PAID, updated.getStatus());
         assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertEquals("bidder1", itemDAO.findById(auction.getItem().getId()).getSellerId());
+        assertEquals(1, itemService.getItemsByOwnerId("bidder1").size());
         List<TransactionSchema> bidderTransactions = transactionDAO.findByUserId("bidder1");
         assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_PAYMENT));
         assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_FORFEIT));
         assertTrue(transactionDAO.findByUserId("seller1").stream()
                 .anyMatch(t -> t.getType() == TransactionType.SELLER_PAYOUT));
+    }
+
+    @Test
+    public void testWinnerPaymentInsufficientBalanceKeepsWaitingPaymentAndDeposit() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 560.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+
+        assertThrows(AuctionException.class, () -> auctionService.payAuction(bidder, auction.getId()));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(510.0, bidderSchema.getBalance());
+        assertEquals(50.0, bidderSchema.getFrozenBalance());
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.WAITING_PAYMENT, updated.getStatus());
+        assertTrue(updated.hasDepositedBidder("bidder1"));
+        assertEquals("seller1", itemDAO.findById(auction.getItem().getId()).getSellerId());
+    }
+
+    @Test
+    public void testWinnerPaymentAfterDeadlineIsRejectedAndForfeitsDeposit() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+
+        AuctionSchema waitingPayment = auctionDAO.findById(auction.getId());
+        waitingPayment.setPaymentDeadlineAt(LocalDateTime.now().minusMinutes(1));
+        auctionDAO.update(waitingPayment);
+
+        assertThrows(AuctionException.class, () -> auctionService.payAuction(bidder, auction.getId()));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.CANCELED, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertEquals("seller1", itemDAO.findById(auction.getItem().getId()).getSellerId());
+    }
+
+    @Test
+    public void testPaymentDeadlineForfeitsDepositAndKeepsSellerOwnership() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+        auctionService.expirePaymentDeadline(auction.getId());
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.CANCELED, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertEquals("seller1", itemDAO.findById(auction.getItem().getId()).getSellerId());
+        assertTrue(transactionDAO.findByUserId("bidder1").stream()
+                .anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_FORFEIT));
+    }
+
+    @Test
+    public void testPendingPaymentsOnlyReturnsWinnerWaitingPaymentAuctions() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        saveUser("bidder2", "bidder2", UserRole.BIDDER, 1000.0);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+
+        List<AuctionDTO> bidderPending = auctionService.getPendingPaymentsForWinner("bidder1");
+        List<AuctionDTO> otherPending = auctionService.getPendingPaymentsForWinner("bidder2");
+
+        assertEquals(1, bidderPending.size());
+        assertEquals(auction.getId(), bidderPending.get(0).getId());
+        assertNotNull(bidderPending.get(0).getPaymentDeadlineAt());
+        assertEquals(0, otherPending.size());
+    }
+
+    @Test
+    public void testArchiveItemSoftDeletesWithoutBreakingHistory() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO item = itemService.createItem(
+                seller,
+                "Item can go",
+                "Desc",
+                500.0,
+                ItemType.ELECTRONICS,
+                null,
+                ItemCondition.NEW,
+                Map.of("brand", "Test", "warrantyMonths", 12));
+
+        itemService.archiveItem(seller, item.getId());
+
+        assertTrue(itemDAO.findById(item.getId()).isArchived());
+        assertEquals(0, itemService.getItemsByOwnerId("seller1").size());
+        assertNotNull(itemService.getItemById(item.getId()));
+    }
+
+    @Test
+    public void testArchiveItemWithActiveAuctionIsRejected() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO item = itemService.createItem(
+                seller,
+                "Item active",
+                "Desc",
+                500.0,
+                ItemType.ELECTRONICS,
+                null,
+                ItemCondition.NEW,
+                Map.of("brand", "Test", "warrantyMonths", 12));
+
+        auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1),
+                "Auction active",
+                "Desc",
+                60,
+                120);
+
+        assertThrows(AuctionException.class, () -> itemService.archiveItem(seller, item.getId()));
+        assertFalse(itemDAO.findById(item.getId()).isArchived());
     }
 
     private void saveUser(String id, String username, UserRole role) {

@@ -8,28 +8,87 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AuctionListController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final double CARD_GAP = 20.0;
+    private static final double MIN_CARD_WIDTH = 220.0;
+    private static final int MAX_CARD_COLUMNS = 4;
 
     @FXML private FlowPane auctionGrid;
+    @FXML private ScrollPane auctionScrollPane;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
+    @FXML private Button btnMyAuctions;
+
+    private List<AuctionDTO> allAuctions = new ArrayList<>();
+    private double currentCardWidth = 300.0;
+    private boolean myAuctionsOnly;
 
     @FXML
     public void initialize() {
-        filterComboBox.getItems().addAll("Tat ca", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
-        filterComboBox.setValue("Tat ca");
+        filterComboBox.getItems().addAll("Tất cả", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
+        filterComboBox.setValue("Tất cả");
+        filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        searchField.setOnAction(e -> applyFilters());
+        btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
+        updateMyAuctionsButtonStyle();
+        setupStableGridWidth();
 
         loadAuctionsFromServer();
+    }
+
+    private void setupStableGridWidth() {
+        auctionScrollPane.viewportBoundsProperty().addListener((obs, oldBounds, newBounds) ->
+                syncGridWidth(newBounds));
+        Platform.runLater(() -> syncGridWidth(auctionScrollPane.getViewportBounds()));
+    }
+
+    private void syncGridWidth(Bounds viewportBounds) {
+        if (viewportBounds == null || viewportBounds.getWidth() <= 0) {
+            return;
+        }
+
+        double width = viewportBounds.getWidth();
+        auctionGrid.setMinWidth(width);
+        auctionGrid.setPrefWidth(width);
+        auctionGrid.setMaxWidth(width);
+        auctionGrid.setPrefWrapLength(width);
+        currentCardWidth = calculateCardWidth(width);
+        auctionGrid.getChildren().forEach(node -> {
+            if (node instanceof Region region) {
+                applyCardWidth(region);
+            }
+        });
+    }
+
+    private double calculateCardWidth(double availableWidth) {
+        int columns = (int) ((availableWidth + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
+        columns = Math.max(1, Math.min(MAX_CARD_COLUMNS, columns));
+        return Math.floor((availableWidth - ((columns - 1) * CARD_GAP) - 2) / columns);
+    }
+
+    private void applyCardWidth(Region card) {
+        card.setMinWidth(currentCardWidth);
+        card.setPrefWidth(currentCardWidth);
+        card.setMaxWidth(currentCardWidth);
     }
 
     private void loadAuctionsFromServer() {
@@ -40,11 +99,105 @@ public class AuctionListController {
             try {
                 AuctionClient client = new AuctionClient();
                 List<AuctionDTO> list = client.getAuctions(currentToken);
-                Platform.runLater(() -> renderGrid(list));
+                Platform.runLater(() -> {
+                    allAuctions = AuctionViewFilter.representativeAuctions(list);
+                    applyFilters();
+                });
             } catch (Exception e) {
-                Platform.runLater(() -> System.out.println("Loi tai danh sach dau gia: " + e.getMessage()));
+                Platform.runLater(() -> System.out.println("Lỗi tải danh sách đấu giá: " + e.getMessage()));
             }
         }).start();
+    }
+
+    @FXML
+    private void handleSearch() {
+        applyFilters();
+    }
+
+    private void applyFilters() {
+        String selectedStatus = filterComboBox.getValue();
+        String keyword = searchField.getText() != null
+                ? searchField.getText().trim().toLowerCase(Locale.ROOT)
+                : "";
+
+        List<AuctionDTO> filtered = allAuctions.stream()
+                .filter(auction -> matchesStatus(auction, selectedStatus))
+                .filter(auction -> !myAuctionsOnly || matchesCurrentUser(auction))
+                .filter(auction -> matchesKeyword(auction, keyword))
+                .toList();
+        renderGrid(filtered);
+    }
+
+    private void toggleMyAuctionsFilter() {
+        myAuctionsOnly = !myAuctionsOnly;
+        updateMyAuctionsButtonStyle();
+        applyFilters();
+    }
+
+    private void updateMyAuctionsButtonStyle() {
+        if (btnMyAuctions == null) {
+            return;
+        }
+        btnMyAuctions.getStyleClass().remove("active");
+        if (myAuctionsOnly) {
+            btnMyAuctions.getStyleClass().add("active");
+        }
+    }
+
+    private boolean matchesStatus(AuctionDTO auction, String selectedStatus) {
+        if (selectedStatus == null || selectedStatus.equals("Tất cả")) {
+            return true;
+        }
+        return auction.getStatus() != null && selectedStatus.equals(auction.getStatus().name());
+    }
+
+    private boolean matchesKeyword(AuctionDTO auction, String keyword) {
+        if (keyword.isEmpty()) {
+            return true;
+        }
+
+        String title = auction.getTitle() != null ? auction.getTitle() : "";
+        String itemName = auction.getItem() != null && auction.getItem().getName() != null
+                ? auction.getItem().getName()
+                : "";
+        String seller = auction.getSeller() != null && auction.getSeller().getUsername() != null
+                ? auction.getSeller().getUsername()
+                : "";
+        return title.toLowerCase(Locale.ROOT).contains(keyword)
+                || itemName.toLowerCase(Locale.ROOT).contains(keyword)
+                || seller.toLowerCase(Locale.ROOT).contains(keyword);
+    }
+
+    private boolean matchesCurrentUser(AuctionDTO auction) {
+        String currentUserId = currentUserId();
+        if (auction == null || currentUserId == null || currentUserId.isBlank()) {
+            return false;
+        }
+
+        if (ClientSession.getInstance().isSeller()) {
+            return auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
+        }
+
+        if (!ClientSession.getInstance().isBidder()) {
+            return false;
+        }
+
+        AuctionStatus status = auction.getStatus();
+        boolean isWinner = auction.getWinner() != null && currentUserId.equals(auction.getWinner().getId());
+        boolean isCurrentHighestBidder = auction.getCurrentHighestBid() != null
+                && auction.getCurrentHighestBid().getBidder() != null
+                && currentUserId.equals(auction.getCurrentHighestBid().getBidder().getId());
+
+        boolean isRunningParticipant = status == AuctionStatus.RUNNING
+                && (auction.isCurrentUserDeposited() || isCurrentHighestBidder);
+        boolean isWaitingPaymentWinner = status == AuctionStatus.WAITING_PAYMENT && isWinner;
+        return isRunningParticipant || isWaitingPaymentWinner;
+    }
+
+    private String currentUserId() {
+        return ClientSession.getInstance().getCurrentUser() != null
+                ? ClientSession.getInstance().getCurrentUser().getId()
+                : null;
     }
 
     private void renderGrid(List<AuctionDTO> auctions) {
@@ -52,19 +205,21 @@ public class AuctionListController {
         for (AuctionDTO item : auctions) {
             auctionGrid.getChildren().add(createAuctionCard(item));
         }
+        syncGridWidth(auctionScrollPane.getViewportBounds());
     }
 
     private VBox createAuctionCard(AuctionDTO item) {
         VBox card = new VBox(12);
         card.getStyleClass().add("auction-card");
-        card.setPrefWidth(250);
+        applyCardWidth(card);
 
         Label title = new Label(item.getTitle());
         title.setStyle("-fx-font-size: 17px; -fx-font-weight: bold;");
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        Label price = new Label(String.format("%,.0f VND", item.getCurrentPrice()));
+        Label price = new Label();
+        CurrencyFormatter.setMoneyText(price, item.getCurrentPrice());
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 
@@ -81,7 +236,7 @@ public class AuctionListController {
         }
 
         VBox infoBox = new VBox(5);
-        Label timeLabel = new Label("Ket thuc: " + formatTime(item.getEndTime()));
+        Label timeLabel = new Label("Kết thúc: " + formatTime(item.getEndTime()));
         Label sellerLabel = new Label("Seller: " + valueOrUnknown(item.getSeller() != null ? item.getSeller().getUsername() : null));
 
         String subStyle = "-fx-font-size: 13px;";
@@ -92,54 +247,94 @@ public class AuctionListController {
 
         infoBox.getChildren().addAll(timeLabel, sellerLabel);
 
-        Button btnDetail = new Button("Xem chi tiet");
-        btnDetail.getStyleClass().add("button");
-        btnDetail.setMaxWidth(Double.MAX_VALUE);
-
-        btnDetail.setOnAction(e -> openAuctionView(btnDetail, item, status));
-
-        card.getChildren().addAll(title, price, statusBadge, infoBox, btnDetail);
+        card.getChildren().addAll(title, price, statusBadge, infoBox);
+        if (ClientSession.getInstance().isBidder()) {
+            card.getChildren().add(createBidderActions(item, status));
+        } else {
+            Button btnDetail = new Button("Xem chi tiết");
+            btnDetail.getStyleClass().add("button");
+            btnDetail.setMaxWidth(Double.MAX_VALUE);
+            btnDetail.setOnAction(e -> openAuctionDetail(btnDetail, item));
+            card.getChildren().add(btnDetail);
+        }
         return card;
     }
 
-    private void openAuctionView(Button source, AuctionDTO item, AuctionStatus status) {
-        try {
-            String fxmlPath = status == AuctionStatus.RUNNING ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
+    private VBox createBidderActions(AuctionDTO item, AuctionStatus status) {
+        VBox actions = new VBox(6);
 
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource(fxmlPath));
+        Button registerButton = new Button("Đăng ký đấu giá");
+        registerButton.getStyleClass().add("button");
+        registerButton.setMaxWidth(Double.MAX_VALUE);
+        registerButton.setDisable(status != AuctionStatus.RUNNING);
+        registerButton.setOnAction(e -> openBiddingView(registerButton, item));
+
+        Hyperlink detailLink = new Hyperlink("Xem chi tiết thông tin");
+        detailLink.setStyle(
+                "-fx-text-fill: #14b8a6; " +
+                "-fx-font-weight: bold; " +
+                "-fx-border-color: transparent; " +
+                "-fx-padding: 0;");
+        detailLink.setOnAction(e -> openAuctionDetail(detailLink, item));
+
+        HBox detailLinkBox = new HBox(detailLink);
+        detailLinkBox.setAlignment(javafx.geometry.Pos.CENTER);
+        detailLinkBox.setMaxWidth(Double.MAX_VALUE);
+
+        actions.getChildren().addAll(registerButton, detailLinkBox);
+        return actions;
+    }
+
+    private void openBiddingView(Node source, AuctionDTO item) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/BiddingView.fxml"));
             javafx.scene.Parent root = loader.load();
 
-            if (status == AuctionStatus.RUNNING) {
-                BiddingController biddingController = loader.getController();
-                biddingController.setAuctionId(item.getId());
-            } else {
-                AuctionDetailController detailController = loader.getController();
-                detailController.setAuctionData(item.getId());
-            }
+            BiddingController biddingController = loader.getController();
+            biddingController.setAuctionId(item.getId());
 
-            javafx.scene.Parent currentRoot = source.getScene().getRoot();
-            if (currentRoot instanceof javafx.scene.layout.HBox) {
-                javafx.scene.layout.VBox mainCard =
-                        (javafx.scene.layout.VBox) ((javafx.scene.layout.HBox) currentRoot).getChildren().get(1);
-                javafx.scene.layout.StackPane contentArea =
-                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
-                contentArea.getChildren().setAll(root);
-            } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
-                ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
-            } else {
-                System.out.println("Dashboard layout khong khop.");
-            }
+            replaceContent(source, root);
         } catch (Exception ex) {
-            System.out.println("Loi chuyen man hinh: " + ex.getMessage());
+            System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
 
+    private void openAuctionDetail(Node source, AuctionDTO item) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AuctionDetailView.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            AuctionDetailController detailController = loader.getController();
+            detailController.setAuctionData(item.getId());
+
+            replaceContent(source, root);
+        } catch (Exception ex) {
+            System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void replaceContent(Node source, javafx.scene.Parent root) {
+        javafx.scene.Parent currentRoot = source.getScene().getRoot();
+        if (currentRoot instanceof javafx.scene.layout.HBox) {
+            javafx.scene.layout.VBox mainCard =
+                    (javafx.scene.layout.VBox) ((javafx.scene.layout.HBox) currentRoot).getChildren().get(1);
+            javafx.scene.layout.StackPane contentArea =
+                    (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+            contentArea.getChildren().setAll(root);
+        } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+            ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
+        } else {
+            System.out.println("Dashboard layout khong khop.");
+        }
+    }
+
     private String formatTime(LocalDateTime time) {
-        return time != null ? time.format(DISPLAY_TIME) : "Chua ro";
+        return time != null ? time.format(DISPLAY_TIME) : "Chưa rõ";
     }
 
     private String valueOrUnknown(String value) {
-        return value != null ? value : "Chua ro";
+        return value != null ? value : "Chưa rõ";
     }
 }

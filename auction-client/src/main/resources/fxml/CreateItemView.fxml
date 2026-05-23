@@ -18,7 +18,7 @@
 
                 <VBox spacing="5.0">
                     <Label styleClass="text-secondary" text="Loại sản phẩm (*)" />
-                    <ComboBox fx:id="typeComboBox" maxWidth="1.999999999" promptText="-- Chọn loại sản phẩm --" styleClass="combo-box" />
+                    <ComboBox fx:id="typeComboBox" maxWidth="Infinity" prefWidth="260.0" promptText="-- Chọn loại sản phẩm --" styleClass="combo-box" />
                 </VBox>
 
                 <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />
@@ -40,7 +40,7 @@
 
                 <VBox spacing="5.0">
                     <Label styleClass="text-secondary" text="Tình trạng (*)" />
-                    <ComboBox fx:id="conditionComboBox" maxWidth="1.999999999" promptText="-- Chọn tình trạng --" styleClass="combo-box" />
+                    <ComboBox fx:id="conditionComboBox" maxWidth="Infinity" prefWidth="260.0" promptText="-- Chọn tình trạng --" styleClass="combo-box" />
                 </VBox>
 
                 <VBox spacing="5.0">

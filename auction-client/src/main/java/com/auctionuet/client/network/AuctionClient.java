@@ -73,4 +73,26 @@ public class AuctionClient {
         }
         throw new Exception(response.getMessage());
     }
+
+    public void payAuction(String token, String auctionId) throws Exception {
+        AuctionIdRequestDTO data = new AuctionIdRequestDTO();
+        data.setAuctionId(auctionId);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.PAY_AUCTION, data, token));
+
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
+        }
+    }
+
+    public List<AuctionDTO> getMyPendingPayments(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.GET_MY_PENDING_PAYMENTS, null, token));
+
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataListAs(AuctionDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
 }

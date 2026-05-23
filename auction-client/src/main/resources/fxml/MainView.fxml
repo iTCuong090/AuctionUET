@@ -14,10 +14,9 @@
         <children>
             <!-- Logo UET -->
             <StackPane>
-                <Circle fill="WHITE" radius="55.0" />
-                <ImageView fitHeight="90.0" fitWidth="90.0" preserveRatio="true">
+                <ImageView fitHeight="110.0" fitWidth="110.0" preserveRatio="true">
                     <image>
-                        <Image url="@../images/UET.png" />
+                        <Image url="@../images/UET-circle.png" />
                     </image>
                 </ImageView>
             </StackPane>

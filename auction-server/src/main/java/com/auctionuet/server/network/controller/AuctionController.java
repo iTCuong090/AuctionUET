@@ -4,7 +4,9 @@ import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.protocol.dto.request.auction.AuctionIdRequestDTO;
 import com.auctionuet.protocol.dto.request.auction.CreateAuctionRequestDTO;
+import com.auctionuet.protocol.dto.request.item.ItemIdRequestDTO;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.AuctionService;
@@ -53,8 +55,8 @@ public class AuctionController {
     }
 
     public Response handleGetAuctions(Request request) throws Exception {
-        sessionManager.validateToken(request.getToken());
-        List<AuctionDTO> auctions = auctionService.getAuctions();
+        User user = sessionManager.validateToken(request.getToken());
+        List<AuctionDTO> auctions = auctionService.getAuctions(user.getId());
         return Response.ok(auctions);
     }
 
@@ -76,9 +78,31 @@ public class AuctionController {
 
     public Response handlePayAuction(Request request) throws Exception {
         User user = sessionManager.validateToken(request.getToken());
+        if (!user.hasPermission(Permission.PAY_AUCTION)) {
+            return Response.error("Ban khong co quyen thanh toan phien dau gia");
+        }
         AuctionIdRequestDTO req = request.getDataAs(AuctionIdRequestDTO.class);
 
         auctionService.payAuction(user, req.getAuctionId());
         return Response.ok("Thanh toan thanh cong! San pham da thuoc ve ban.");
+    }
+
+    public Response handleGetMyPendingPayments(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        if (!user.hasPermission(Permission.GET_MY_PENDING_PAYMENTS)) {
+            return Response.error("Ban khong co quyen xem danh sach thanh toan");
+        }
+        List<AuctionDTO> auctions = auctionService.getPendingPaymentsForWinner(user.getId());
+        return Response.ok(auctions);
+    }
+
+    public Response handleGetItemAuctionHistory(Request request) throws Exception {
+        User user = sessionManager.validateToken(request.getToken());
+        if (!user.hasPermission(Permission.GET_ITEM_AUCTION_HISTORY)) {
+            return Response.error("Ban khong co quyen xem lich su vat pham");
+        }
+        ItemIdRequestDTO req = request.getDataAs(ItemIdRequestDTO.class);
+        List<AuctionDTO> auctions = auctionService.getItemAuctionHistory(user, req.getItemId());
+        return Response.ok(auctions);
     }
 }

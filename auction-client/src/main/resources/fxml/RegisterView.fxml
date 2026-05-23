@@ -4,7 +4,12 @@
 <?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="14" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.RegisterController">
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="auth-form-scroll" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.RegisterController">
+    <content>
+<VBox alignment="CENTER" maxWidth="Infinity" spacing="14">
+    <padding>
+        <Insets bottom="18.0" left="0.0" right="28.0" top="8.0" />
+    </padding>
     <children>
         <!-- Tiêu đề -->
         <Label styleClass="text-heading" text="Tạo tài khoản mới">
@@ -67,3 +72,5 @@
         </HBox>
     </children>
 </VBox>
+    </content>
+</ScrollPane>

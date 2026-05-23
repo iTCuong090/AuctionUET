@@ -84,13 +84,14 @@ public class AuctionDAO implements GenericDAO<AuctionSchema> {
         return result;
     }
 
-    public AuctionSchema findByItemId(String itemId) {
+    public List<AuctionSchema> findByItemId(String itemId) {
         List<AuctionSchema> list = JsonFileHelper.readList(filePath, AuctionSchema.class);
+        List<AuctionSchema> result = new java.util.ArrayList<>();
         for (AuctionSchema entity : list) {
             if (itemId.equals(entity.getItemId())) {
-                return entity;
+                result.add(entity);
             }
         }
-        return null;
+        return result;
     }
 }

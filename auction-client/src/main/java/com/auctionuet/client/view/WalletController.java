@@ -1,7 +1,9 @@
 package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.WalletClient;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
@@ -13,7 +15,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WalletController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -32,6 +39,7 @@ public class WalletController {
     @FXML private ListView<String> transactionListView;
 
     private final WalletClient walletClient = new WalletClient();
+    private final AuctionClient auctionClient = new AuctionClient();
 
     @FXML
     public void initialize() {
@@ -51,7 +59,7 @@ public class WalletController {
                     statusLabel.setText("");
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> statusLabel.setText("Loi tai vi: " + e.getMessage()));
+                Platform.runLater(() -> statusLabel.setText("Lỗi tải ví: " + e.getMessage()));
             }
         }).start();
     }
@@ -63,9 +71,10 @@ public class WalletController {
         new Thread(() -> {
             try {
                 List<TransactionDTO> transactions = walletClient.getMyTransactions(token);
-                Platform.runLater(() -> renderTransactions(transactions));
+                Map<String, String> auctionTitles = loadAuctionTitles(token, transactions);
+                Platform.runLater(() -> renderTransactions(transactions, auctionTitles));
             } catch (Exception e) {
-                Platform.runLater(() -> transactionListView.getItems().setAll("Loi tai lich su: " + e.getMessage()));
+                Platform.runLater(() -> transactionListView.getItems().setAll("Lỗi tải lịch sử: " + e.getMessage()));
             }
         }).start();
     }
@@ -74,14 +83,14 @@ public class WalletController {
     private void handleGenerateQr() {
         String amountText = depositAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("Vui long nhap so tien can nap.");
+            statusLabel.setText("Vui lòng nhập số tiền cần nạp.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("So tien phai lon hon 0.");
+                statusLabel.setText("Số tiền phải lớn hơn 0.");
                 return;
             }
 
@@ -92,10 +101,10 @@ public class WalletController {
             generateQrBtn.setVisible(false);
             generateQrBtn.setManaged(false);
 
-            statusLabel.setText("Vui long quet ma QR, sau do nhan Xac nhan.");
+            statusLabel.setText("Vui lòng quét mã QR, sau đó nhấn Xác nhận.");
             statusLabel.setStyle("-fx-text-fill: #22c55e;");
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
         }
     }
 
@@ -111,7 +120,7 @@ public class WalletController {
                     WalletResponseDTO newWallet = walletClient.deposit(token, amount);
                     Platform.runLater(() -> {
                         renderWallet(newWallet);
-                        statusLabel.setText("Nap tien thanh cong!");
+                        statusLabel.setText("Nạp tiền thành công!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
 
                         depositAmountField.clear();
@@ -125,13 +134,13 @@ public class WalletController {
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("Loi nap tien: " + e.getMessage());
+                        statusLabel.setText("Lỗi nạp tiền: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -140,14 +149,14 @@ public class WalletController {
     private void handleWithdraw() {
         String amountText = withdrawAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
-            statusLabel.setText("Vui long nhap so tien can rut.");
+            statusLabel.setText("Vui lòng nhập số tiền cần rút.");
             return;
         }
 
         try {
             double amount = Double.parseDouble(amountText);
             if (amount <= 0) {
-                statusLabel.setText("So tien phai lon hon 0.");
+                statusLabel.setText("Số tiền phải lớn hơn 0.");
                 return;
             }
 
@@ -158,20 +167,20 @@ public class WalletController {
                     WalletResponseDTO newWallet = walletClient.withdraw(token, amount);
                     Platform.runLater(() -> {
                         renderWallet(newWallet);
-                        statusLabel.setText("Rut tien thanh cong!");
+                        statusLabel.setText("Rút tiền thành công!");
                         statusLabel.setStyle("-fx-text-fill: #22c55e;");
                         withdrawAmountField.clear();
                         loadTransactionHistory();
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
-                        statusLabel.setText("Loi rut tien: " + e.getMessage());
+                        statusLabel.setText("Lỗi rút tiền: " + e.getMessage());
                         statusLabel.setStyle("-fx-text-fill: #dc2626;");
                     });
                 }
             }).start();
         } catch (NumberFormatException ex) {
-            statusLabel.setText("So tien khong hop le.");
+            statusLabel.setText("Số tiền không hợp lệ.");
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }
@@ -181,33 +190,85 @@ public class WalletController {
         double frozen = wallet != null ? wallet.getFrozenBalance() : 0.0;
         double total = wallet != null ? wallet.getTotalBalance() : 0.0;
 
-        balanceLabel.setText(String.format("%,.0f VND", balance));
-        frozenLabel.setText(String.format("%,.0f VND", frozen));
-        totalLabel.setText(String.format("%,.0f VND", total));
+        CurrencyFormatter.setMoneyText(balanceLabel, balance);
+        CurrencyFormatter.setMoneyText(frozenLabel, frozen);
+        CurrencyFormatter.setMoneyText(totalLabel, total);
     }
 
-    private void renderTransactions(List<TransactionDTO> transactions) {
+    private Map<String, String> loadAuctionTitles(String token, List<TransactionDTO> transactions) {
+        if (transactions == null || transactions.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<String> auctionIds = transactions.stream()
+                .map(TransactionDTO::getAuctionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (auctionIds.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            List<AuctionDTO> auctions = auctionClient.getAuctions(token);
+            Map<String, String> titles = new HashMap<>();
+            for (AuctionDTO auction : auctions) {
+                if (auction != null && auctionIds.contains(auction.getId())) {
+                    titles.put(auction.getId(), valueOrUnknown(auction.getTitle()));
+                }
+            }
+            return titles;
+        } catch (Exception ignored) {
+            return Map.of();
+        }
+    }
+
+    private void renderTransactions(List<TransactionDTO> transactions, Map<String, String> auctionTitles) {
         transactionListView.getItems().clear();
         if (transactions == null || transactions.isEmpty()) {
-            transactionListView.getItems().add("Chua co giao dich nao.");
+            transactionListView.getItems().add("Chưa có giao dịch nào.");
             return;
         }
 
         for (TransactionDTO transaction : transactions) {
             String time = transaction.getCreatedAt() != null
                     ? transaction.getCreatedAt().format(DISPLAY_TIME)
-                    : "Chua ro";
+                    : "Chưa rõ";
+            String auctionTitle = auctionTitleOf(transaction, auctionTitles);
             String auctionText = transaction.getAuctionId() != null
-                    ? " | Auction: " + transaction.getAuctionId()
+                    ? " | Phiên: " + auctionTitle
                     : "";
-            String description = transaction.getDescription() != null ? " | " + transaction.getDescription() : "";
+            String description = readableDescription(transaction, auctionTitle);
             transactionListView.getItems().add(String.format(
-                    "%s | %s | %,.0f VND%s%s",
+                    "%s | %s | %s%s%s",
                     time,
                     transaction.getType(),
-                    transaction.getAmount(),
+                    CurrencyFormatter.format(transaction.getAmount()),
                     auctionText,
                     description));
         }
+    }
+
+    private String auctionTitleOf(TransactionDTO transaction, Map<String, String> auctionTitles) {
+        if (transaction == null || transaction.getAuctionId() == null) {
+            return "Chưa rõ";
+        }
+        String title = auctionTitles != null ? auctionTitles.get(transaction.getAuctionId()) : null;
+        return valueOrUnknown(title);
+    }
+
+    private String readableDescription(TransactionDTO transaction, String auctionTitle) {
+        if (transaction == null || transaction.getDescription() == null || transaction.getDescription().isBlank()) {
+            return "";
+        }
+
+        String description = transaction.getDescription();
+        if (transaction.getAuctionId() != null) {
+            description = description.replace(transaction.getAuctionId(), auctionTitle);
+        }
+        return " | " + description;
+    }
+
+    private String valueOrUnknown(String value) {
+        return value != null && !value.isBlank() ? value : "Chưa rõ";
     }
 }
