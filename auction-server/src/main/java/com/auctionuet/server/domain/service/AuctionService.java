@@ -262,6 +262,10 @@ public class AuctionService {
         return toAuctionDTOList(auctionDAO.findAll());
     }
 
+    public List<AuctionDTO> getAuctions(String currentUserId) {
+        return toAuctionDTOList(auctionDAO.findAll(), currentUserId);
+    }
+
     public List<AuctionDTO> getAuctionsByStatus(AuctionStatus status) {
         return toAuctionDTOList(auctionDAO.findByStatus(status));
     }
@@ -473,9 +477,13 @@ public class AuctionService {
     }
 
     private List<AuctionDTO> toAuctionDTOList(List<AuctionSchema> schemas) {
+        return toAuctionDTOList(schemas, null);
+    }
+
+    private List<AuctionDTO> toAuctionDTOList(List<AuctionSchema> schemas, String currentUserId) {
         List<AuctionDTO> auctionDTOList = new ArrayList<>();
         for (AuctionSchema schema : schemas) {
-            AuctionDTO dto = toAuctionDTO(schema);
+            AuctionDTO dto = toAuctionDTO(schema, currentUserId);
             if (dto != null) {
                 auctionDTOList.add(dto);
             }

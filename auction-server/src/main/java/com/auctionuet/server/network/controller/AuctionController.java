@@ -55,8 +55,8 @@ public class AuctionController {
     }
 
     public Response handleGetAuctions(Request request) throws Exception {
-        sessionManager.validateToken(request.getToken());
-        List<AuctionDTO> auctions = auctionService.getAuctions();
+        User user = sessionManager.validateToken(request.getToken());
+        List<AuctionDTO> auctions = auctionService.getAuctions(user.getId());
         return Response.ok(auctions);
     }
 

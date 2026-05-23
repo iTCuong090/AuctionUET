@@ -2,11 +2,14 @@ package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.UserRole;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,6 +29,7 @@ public class ProfileController {
 
     @FXML private Label statWonLabel;
     @FXML private Label statSoldLabel;
+    @FXML private Label statSecondTitleLabel;
     @FXML private Label statReputationLabel;
     @FXML private Label statActiveLabel;
 
@@ -44,6 +48,7 @@ public class ProfileController {
             } else {
                 roleLabel.setStyle("-fx-background-color: #3498db; -fx-background-radius: 10; -fx-padding: 6 18;");
             }
+            statSecondTitleLabel.setText(getSecondStatTitle(currentUser));
 
             balanceLabel.setText("Đang tải...");
         } else {
@@ -101,6 +106,7 @@ public class ProfileController {
         }
 
         String myUserId = currentUser.getId();
+        boolean isSeller = isSeller(currentUser);
 
         new Thread(() -> {
             try {
@@ -108,24 +114,29 @@ public class ProfileController {
                 List<AuctionDTO> allAuctions = client.getAuctions(token);
 
                 long wonCount = allAuctions.stream()
-                        .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
+                        .filter(this::isWonAuction)
                         .filter(a -> a.getWinner() != null && myUserId.equals(a.getWinner().getId()))
                         .count();
 
                 long soldCount = allAuctions.stream()
-                        .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
+                        .filter(a -> a.getStatus() == AuctionStatus.PAID)
                         .filter(a -> a.getSeller() != null && myUserId.equals(a.getSeller().getId()))
                         .count();
 
                 long activeCount = allAuctions.stream()
-                        .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
+                        .filter(a -> isActiveForCurrentUser(a, myUserId))
                         .count();
+
+                long secondStatCount = isSeller
+                        ? soldCount
+                        : countParticipatedAuctions(token, myUserId, allAuctions);
 
                 String reputation = calculateReputation((int) (wonCount + soldCount));
 
                 Platform.runLater(() -> {
                     statWonLabel.setText(String.valueOf(wonCount));
-                    statSoldLabel.setText(String.valueOf(soldCount));
+                    statSoldLabel.setText(String.valueOf(secondStatCount));
+                    statSecondTitleLabel.setText(isSeller ? "Sản phẩm đã bán" : "Phiên đã tham gia");
                     statActiveLabel.setText(String.valueOf(activeCount));
                     statReputationLabel.setText(reputation);
                 });
@@ -138,15 +149,78 @@ public class ProfileController {
         }).start();
     }
 
+    private long countParticipatedAuctions(String token, String userId, List<AuctionDTO> auctions) {
+        BidClient bidClient = new BidClient();
+        return auctions.stream()
+                .filter(auction -> hasParticipation(token, userId, auction, bidClient))
+                .count();
+    }
+
+    private boolean hasParticipation(
+            String token, String userId, AuctionDTO auction, BidClient bidClient) {
+        if (isCurrentUserKnownParticipant(auction, userId)) {
+            return true;
+        }
+
+        try {
+            List<BidDTO> bids = bidClient.getBidHistory(token, auction.getId());
+            return bids != null && bids.stream()
+                    .anyMatch(bid -> bid.getBidder() != null && userId.equals(bid.getBidder().getId()));
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String getSecondStatTitle(UserDTO user) {
+        return isSeller(user) ? "Sản phẩm đã bán" : "Phiên đã tham gia";
+    }
+
+    private boolean isSeller(UserDTO user) {
+        return user != null && user.getRole() == UserRole.SELLER;
+    }
+
+    private boolean isCurrentUserKnownParticipant(AuctionDTO auction, String userId) {
+        boolean isWinner = auction.getWinner() != null && userId.equals(auction.getWinner().getId());
+        boolean isHighestBidder = auction.getCurrentHighestBid() != null
+                && auction.getCurrentHighestBid().getBidder() != null
+                && userId.equals(auction.getCurrentHighestBid().getBidder().getId());
+        return auction.isCurrentUserDeposited() || isWinner || isHighestBidder;
+    }
+
+    private boolean isWonAuction(AuctionDTO auction) {
+        return auction.getStatus() == AuctionStatus.WAITING_PAYMENT
+                || auction.getStatus() == AuctionStatus.PAID;
+    }
+
+    private boolean isActiveForCurrentUser(AuctionDTO auction, String userId) {
+        AuctionStatus status = auction.getStatus();
+        boolean isSeller = auction.getSeller() != null && userId.equals(auction.getSeller().getId());
+        boolean isWinnerWaitingPayment = status == AuctionStatus.WAITING_PAYMENT
+                && auction.getWinner() != null
+                && userId.equals(auction.getWinner().getId());
+        boolean isRunningBidder = status == AuctionStatus.RUNNING && auction.isCurrentUserDeposited();
+
+        return (isSeller && isBlockingSellerStatus(status))
+                || isWinnerWaitingPayment
+                || isRunningBidder;
+    }
+
+    private boolean isBlockingSellerStatus(AuctionStatus status) {
+        return status == AuctionStatus.OPEN
+                || status == AuctionStatus.RUNNING
+                || status == AuctionStatus.WAITING_PAYMENT;
+    }
+
     private String calculateReputation(int totalTransactions) {
         int stars = Math.min(5, Math.max(1, (totalTransactions / 2) + 1));
-        return "*".repeat(stars) + "-".repeat(5 - stars);
+        return "★".repeat(stars) + "☆".repeat(5 - stars);
     }
 
     private void setStatsDefault() {
         statWonLabel.setText("0");
         statSoldLabel.setText("0");
+        statSecondTitleLabel.setText(getSecondStatTitle(ClientSession.getInstance().getCurrentUser()));
         statActiveLabel.setText("0");
-        statReputationLabel.setText("*----");
+        statReputationLabel.setText("★☆☆☆☆");
     }
 }
