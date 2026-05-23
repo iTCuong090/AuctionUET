@@ -23,6 +23,7 @@
         <HBox alignment="CENTER_LEFT" spacing="15.0">
             <children>
                 <ComboBox fx:id="filterComboBox" prefWidth="150.0" promptText="Lọc trạng thái..." styleClass="combo-box" />
+                <Button fx:id="btnMyAuctions" mnemonicParsing="false" prefWidth="135.0" styleClass="payment-filter-chip" text="My Auctions" />
                 <TextField fx:id="searchField" promptText="Tìm kiếm tên sản phẩm..." styleClass="text-field" HBox.hgrow="ALWAYS" />
                 <Button mnemonicParsing="false" onAction="#handleSearch" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e;" text="🔍 Tìm" />
             </children>

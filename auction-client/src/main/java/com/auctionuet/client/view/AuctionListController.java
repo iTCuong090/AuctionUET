@@ -35,9 +35,11 @@ public class AuctionListController {
     @FXML private ScrollPane auctionScrollPane;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
+    @FXML private Button btnMyAuctions;
 
     private List<AuctionDTO> allAuctions = new ArrayList<>();
     private double currentCardWidth = 300.0;
+    private boolean myAuctionsOnly;
 
     @FXML
     public void initialize() {
@@ -46,6 +48,8 @@ public class AuctionListController {
         filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
+        btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
+        updateMyAuctionsButtonStyle();
         setupStableGridWidth();
 
         loadAuctionsFromServer();
@@ -118,9 +122,26 @@ public class AuctionListController {
 
         List<AuctionDTO> filtered = allAuctions.stream()
                 .filter(auction -> matchesStatus(auction, selectedStatus))
+                .filter(auction -> !myAuctionsOnly || matchesCurrentUser(auction))
                 .filter(auction -> matchesKeyword(auction, keyword))
                 .toList();
         renderGrid(filtered);
+    }
+
+    private void toggleMyAuctionsFilter() {
+        myAuctionsOnly = !myAuctionsOnly;
+        updateMyAuctionsButtonStyle();
+        applyFilters();
+    }
+
+    private void updateMyAuctionsButtonStyle() {
+        if (btnMyAuctions == null) {
+            return;
+        }
+        btnMyAuctions.getStyleClass().remove("active");
+        if (myAuctionsOnly) {
+            btnMyAuctions.getStyleClass().add("active");
+        }
     }
 
     private boolean matchesStatus(AuctionDTO auction, String selectedStatus) {
@@ -145,6 +166,27 @@ public class AuctionListController {
         return title.toLowerCase(Locale.ROOT).contains(keyword)
                 || itemName.toLowerCase(Locale.ROOT).contains(keyword)
                 || seller.toLowerCase(Locale.ROOT).contains(keyword);
+    }
+
+    private boolean matchesCurrentUser(AuctionDTO auction) {
+        String currentUserId = currentUserId();
+        if (auction == null || currentUserId == null || currentUserId.isBlank()) {
+            return false;
+        }
+
+        boolean isSeller = auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
+        boolean isWinner = auction.getWinner() != null && currentUserId.equals(auction.getWinner().getId());
+        boolean isCurrentHighestBidder = auction.getCurrentHighestBid() != null
+                && auction.getCurrentHighestBid().getBidder() != null
+                && currentUserId.equals(auction.getCurrentHighestBid().getBidder().getId());
+
+        return isSeller || isWinner || isCurrentHighestBidder || auction.isCurrentUserDeposited();
+    }
+
+    private String currentUserId() {
+        return ClientSession.getInstance().getCurrentUser() != null
+                ? ClientSession.getInstance().getCurrentUser().getId()
+                : null;
     }
 
     private void renderGrid(List<AuctionDTO> auctions) {

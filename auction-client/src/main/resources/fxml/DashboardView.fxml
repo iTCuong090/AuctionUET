@@ -73,11 +73,6 @@
                     
                     <Region HBox.hgrow="ALWAYS" />
                     
-                    <Label fx:id="walletBalanceLabel" styleClass="text-secondary" text="TK: -- VND">
-                        <font><Font name="System Bold" size="14.0" /></font>
-                    </Label>
-                    <Region prefWidth="16.0" />
-
                     <!-- Nút đổi theme -->
                     <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" styleClass="theme-toggle-btn" text="S" />
                     <Region prefWidth="20.0" />

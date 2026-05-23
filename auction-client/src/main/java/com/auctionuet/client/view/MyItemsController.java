@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class MyItemsController {
     private static final String ALL_STATUS = "Tất cả";
-    private static final String NO_AUCTION_STATUS = "NOT_LISTED";
+    private static final String NO_AUCTION_STATUS = "NOT_AUCTIONS";
 
     @FXML private FlowPane itemGrid;
     @FXML private Label statusLabel;

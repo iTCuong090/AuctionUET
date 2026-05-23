@@ -181,7 +181,7 @@ Thay đổi chính:
 - Thẻ item hiển thị tiêu chí theo chiều dọc để không bị cắt chữ.
 - `brand` và `warrantyMonths` được tách thành tiêu chí riêng thay vì hiện raw map.
 - Trạng thái auction của item hiện bằng badge màu giống card danh sách đấu giá.
-- Nếu item chưa gắn auction thì hiển thị `NOT_LISTED`.
+- Nếu item chưa gắn auction thì hiển thị `NOT_AUCTIONS`.
 - Có ô menu, thanh tìm kiếm và nút tìm giống màn danh sách đấu giá.
 
 ### 5.2 Lịch sử vật phẩm
