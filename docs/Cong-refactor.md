@@ -462,9 +462,281 @@ Nhóm controller mới/touched nhiều nhất:
 
 Các controller gọi network trong background thread và update UI bằng `Platform.runLater`, phù hợp quy tắc JavaFX trong repo.
 
-## 13. Chi tiết file đã tạo và file đã sửa
+## 13. Luồng dữ liệu theo file
 
-### 13.1 File tạo mới
+Các sơ đồ dưới đây mô tả hướng đi chính của dữ liệu/request giữa các file. Mũi tên thể hiện file nào gọi file nào hoặc dữ liệu đi qua lớp nào, không phải toàn bộ import trong code.
+
+### 13.1 Luồng mở màn Thanh toán đấu giá
+
+Khi user bấm sidebar `Thanh toán`, client load danh sách phiên cần thanh toán và các phiên đã thanh toán/quá hạn gần đây.
+
+```mermaid
+flowchart LR
+    subgraph Client["auction-client"]
+        A["PaymentView.fxml"] --> B["PaymentController.loadPayments()"]
+        B --> C["AuctionClient.getMyPendingPayments()"]
+        C --> D["ServerConnection.sendRequest()"]
+        M["Response list AuctionDTO"] --> N["PaymentController.renderPayments()"]
+        N --> O["Payment card grid"]
+    end
+
+    subgraph Protocol["auction-protocol"]
+        E["ActionType.GET_MY_PENDING_PAYMENTS"]
+        F["AuctionDTO"]
+    end
+
+    subgraph Server["auction-server"]
+        G["RequestRouter.route()"] --> H["AuctionController.getMyPendingPayments()"]
+        H --> I["AuctionService.getMyPendingPayments()"]
+        I --> J["AuctionDAO.findByStatus(WAITING_PAYMENT)"]
+        I --> K["ItemService/UserService mapping"]
+        J --> L["List AuctionDTO"]
+        K --> L
+    end
+
+    D --> E
+    E --> G
+    L --> F
+    F --> M
+```
+
+Điểm chính:
+
+- `PaymentController` không tự lọc dữ liệu gốc từ JSON.
+- Server chỉ trả các auction đúng user hiện tại là winner.
+- UI nhận `AuctionDTO`, sau đó mới chia thành tab `Tất cả`, `Chưa thanh toán`, `Đã thanh toán (30 ngày)`.
+
+### 13.2 Luồng xác nhận thanh toán trong popup Trả tiền
+
+Khi user bấm `Thanh toán` trên card, popup `Trả tiền` mở ra. Khi bấm `Xác nhận đã thanh toán`, request đi đến server để xử lý tiền, giao dịch, owner item và trạng thái auction.
+
+```mermaid
+flowchart LR
+    subgraph Client["auction-client"]
+        A["PaymentController.openCheckoutPopup()"] --> B["PaymentCheckoutView.fxml"]
+        B --> C["PaymentCheckoutController.renderCheckout()"]
+        C --> D["PaymentCheckoutController.handleConfirmPayment()"]
+        D --> E["AuctionClient.payAuction()"]
+        E --> F["ServerConnection.sendRequest()"]
+        R["Response OK"] --> S["PaymentCheckoutController.closeWindow()"]
+        S --> T["PaymentController.loadPayments()"]
+    end
+
+    subgraph Protocol["auction-protocol"]
+        G["ActionType.PAY_AUCTION"]
+        H["AuctionIdRequestDTO"]
+    end
+
+    subgraph Server["auction-server"]
+        I["RequestRouter.route()"] --> J["AuctionController.payAuction()"]
+        J --> K["AuctionService.payAuction()"]
+        K --> L["WalletService.payAuctionRemaining()"]
+        K --> M["WalletService.payoutSeller()"]
+        K --> N["ItemService.transferOwnership()"]
+        K --> O["AuctionDAO.update(PAID, paidAt)"]
+        L --> P["TransactionService.record(AUCTION_PAYMENT)"]
+        M --> Q["TransactionService.record(SELLER_PAYOUT)"]
+        N --> U["ItemDAO.update(owner = winnerId)"]
+    end
+
+    F --> G
+    G --> H
+    H --> I
+    O --> R
+    P --> R
+    Q --> R
+    U --> R
+```
+
+Logic tiền ở luồng này:
+
+- UI hiển thị `Tổng tiền phải trả` là giá thắng và note `đã bao gồm cọc`.
+- Server tính tiền tươi cần trừ là `highestBid - retainedDepositAmount`.
+- Nếu tiền tươi không đủ, `WalletService.payAuctionRemaining(...)` ném lỗi, auction vẫn ở `WAITING_PAYMENT`.
+- Nếu thanh toán thành công, seller nhận đủ giá thắng, item chuyển sang owner mới là Bidder, auction thành `PAID`.
+
+### 13.3 Luồng tự động quá hạn thanh toán
+
+Luồng này chạy ở server, không phụ thuộc việc client có đang mở màn thanh toán hay không.
+
+```mermaid
+flowchart TD
+    A["AuctionService.endAuction()"] --> B{"Có winner?"}
+    B -->|"Không"| C["AuctionDAO.update(CANCELED)"]
+    B -->|"Có"| D["AuctionSchema.setStatus(WAITING_PAYMENT)"]
+    D --> E["AuctionSchema.setPaymentDeadlineAt(now + 5 minutes)"]
+    E --> F["AuctionDAO.update()"]
+    F --> G["AuctionManager.schedulePaymentDeadline()"]
+    G --> H["ScheduledExecutorService timer"]
+    H --> I["AuctionService.expirePaymentDeadline()"]
+    I --> J["WalletService.forfeitAuctionDeposit()"]
+    J --> K["TransactionService.record(AUCTION_DEPOSIT_FORFEIT)"]
+    I --> L["AuctionDAO.update(CANCELED)"]
+    L --> M["Item vẫn thuộc Seller trong ItemSchema.sellerId"]
+```
+
+Điểm bảo vệ quan trọng:
+
+- `AuctionService.payAuction(...)` cũng check lại `paymentDeadlineAt`.
+- Nếu client giữ màn cũ rồi bấm thanh toán sau hạn, server gọi expire và từ chối thanh toán.
+- Việc tịch thu cọc nằm ở server service, không nằm trong JavaFX controller.
+
+### 13.4 Luồng Vật phẩm của tôi và lịch sử vật phẩm
+
+Màn `Vật phẩm` lấy item theo owner hiện tại. Với Seller, owner là Seller. Với Bidder đã thanh toán thành công, owner là Bidder vì `ItemService.transferOwnership(...)` đã đổi `sellerId`.
+
+```mermaid
+flowchart LR
+    subgraph Client["auction-client"]
+        A["DashboardView.fxml"] --> B["DashboardController.loadView(MyItemsView.fxml)"]
+        B --> C["MyItemsController.loadItems()"]
+        C --> D["ItemClient.getMyItems()"]
+        Q["List ItemDTO"] --> R["MyItemsController.loadAuctionStatus()"]
+        R --> S["ItemClient.getItemAuctionHistory()"]
+        Z["List AuctionDTO"] --> AA["MyItemsController.renderItems()"]
+        AA --> AB["Button Lịch sử"]
+        AB --> AC["ItemHistoryView.fxml"]
+        AC --> AD["ItemHistoryController.loadHistory()"]
+    end
+
+    subgraph Server["auction-server"]
+        E["RequestRouter.route(GET_MY_ITEMS)"] --> F["ItemController.getMyItems()"]
+        F --> G["ItemService.getItemsByOwnerId()"]
+        G --> H["ItemDAO.findBySellerId(ownerId)"]
+        H --> I["ItemDTO mapping"]
+
+        T["RequestRouter.route(GET_ITEM_AUCTION_HISTORY)"] --> U["AuctionController.getItemAuctionHistory()"]
+        U --> V["AuctionService.getItemAuctionHistory()"]
+        V --> W["AuctionDAO.findByItemId(itemId)"]
+        W --> X["AuctionDTO mapping"]
+    end
+
+    D --> E
+    I --> Q
+    S --> T
+    X --> Z
+    AD --> S
+```
+
+Luồng gỡ mềm item:
+
+```mermaid
+flowchart LR
+    A["MyItemsController.handleDeleteItem()"] --> B["ItemClient.deleteItem()"]
+    B --> C["ActionType.DELETE_ITEM + ItemIdRequestDTO"]
+    C --> D["RequestRouter.route()"]
+    D --> E["ItemController.deleteItem()"]
+    E --> F["ItemService.archiveItem()"]
+    F --> G["AuctionDAO.findByItemId(itemId)"]
+    G --> H{"Có OPEN/RUNNING/WAITING_PAYMENT?"}
+    H -->|"Có"| I["Throw AuctionException"]
+    H -->|"Không"| J["ItemSchema.archived = true"]
+    J --> K["ItemDAO.update()"]
+    K --> L["MyItemsController.reloadItems()"]
+```
+
+Điểm chính:
+
+- Gỡ item là soft-delete qua `archived`, không xóa khỏi JSON.
+- Lịch sử auction cũ vẫn đọc được vì item không bị hard-delete.
+- Trạng thái auction trên card item được lấy từ `GET_ITEM_AUCTION_HISTORY`, không đoán bằng tên item.
+
+### 13.5 Luồng tạo phiên và bắt đầu phiên đấu giá
+
+Seller có thể tạo phiên từ màn `Vật phẩm`, sau đó start phiên ở màn chi tiết.
+
+```mermaid
+flowchart LR
+    subgraph Client["auction-client"]
+        A["MyItemsController.openCreateAuction()"] --> B["CreateAuctionView.fxml"]
+        B --> C["CreateAuctionController.setPreselectedItem()"]
+        C --> D["CreateAuctionController.handleCreateAuction()"]
+        D --> E["AuctionClient.createAuction()"]
+        P["AuctionDTO OPEN"] --> Q["AuctionDetailView.fxml"]
+        Q --> R["AuctionDetailController.handleStartAuction()"]
+        R --> S["AuctionClient.startAuction()"]
+    end
+
+    subgraph Server["auction-server"]
+        F["RequestRouter.route(CREATE_AUCTION)"] --> G["AuctionController.createAuction()"]
+        G --> H["AuctionService.createAuction()"]
+        H --> I["ItemService.getItemSchemaById()"]
+        H --> J["AuctionDAO.findByItemId() check active"]
+        H --> K["AuctionDAO.save(OPEN)"]
+        K --> L["AuctionManager.scheduleAuctionStart()"]
+
+        T["RequestRouter.route(START_AUCTION)"] --> U["AuctionController.startAuction()"]
+        U --> V["AuctionService.startAuction()"]
+        V --> W["AuctionDAO.update(RUNNING)"]
+        V --> X["AuctionManager.loadAuction()"]
+        X --> Y["ClientHandler.onAuctionStarted()"]
+    end
+
+    E --> F
+    K --> P
+    S --> T
+    Y --> Z["PushMessage AUCTION_STARTED"]
+    Z --> AA["ServerConnection.pushListener"]
+```
+
+Điểm chính:
+
+- `CreateAuctionController` chỉ gom dữ liệu từ form và gọi client adapter.
+- `AuctionService.createAuction(...)` mới là nơi chặn duplicate active auction theo `itemId`.
+- Seller start auction từ detail; sau khi start, UI reload status thành `RUNNING`.
+
+### 13.6 Luồng đặt giá và biểu đồ bid realtime
+
+Màn chi tiết có chart giá. Dữ liệu ban đầu lấy từ bid history, dữ liệu mới đến qua push `BID_UPDATE`.
+
+```mermaid
+flowchart LR
+    subgraph Client["auction-client"]
+        A["AuctionDetailView.fxml"] --> B["AuctionDetailController.loadBidHistory()"]
+        B --> C["BidClient.getBidHistory()"]
+        L["List BidDTO"] --> M["AuctionDetailController.appendBidToChart()"]
+        M --> N["LineChart Number/Number"]
+
+        O["AuctionDetailController.subscribeToAuction()"] --> P["BidClient.subscribe()"]
+        AA["ServerConnection.pushListener"] --> AB["AuctionDetailController.onPushMessage()"]
+        AB --> AC["append BID_UPDATE to chart/table"]
+        AE["AuctionDetailController/BiddingController đặt giá"] --> AF["BidClient.placeBid()"]
+        AF --> AG["ServerConnection.sendRequest(PLACE_BID)"]
+    end
+
+    subgraph Server["auction-server"]
+        D["RequestRouter.route(GET_BID_HISTORY)"] --> E["BidController.getBidHistory()"]
+        E --> F["BidService.getBidHistoryDTO()"]
+        F --> G["BidDAO.findByAuctionId()"]
+
+        Q["RequestRouter.route(SUBSCRIBE)"] --> R["BidController.subscribe()"]
+        R --> S["AuctionManager.addObserver(ClientHandler)"]
+
+        U["RequestRouter.route(PLACE_BID)"] --> V["BidController.placeBid()"]
+        V --> W["BidService.placeBid()"]
+        W --> X["LiveAuction.placeBid()"]
+        W --> Y["BidDAO.save() + AuctionDAO.update()"]
+        X --> Z["ClientHandler.onBidPlaced()"]
+    end
+
+    C --> D
+    G --> L
+    P --> Q
+    AG --> U
+    Z --> AD["PushMessage BID_UPDATE"]
+    AD --> AA
+```
+
+Điểm chính:
+
+- Chart không tự tạo dữ liệu giả; nó render từ `BidDTO`.
+- `BidClient.getBidHistory(...)` lấy dữ liệu quá khứ từ server.
+- `subscribeToAuction(...)` đăng ký push realtime.
+- Khi có bid mới, `ClientHandler` gửi `PushMessage BID_UPDATE`, `ServerConnection` chuyển cho listener và `AuctionDetailController` append điểm mới vào chart.
+
+## 14. Chi tiết file đã tạo và file đã sửa
+
+### 14.1 File tạo mới
 
 | File tạo mới | Nội dung |
 |---|---|
@@ -481,7 +753,7 @@ Các controller gọi network trong background thread và update UI bằng `Plat
 | `auction-protocol/src/main/java/com/auctionuet/protocol/dto/request/item/ItemIdRequestDTO.java` | DTO request dùng chung cho các action theo item id. |
 | `docs/Cong-refactor.md` | Báo cáo tổng hợp thay đổi tuần 6. |
 
-### 13.2 File protocol/server đã sửa
+### 14.2 File protocol/server đã sửa
 
 | File sửa | Nội dung sửa |
 |---|---|
@@ -501,7 +773,7 @@ Các controller gọi network trong background thread và update UI bằng `Plat
 | `auction-server/src/main/java/com/auctionuet/server/persistence/schema/AuctionSchema.java` | Thêm `paymentDeadlineAt`, `paidAt` để persist trạng thái thanh toán. |
 | `auction-server/src/main/java/com/auctionuet/server/persistence/schema/ItemSchema.java` | Thêm `archived` để soft-delete item. |
 
-### 13.3 File client Java đã sửa
+### 14.3 File client Java đã sửa
 
 | File sửa | Nội dung sửa |
 |---|---|
@@ -520,7 +792,7 @@ Các controller gọi network trong background thread và update UI bằng `Plat
 | `auction-client/src/main/java/com/auctionuet/client/view/RegisterController.java` | Cập nhật nhẹ text/navigation để đồng bộ UI. |
 | `auction-client/src/main/java/com/auctionuet/client/view/WalletController.java` | Format tiền compact, render transaction history rõ hơn và map auction id sang title nếu có. |
 
-### 13.4 FXML và CSS đã sửa
+### 14.4 FXML và CSS đã sửa
 
 | File | Nội dung |
 |---|---|
@@ -533,7 +805,7 @@ Các controller gọi network trong background thread và update UI bằng `Plat
 | `auction-client/src/main/resources/css/light-theme.css` | Màu light theme cho badge, detail metrics, item/payment cards. |
 | `auction-client/src/main/resources/css/dark-theme.css` | Màu dark theme tương ứng, sửa layout bị nhảy/thừa khoảng trống khi đổi theme. |
 
-### 13.5 Test và dữ liệu
+### 14.5 Test và dữ liệu
 
 | File | Nội dung |
 |---|---|
@@ -546,7 +818,7 @@ Các controller gọi network trong background thread và update UI bằng `Plat
 
 Các file `data/*.json` nên được xem là seed/demo data. Khi review code, phần quan trọng là schema/service/DAO đã hỗ trợ field mới; không nên dùng dữ liệu demo cũ làm bằng chứng duy nhất cho business rule.
 
-## 14. Test và kiểm chứng
+## 15. Test và kiểm chứng
 
 Test server được mở rộng ở:
 
@@ -570,7 +842,7 @@ Kết quả đã chạy trong quá trình làm:
 
 Vì lần sửa này chỉ thêm chi tiết vào tài liệu, không bắt buộc chạy lại test. Trước khi merge/nộp vẫn nên chạy lại `mvn test` một lần sau khi chốt toàn bộ working tree.
 
-## 15. Rủi ro và việc nên dọn tiếp
+## 16. Rủi ro và việc nên dọn tiếp
 
 Các điểm cần nói thật với nhóm:
 
@@ -582,7 +854,7 @@ Các điểm cần nói thật với nhóm:
 - Cần review lại tiếng Việt có dấu ở toàn bộ UI để tránh còn string cũ không dấu.
 - Trước khi chấm/demo nên chạy lại full `mvn test` và kiểm tra manual các flow: Seller tạo item, tạo auction, start auction; Bidder bid, thắng, thanh toán đủ/thiếu/quá hạn.
 
-## 16. Kết luận
+## 17. Kết luận
 
 So với bản cũ, nhánh tuần 6 đã đưa AuctionUET tiến gần hơn tới một sản phẩm đấu giá hoàn chỉnh:
 
