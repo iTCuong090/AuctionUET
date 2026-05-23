@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
@@ -33,7 +32,6 @@
                         <VBox fx:id="createItemHost" managed="false" visible="false" />
 
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
-                            <ComboBox fx:id="filterComboBox" prefWidth="170.0" promptText="Lọc trạng thái..." styleClass="combo-box" />
                             <TextField fx:id="searchField" promptText="Tìm kiếm vật phẩm..." styleClass="text-field" HBox.hgrow="ALWAYS" />
                             <Button mnemonicParsing="false" onAction="#handleSearch" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e;" text="🔍 Tìm" />
                         </HBox>

@@ -14,21 +14,26 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CreateAuctionController {
 
     @FXML private ComboBox<ItemDTO> itemComboBox;
-    @FXML private Label previewName, previewPrice, previewType, durationLabel, statusLabel;
+    @FXML private Label durationLabel, statusLabel;
     @FXML private TextField titleField, antiSnipingWindowField, antiSnipingExtensionField;
     @FXML private TextArea descArea;
     @FXML private DatePicker startDatePicker, endDatePicker;
     @FXML private ComboBox<String> startHourCombo, startMinuteCombo, endHourCombo, endMinuteCombo;
+    @FXML private VBox previewContentBox;
 
     private final ItemClient itemClient = new ItemClient();
     private final AuctionClient auctionClient = new AuctionClient();
@@ -37,15 +42,15 @@ public class CreateAuctionController {
 
     @FXML
     public void initialize() {
+        renderEmptyItemPreview();
         loadMyItems();
 
         itemComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                previewName.setText("Tên: " + newVal.getName());
-                previewPrice.setText("Giá khởi điểm: " + CurrencyFormatter.format(newVal.getStartingPrice()));
-                previewType.setText("Loại: " + newVal.getType());
-
+                renderItemPreview(newVal);
                 syncTitleWithSelectedItem(newVal);
+            } else {
+                renderEmptyItemPreview();
             }
         });
 
@@ -164,6 +169,113 @@ public class CreateAuctionController {
     private void showError(String msg) {
         statusLabel.setText("Lỗi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
+    }
+
+    private void renderEmptyItemPreview() {
+        previewContentBox.getChildren().clear();
+        addPreviewFullWidth("Trạng thái", "Chưa chọn sản phẩm.");
+    }
+
+    private void renderItemPreview(ItemDTO item) {
+        previewContentBox.getChildren().clear();
+        List<VBox> fields = new ArrayList<>();
+        fields.add(createPreviewField("Tên", item.getName(), true));
+        fields.add(createPreviewField("Giá khởi điểm", CurrencyFormatter.format(item.getStartingPrice()), true));
+        fields.add(createPreviewField("Loại", valueOrEmpty(item.getType()), false));
+        fields.add(createPreviewField("Tình trạng", valueOrEmpty(item.getCondition()), false));
+        fields.addAll(createTypeSpecificPreviewFields(item));
+        addPreviewRows(fields);
+
+        String description = item.getDescription();
+        if (description != null && !description.isBlank()) {
+            addPreviewFullWidth("Chi tiết", description.trim());
+        }
+    }
+
+    private List<VBox> createTypeSpecificPreviewFields(ItemDTO item) {
+        List<VBox> result = new ArrayList<>();
+        Map<String, Object> fields = item.getExtraFields();
+        if (fields == null || item.getType() == null) {
+            return result;
+        }
+
+        switch (item.getType()) {
+            case ELECTRONICS -> {
+                result.add(createPreviewField("Brand", fieldValue(fields, "brand"), false));
+                result.add(createPreviewField("Warranty", withUnit(fieldValue(fields, "warrantyMonths"), "tháng"), false));
+            }
+            case ART -> {
+                result.add(createPreviewField("Artist", fieldValue(fields, "artist"), false));
+                result.add(createPreviewField("Year", fieldValue(fields, "year"), false));
+                result.add(createPreviewField("Medium", fieldValue(fields, "medium"), false));
+            }
+            case VEHICLE -> {
+                result.add(createPreviewField("Make", fieldValue(fields, "make"), false));
+                result.add(createPreviewField("Model", fieldValue(fields, "model"), false));
+                result.add(createPreviewField("Mileage", withUnit(fieldValue(fields, "mileage"), "km"), false));
+                result.add(createPreviewField("Vehicle year", fieldValue(fields, "vehicleYear"), false));
+            }
+        }
+        return result;
+    }
+
+    private void addPreviewRows(List<VBox> fields) {
+        for (int i = 0; i < fields.size(); i += 2) {
+            HBox row = new HBox(24);
+            row.setMaxWidth(Double.MAX_VALUE);
+            row.getChildren().add(fields.get(i));
+            HBox.setHgrow(fields.get(i), Priority.ALWAYS);
+
+            if (i + 1 < fields.size()) {
+                row.getChildren().add(fields.get(i + 1));
+                HBox.setHgrow(fields.get(i + 1), Priority.ALWAYS);
+            }
+            previewContentBox.getChildren().add(row);
+        }
+    }
+
+    private VBox createPreviewField(String name, String value, boolean highlight) {
+        VBox fieldBox = new VBox();
+        fieldBox.setMaxWidth(Double.MAX_VALUE);
+        fieldBox.setPrefWidth(1);
+
+        Label fieldLabel = new Label(name + ": " + value);
+        fieldLabel.getStyleClass().add(highlight ? "text-primary" : "text-detail");
+        fieldLabel.setWrapText(true);
+        fieldLabel.setMaxWidth(Double.MAX_VALUE);
+        fieldLabel.setStyle(highlight
+                ? "-fx-font-size: 14px; -fx-font-weight: bold;"
+                : "-fx-font-size: 13px;");
+
+        fieldBox.getChildren().add(fieldLabel);
+        return fieldBox;
+    }
+
+    private void addPreviewFullWidth(String name, String value) {
+        VBox fieldBox = createPreviewField(name, value, false);
+        previewContentBox.getChildren().add(fieldBox);
+    }
+
+    private String fieldValue(Map<String, Object> fields, String key) {
+        return formatFieldValue(fields.get(key));
+    }
+
+    private String withUnit(String value, String unit) {
+        return value == null || value.isBlank() ? "" : value + " " + unit;
+    }
+
+    private String formatFieldValue(Object value) {
+        if (value instanceof Number number) {
+            double doubleValue = number.doubleValue();
+            if (doubleValue == Math.rint(doubleValue)) {
+                return String.format("%.0f", doubleValue);
+            }
+        }
+        return value != null ? value.toString() : "";
+    }
+
+    private String valueOrEmpty(Object value) {
+        return value != null ? value.toString() : "";
     }
 
     private void syncTitleWithSelectedItem(ItemDTO item) {

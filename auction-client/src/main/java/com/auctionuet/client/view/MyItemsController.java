@@ -10,7 +10,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -23,7 +22,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MyItemsController {
-    private static final String ALL_STATUS = "Tất cả";
     private static final String NO_AUCTION_STATUS = "NOT_AUCTIONS";
 
     @FXML private FlowPane itemGrid;
@@ -31,7 +29,6 @@ public class MyItemsController {
     @FXML private Button btnToggleCreate;
     @FXML private Button btnRefresh;
     @FXML private VBox createItemHost;
-    @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
 
     private final ItemClient itemClient = new ItemClient();
@@ -49,13 +46,6 @@ public class MyItemsController {
     }
 
     private void setupFilters() {
-        filterComboBox.getItems().add(ALL_STATUS);
-        filterComboBox.getItems().add(NO_AUCTION_STATUS);
-        for (AuctionStatus status : AuctionStatus.values()) {
-            filterComboBox.getItems().add(status.name());
-        }
-        filterComboBox.setValue(ALL_STATUS);
-        filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
     }
@@ -146,22 +136,13 @@ public class MyItemsController {
     }
 
     private void applyFilters() {
-        String selectedStatus = filterComboBox.getValue();
         String keyword = searchField.getText() != null
                 ? searchField.getText().trim().toLowerCase(Locale.ROOT)
                 : "";
         List<ItemCardData> filteredItems = allItems.stream()
-                .filter(item -> matchesStatus(item, selectedStatus))
                 .filter(item -> matchesKeyword(item, keyword))
                 .toList();
         renderItems(filteredItems);
-    }
-
-    private boolean matchesStatus(ItemCardData item, String selectedStatus) {
-        if (selectedStatus == null || selectedStatus.equals(ALL_STATUS)) {
-            return true;
-        }
-        return selectedStatus.equals(item.auctionStatus());
     }
 
     private boolean matchesKeyword(ItemCardData item, String keyword) {

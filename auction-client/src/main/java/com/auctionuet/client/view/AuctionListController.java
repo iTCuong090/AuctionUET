@@ -174,13 +174,24 @@ public class AuctionListController {
             return false;
         }
 
-        boolean isSeller = auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
+        if (ClientSession.getInstance().isSeller()) {
+            return auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
+        }
+
+        if (!ClientSession.getInstance().isBidder()) {
+            return false;
+        }
+
+        AuctionStatus status = auction.getStatus();
         boolean isWinner = auction.getWinner() != null && currentUserId.equals(auction.getWinner().getId());
         boolean isCurrentHighestBidder = auction.getCurrentHighestBid() != null
                 && auction.getCurrentHighestBid().getBidder() != null
                 && currentUserId.equals(auction.getCurrentHighestBid().getBidder().getId());
 
-        return isSeller || isWinner || isCurrentHighestBidder || auction.isCurrentUserDeposited();
+        boolean isRunningParticipant = status == AuctionStatus.RUNNING
+                && (auction.isCurrentUserDeposited() || isCurrentHighestBidder);
+        boolean isWaitingPaymentWinner = status == AuctionStatus.WAITING_PAYMENT && isWinner;
+        return isRunningParticipant || isWaitingPaymentWinner;
     }
 
     private String currentUserId() {
