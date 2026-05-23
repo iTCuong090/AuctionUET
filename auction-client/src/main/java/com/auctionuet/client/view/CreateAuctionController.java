@@ -3,6 +3,7 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -17,6 +18,7 @@ import javafx.scene.control.TextField;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CreateAuctionController {
@@ -180,11 +182,18 @@ public class CreateAuctionController {
         new Thread(() -> {
             try {
                 List<ItemDTO> items = itemClient.getMyItems(token);
+                List<ItemDTO> auctionableItems = filterAuctionableItems(token, items);
                 Platform.runLater(() -> {
-                    itemComboBox.setItems(FXCollections.observableArrayList(items));
-                    selectInitialItemIfLoaded();
+                    itemComboBox.setItems(FXCollections.observableArrayList(auctionableItems));
+                    boolean selectedInitialItem = selectInitialItemIfLoaded();
                     if (items.isEmpty()) {
                         statusLabel.setText("Bạn chưa có sản phẩm nào. Hãy tạo sản phẩm trước.");
+                        statusLabel.setStyle("-fx-text-fill: #f39c12;");
+                    } else if (auctionableItems.isEmpty()) {
+                        statusLabel.setText("Tất cả vật phẩm đang có phiên đấu giá hoạt động.");
+                        statusLabel.setStyle("-fx-text-fill: #f39c12;");
+                    } else if (initialItemId != null && !selectedInitialItem) {
+                        statusLabel.setText("Vật phẩm này đang có phiên đấu giá hoạt động.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     }
                 });
@@ -195,15 +204,40 @@ public class CreateAuctionController {
         }).start();
     }
 
-    private void selectInitialItemIfLoaded() {
+    private List<ItemDTO> filterAuctionableItems(String token, List<ItemDTO> items) {
+        List<ItemDTO> result = new ArrayList<>();
+        if (items == null) {
+            return result;
+        }
+
+        for (ItemDTO item : items) {
+            if (!hasBlockingAuction(token, item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    private boolean hasBlockingAuction(String token, ItemDTO item) {
+        try {
+            List<AuctionDTO> auctions = itemClient.getItemAuctionHistory(token, item.getId());
+            return auctions != null && auctions.stream()
+                    .anyMatch(auction -> AuctionViewFilter.isBlockingStatus(auction.getStatus()));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean selectInitialItemIfLoaded() {
         if (initialItemId == null || itemComboBox.getItems() == null) {
-            return;
+            return false;
         }
         for (ItemDTO item : itemComboBox.getItems()) {
             if (initialItemId.equals(item.getId())) {
                 itemComboBox.getSelectionModel().select(item);
-                return;
+                return true;
             }
         }
+        return false;
     }
 }

@@ -18,7 +18,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -117,11 +116,10 @@ public class MyItemsController {
             if (auctions == null || auctions.isEmpty()) {
                 return NO_AUCTION_STATUS;
             }
-            return auctions.stream()
-                    .max(Comparator.comparing(auction ->
-                            auction.getEndTime() != null ? auction.getEndTime() : auction.getStartTime()))
-                    .map(auction -> auction.getStatus() != null ? auction.getStatus().name() : NO_AUCTION_STATUS)
-                    .orElse(NO_AUCTION_STATUS);
+            AuctionDTO representative = AuctionViewFilter.representativeAuction(auctions);
+            return representative != null && representative.getStatus() != null
+                    ? representative.getStatus().name()
+                    : NO_AUCTION_STATUS;
         } catch (Exception e) {
             return NO_AUCTION_STATUS;
         }
@@ -226,7 +224,12 @@ public class MyItemsController {
             createAuctionButton.getStyleClass().add("button");
             createAuctionButton.setMaxWidth(Double.MAX_VALUE);
             createAuctionButton.setStyle("-fx-font-size: 13px;");
-            createAuctionButton.setOnAction(e -> openCreateAuction(item));
+            if (isBlockingAuctionStatus(data.auctionStatus())) {
+                createAuctionButton.setText("Đã có phiên");
+                createAuctionButton.setDisable(true);
+            } else {
+                createAuctionButton.setOnAction(e -> openCreateAuction(item));
+            }
 
             Button deleteButton = new Button("Gỡ");
             deleteButton.getStyleClass().add("button");
@@ -243,6 +246,14 @@ public class MyItemsController {
 
     private String formatAuctionStatusBadge(String auctionStatus) {
         return auctionStatus;
+    }
+
+    private boolean isBlockingAuctionStatus(String auctionStatus) {
+        try {
+            return AuctionViewFilter.isBlockingStatus(AuctionStatus.valueOf(auctionStatus));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void applyAuctionStatusStyle(Label badge, String auctionStatus) {

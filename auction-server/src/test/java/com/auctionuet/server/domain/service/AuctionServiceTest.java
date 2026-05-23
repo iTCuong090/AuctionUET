@@ -204,6 +204,56 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testCreateAuctionRejectsItemWithActiveAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
+
+        assertThrows(AuctionException.class, () ->
+                auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(10),
+                        LocalDateTime.now().plusDays(2), "Auction 2", "Desc", 60, 120));
+    }
+
+    @Test
+    public void testCreateAuctionAllowsCanceledPreviousAuction() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        AuctionDTO firstAuction = auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1),
+                "Auction 1",
+                "Desc",
+                60,
+                120);
+        auctionService.startAuction(seller, firstAuction.getId());
+        auctionService.endAuction(firstAuction.getId());
+
+        AuctionDTO secondAuction = auctionService.createAuction(
+                seller,
+                item.getId(),
+                LocalDateTime.now().plusMinutes(10),
+                LocalDateTime.now().plusDays(2),
+                "Auction 2",
+                "Desc",
+                60,
+                120);
+
+        assertNotNull(secondAuction);
+        assertEquals(AuctionStatus.CANCELED, auctionDAO.findById(firstAuction.getId()).getStatus());
+        assertEquals(AuctionStatus.OPEN, auctionDAO.findById(secondAuction.getId()).getStatus());
+        assertEquals(2, auctionDAO.findByItemId(item.getId()).size());
+    }
+
+    @Test
     public void testCreateAuctionWrongOwner() throws Exception {
         User seller1 = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User seller2 = new MockUser("seller2", "seller2", UserRole.SELLER, true);
@@ -249,15 +299,12 @@ public class AuctionServiceTest {
     public void testGetAuctions() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         ItemDTO dto = createElectronicsDTO();
-        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
-                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
-
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 1", "Desc", 60, 120);
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 2", "Desc", 60, 120);
-        auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusDays(1), "Auction 3", "Desc", 60, 120);
+        for (int i = 1; i <= 3; i++) {
+            ItemDTO item = itemService.createItem(seller, dto.getName() + " " + i, dto.getDescription(),
+                    dto.getStartingPrice(), dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+            auctionService.createAuction(seller, item.getId(), LocalDateTime.now().plusMinutes(5),
+                    LocalDateTime.now().plusDays(1), "Auction " + i, "Desc", 60, 120);
+        }
 
         List<AuctionDTO> auctions = auctionService.getAuctions();
         assertEquals(3, auctions.size());

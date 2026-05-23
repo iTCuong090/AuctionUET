@@ -248,5 +248,37 @@
     "id": "0b5e2df4-71be-47f2-84ac-87eafd667c4c",
     "createdAt": "2026-05-23T09:16:02.6661824",
     "updatedAt": "2026-05-23T09:16:02.6661824"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "amount": 27735.300000000003,
+    "auctionId": "c65e2106-af2a-47c8-93fe-a83407a2c3c5",
+    "relatedTransactionId": "6c18198a-2285-48af-9c74-7a51beac4160",
+    "balanceBefore": 1.2345645614251425E98,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 127735.29999999999,
+    "frozenBalanceAfter": 99999.99999999999,
+    "description": "Tich thu tien coc do qua han thanh toan",
+    "id": "a835a5e4-af13-48d5-b737-d3b80fef33cd",
+    "createdAt": "2026-05-23T09:50:00.0070816",
+    "updatedAt": "2026-05-23T09:50:00.0070816"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "amount": 99999.99999999999,
+    "auctionId": "3de192e1-5c73-4f29-b1e1-5f9805307506",
+    "relatedTransactionId": "013eb84a-73c5-4c7f-b361-25124208f149",
+    "balanceBefore": 1.2345645614251425E98,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 99999.99999999999,
+    "frozenBalanceAfter": 0.0,
+    "description": "Tich thu tien coc do qua han thanh toan",
+    "id": "d164b180-c4d1-4f35-aa3a-d3f6734a626c",
+    "createdAt": "2026-05-23T09:50:00.0113884",
+    "updatedAt": "2026-05-23T09:50:00.0113884"
   }
 ]

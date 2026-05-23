@@ -19,7 +19,9 @@ import com.auctionuet.server.persistence.schema.UserSchema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,7 +48,7 @@ public class AuctionService {
         this.auctionManager.setReconcileCallback(this::reconcileAuctionsFromDatabase);
     }
 
-    public AuctionDTO createAuction(User seller, String itemId, LocalDateTime startTime,
+    public synchronized AuctionDTO createAuction(User seller, String itemId, LocalDateTime startTime,
             LocalDateTime endTime, String title, String description,
             int antiSnipingWindowSeconds, int antiSnipingExtensionSeconds) throws AuctionException {
         requireCreateAuctionPermission(seller);
@@ -57,6 +59,7 @@ public class AuctionService {
         requireItemOwner(seller, item);
         validateAuctionTimeRange(startTime, endTime);
         requireFutureStartTime(startTime);
+        requireItemAvailableForNewAuction(itemId);
 
         AuctionSchema schema = new AuctionSchema(
                 UUID.randomUUID().toString(),
@@ -97,6 +100,7 @@ public class AuctionService {
 
     public synchronized void reconcileAuctionsFromDatabase() {
         LocalDateTime now = LocalDateTime.now();
+        reconcileDuplicateActiveAuctions();
         for (AuctionSchema schema : auctionDAO.findAll()) {
             if (schema.getStatus() == AuctionStatus.PAID || schema.getStatus() == AuctionStatus.CANCELED) {
                 auctionManager.cancelAllTasks(schema.getId());
@@ -300,6 +304,14 @@ public class AuctionService {
             cancelStaleAuction(schema, "Huy phien dau gia do item khong ton tai");
             return;
         }
+
+        AuctionSchema activeKeeper = selectActiveKeeperForItem(schema.getItemId());
+        if (activeKeeper != null && !schema.getId().equals(activeKeeper.getId())) {
+            cancelStaleAuction(schema, "Hủy phiên đấu giá trùng vật phẩm");
+            return;
+        }
+        cancelCompetingActiveAuctions(schema);
+
         auctionManager.cancelAuctionStart(schema.getId());
         schema.setStatus(AuctionStatus.RUNNING);
         schema.setPaymentDeadlineAt(null);
@@ -353,6 +365,111 @@ public class AuctionService {
         auctionDAO.update(schema);
         auctionManager.cancelAllTasks(schema.getId());
         auctionManager.removeLiveAuction(schema.getId());
+    }
+
+    private void requireItemAvailableForNewAuction(String itemId) throws AuctionException {
+        AuctionSchema blockingAuction = findBlockingAuctionForItem(itemId);
+        if (blockingAuction != null) {
+            throw new AuctionException("Vật phẩm này đã có phiên đấu giá đang hoạt động");
+        }
+    }
+
+    private AuctionSchema findBlockingAuctionForItem(String itemId) {
+        for (AuctionSchema auction : auctionDAO.findByItemId(itemId)) {
+            if (isBlockingAuctionStatus(auction.getStatus())) {
+                return auction;
+            }
+        }
+        return null;
+    }
+
+    private void reconcileDuplicateActiveAuctions() {
+        Map<String, List<AuctionSchema>> auctionsByItemId = new LinkedHashMap<>();
+        for (AuctionSchema auction : auctionDAO.findAll()) {
+            if (auction.getItemId() == null || !isBlockingAuctionStatus(auction.getStatus())) {
+                continue;
+            }
+            auctionsByItemId.computeIfAbsent(auction.getItemId(), key -> new ArrayList<>()).add(auction);
+        }
+
+        for (List<AuctionSchema> itemAuctions : auctionsByItemId.values()) {
+            if (itemAuctions.size() <= 1) {
+                continue;
+            }
+
+            AuctionSchema keeper = selectActiveKeeper(itemAuctions);
+            for (AuctionSchema auction : itemAuctions) {
+                if (!auction.getId().equals(keeper.getId())) {
+                    cancelStaleAuction(auction, "Hủy phiên đấu giá trùng vật phẩm khi đồng bộ dữ liệu");
+                }
+            }
+        }
+    }
+
+    private void cancelCompetingActiveAuctions(AuctionSchema keeper) {
+        for (AuctionSchema auction : auctionDAO.findByItemId(keeper.getItemId())) {
+            if (!auction.getId().equals(keeper.getId()) && isBlockingAuctionStatus(auction.getStatus())) {
+                cancelStaleAuction(auction, "Hủy phiên đấu giá trùng vật phẩm");
+            }
+        }
+    }
+
+    private AuctionSchema selectActiveKeeperForItem(String itemId) {
+        List<AuctionSchema> activeAuctions = auctionDAO.findByItemId(itemId).stream()
+                .filter(auction -> isBlockingAuctionStatus(auction.getStatus()))
+                .toList();
+        return selectActiveKeeper(activeAuctions);
+    }
+
+    private AuctionSchema selectActiveKeeper(List<AuctionSchema> activeAuctions) {
+        AuctionSchema selected = null;
+        for (AuctionSchema auction : activeAuctions) {
+            if (selected == null || isBetterActiveAuction(auction, selected)) {
+                selected = auction;
+            }
+        }
+        return selected;
+    }
+
+    private boolean isBetterActiveAuction(AuctionSchema candidate, AuctionSchema current) {
+        int candidateRank = activeStatusRank(candidate.getStatus());
+        int currentRank = activeStatusRank(current.getStatus());
+        if (candidateRank != currentRank) {
+            return candidateRank > currentRank;
+        }
+        return schemaTieBreakTime(candidate).isAfter(schemaTieBreakTime(current));
+    }
+
+    private int activeStatusRank(AuctionStatus status) {
+        if (status == AuctionStatus.WAITING_PAYMENT) {
+            return 3;
+        }
+        if (status == AuctionStatus.RUNNING) {
+            return 2;
+        }
+        if (status == AuctionStatus.OPEN) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private LocalDateTime schemaTieBreakTime(AuctionSchema schema) {
+        if (schema.getCreatedAt() != null) {
+            return schema.getCreatedAt();
+        }
+        if (schema.getStartTime() != null) {
+            return schema.getStartTime();
+        }
+        if (schema.getUpdatedAt() != null) {
+            return schema.getUpdatedAt();
+        }
+        return LocalDateTime.MIN;
+    }
+
+    private boolean isBlockingAuctionStatus(AuctionStatus status) {
+        return status == AuctionStatus.OPEN
+                || status == AuctionStatus.RUNNING
+                || status == AuctionStatus.WAITING_PAYMENT;
     }
 
     private List<AuctionDTO> toAuctionDTOList(List<AuctionSchema> schemas) {

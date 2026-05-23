@@ -30,10 +30,10 @@
     "email": "ccc@gmail.com",
     "role": "BIDDER",
     "balance": 1.2345645614251425E98,
-    "frozenBalance": 127735.29999999999,
+    "frozenBalance": 0.0,
     "id": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "createdAt": "2026-05-08T14:05:41.3492979",
-    "updatedAt": "2026-05-23T09:16:02.6656999"
+    "updatedAt": "2026-05-23T09:50:00.0100846"
   },
   {
     "username": "seller",

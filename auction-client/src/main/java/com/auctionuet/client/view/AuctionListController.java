@@ -93,7 +93,7 @@ public class AuctionListController {
                 AuctionClient client = new AuctionClient();
                 List<AuctionDTO> list = client.getAuctions(currentToken);
                 Platform.runLater(() -> {
-                    allAuctions = list != null ? list : new ArrayList<>();
+                    allAuctions = AuctionViewFilter.representativeAuctions(list);
                     applyFilters();
                 });
             } catch (Exception e) {

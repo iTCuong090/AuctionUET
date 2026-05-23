@@ -50,16 +50,17 @@ public class HomeController {
             try {
                 AuctionClient client = new AuctionClient();
                 List<AuctionDTO> allAuctions = client.getAuctions(token);
+                List<AuctionDTO> publicAuctions = AuctionViewFilter.representativeAuctions(allAuctions);
 
-                int total = allAuctions.size();
-                long running = allAuctions.stream()
+                int total = publicAuctions.size();
+                long running = publicAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
                         .count();
-                long finished = allAuctions.stream()
+                long finished = publicAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
                         .count();
 
-                List<AuctionDTO> endingSoon = allAuctions.stream()
+                List<AuctionDTO> endingSoon = publicAuctions.stream()
                         .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
                         .filter(a -> a.getEndTime() != null)
                         .sorted(Comparator.comparing(AuctionDTO::getEndTime))
