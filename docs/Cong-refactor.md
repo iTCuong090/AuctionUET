@@ -24,14 +24,14 @@ Số liệu diff đã commit so với `main`:
 | Base branch | `main` |
 | Base commit | `38eac64` |
 | Current branch | `week6-nguyen-cao-cong` |
-| Current commit | `d1ee55f` |
-| Số commit trên nhánh | 19 |
-| Số file thay đổi | 54 |
-| Số dòng thêm | 4.207 |
-| Số dòng xóa | 244 |
-| File thêm mới đáng chú ý | 11 |
+| Current commit | `e6f11d0` |
+| Số commit trên nhánh | 20 |
+| Số file thay đổi | 55 |
+| Số dòng thêm | 4.935 |
+| Số dòng xóa | 309 |
+| File thêm mới | 12 |
 
-Ngoài phần đã commit, working tree còn có một số chỉnh sửa mới ở client/server và một vài file JSON demo do quá trình chạy app. Báo cáo này tập trung vào thay đổi chức năng và không coi dữ liệu demo trong `data/*.json` là migration bắt buộc.
+Số liệu trên tính cả file báo cáo này. Các file `data/*.json` có thay đổi chủ yếu do dữ liệu demo trong quá trình chạy app, không phải migration schema bắt buộc.
 
 ## 2. So sánh trước và sau
 
@@ -350,8 +350,203 @@ Kết quả mong muốn:
 | `auction-client/src/main/resources/fxml/PaymentView.fxml` | FXML màn thanh toán đấu giá. |
 | `auction-client/src/main/resources/fxml/PaymentCheckoutView.fxml` | FXML popup trả tiền. |
 | `auction-protocol/src/main/java/com/auctionuet/protocol/dto/request/item/ItemIdRequestDTO.java` | Request DTO dùng cho item id actions. |
+| `docs/Cong-refactor.md` | Báo cáo tổng hợp thay đổi tuần 6 theo mẫu báo cáo refactor. |
 
-## 12. Test và kiểm chứng
+## 12. Chi tiết code theo tầng
+
+Phần này đi sâu hơn vào code để thấy các thay đổi không chỉ nằm ở giao diện, mà đã đi qua đủ các tầng: protocol, server service, persistence, client network và JavaFX controller.
+
+### 12.1 Tầng protocol
+
+Các thay đổi protocol nằm ở module `auction-protocol`, giữ đúng hướng contract-first của repo.
+
+| File | Thay đổi chính | Lý do |
+|---|---|---|
+| `auction-protocol/src/main/java/com/auctionuet/protocol/ActionType.java` | Thêm/hoàn thiện `DELETE_ITEM`, `GET_MY_ITEMS`, `GET_ITEM_AUCTION_HISTORY`, `PAY_AUCTION`, `GET_MY_PENDING_PAYMENTS`. | Client và server dùng chung enum action, tránh gửi string/action không được route. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/enums/Permission.java` | Bổ sung permission cho item ownership, thanh toán và lịch sử item. | Controller có thể check quyền mỏng trước khi gọi service. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/dto/request/item/ItemIdRequestDTO.java` | DTO mới chỉ chứa `itemId`, có validate không được rỗng. | Dùng lại cho `DELETE_ITEM` và `GET_ITEM_AUCTION_HISTORY`, tránh parse `Map<String, Object>` thủ công. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/dto/response/auction/AuctionDTO.java` | Thêm `paymentDeadlineAt`, `paidAt`, `depositAmount`, `currentUserDeposited`. | UI cần biết hạn thanh toán, thời điểm thanh toán, cọc phải giữ và user hiện tại đã cọc chưa. |
+
+Điểm đáng chú ý: các field mới được thêm vào DTO chung thay vì tạo DTO riêng ở client. Vì vậy nếu server trả thiếu field hoặc client gọi sai constructor, lỗi sẽ lộ ở compile/test sớm hơn.
+
+### 12.2 Tầng server service
+
+`AuctionService` là phần thay đổi nghiệp vụ lớn nhất.
+
+| Method/nhóm code | Vai trò hiện tại |
+|---|---|
+| Constructor `AuctionService(...)` | Gắn callback cho `AuctionManager`: auto start auction, auto end auction và expire deadline thanh toán. |
+| `createAuction(...)` | Tạo phiên mới, kiểm tra item thuộc Seller, validate thời gian, và chặn tạo thêm auction active cho cùng item. |
+| `startAuction(...)` / `startAuctionNow(...)` | Chuyển `OPEN -> RUNNING`, load vào `AuctionManager`, schedule end time và notify observer. |
+| `endAuction(...)` | Khi hết phiên: nếu không có winner thì cancel và hoàn cọc; nếu có winner thì chuyển `WAITING_PAYMENT`, set `paymentDeadlineAt`, hoàn cọc người thua, giữ cọc winner. |
+| `expirePaymentDeadline(...)` | Khi quá hạn thanh toán: chỉ xử lý auction `WAITING_PAYMENT`, tịch thu cọc winner, chuyển `CANCELED`, giữ owner item là Seller. |
+| `payAuction(...)` | Winner thanh toán: check đúng winner, đúng status, chưa quá deadline, trừ phần tiền còn lại sau cọc, payout Seller, chuyển owner item, set `PAID` và `paidAt`. |
+| `getMyPendingPayments(...)` | Trả danh sách auction `WAITING_PAYMENT` mà user hiện tại là winner. |
+| `getItemAuctionHistory(...)` | Trả lịch sử auction theo `itemId`, phục vụ màn lịch sử vật phẩm. |
+| `toDTO(...)` | Map schema sang `AuctionDTO`, gắn thêm `paymentDeadlineAt`, `paidAt`, `depositAmount`, `currentUserDeposited`. |
+
+Các rule tiền/cọc được giữ trong service, không đưa vào controller JavaFX. UI chỉ hiển thị và gọi action thanh toán.
+
+`ItemService` cũng được mở rộng:
+
+| Method/nhóm code | Vai trò hiện tại |
+|---|---|
+| `getItemsByOwner(...)` / nhóm lấy item của user | Dùng `sellerId` như owner hiện tại để trả item cho cả Seller và Bidder. |
+| `transferOwnership(itemId, newOwnerId)` | Sau khi auction `PAID`, cập nhật owner item sang winner. |
+| `deleteItem(...)` | Gỡ mềm item bằng `archived = true`, chỉ cho owner gỡ. |
+| Check active auction trước khi delete | Không cho gỡ nếu item đang có auction `OPEN`, `RUNNING`, hoặc `WAITING_PAYMENT`. |
+| `toDTO(...)` | Map `ItemSchema` sang `ItemDTO`, giữ `extraFields` để client render brand/warranty/artist/year... |
+
+`WalletService` không bị đưa logic vào UI. Luồng thanh toán vẫn đi qua server:
+
+- `freezeDeposit` giữ cọc khi tham gia bid.
+- `payAuctionRemaining` trừ phần tiền tươi còn lại.
+- `forfeitDeposit` tịch thu cọc khi quá hạn.
+- `deposit`/`withdraw` vẫn phục vụ màn ví.
+
+### 12.3 Tầng manager, schema và DAO
+
+| File | Thay đổi chính | Ý nghĩa |
+|---|---|---|
+| `auction-server/src/main/java/com/auctionuet/server/domain/manager/AuctionManager.java` | Thêm scheduler/payment deadline task, callback expire, periodic reconcile. | Deadline thanh toán chạy ở server, không phụ thuộc client còn mở app hay không. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/schema/AuctionSchema.java` | Thêm `paymentDeadlineAt`, `paidAt`. | Lưu được hạn thanh toán và thời điểm thanh toán vào JSON. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/schema/ItemSchema.java` | Thêm `archived`. | Hỗ trợ gỡ mềm item, không phá lịch sử auction cũ. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/dao/AuctionDAO.java` | Bổ sung helper tìm theo status/điều kiện phục vụ pending payment và active auction. | Service không phải tự lọc thủ công quá nhiều nơi. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/dao/ItemDAO.java` | Không trả item archived trong các danh sách active. | Item đã gỡ mềm không còn xuất hiện để tạo phiên mới. |
+
+Việc dùng `archived` thay vì hard-delete là đúng với lịch sử đấu giá: auction cũ vẫn cần đọc được item để xem chi tiết/lịch sử.
+
+### 12.4 Tầng server controller và router
+
+| File | Thay đổi chính |
+|---|---|
+| `auction-server/src/main/java/com/auctionuet/server/network/server/RequestRouter.java` | Route thêm `PAY_AUCTION`, `GET_MY_PENDING_PAYMENTS`, `GET_MY_ITEMS`, `DELETE_ITEM`, `GET_ITEM_AUCTION_HISTORY`. |
+| `auction-server/src/main/java/com/auctionuet/server/network/controller/AuctionController.java` | Thêm endpoint thanh toán, pending payments và item auction history; check token/permission rồi gọi `AuctionService`. |
+| `auction-server/src/main/java/com/auctionuet/server/network/controller/ItemController.java` | Thêm get my items và delete item; controller không tự xử lý ownership mà chuyển cho `ItemService`. |
+
+Controller vẫn giữ vai trò mỏng:
+
+- deserialize DTO bằng `request.getDataAs(...)`;
+- validate token bằng `SessionManager`;
+- check `user.hasPermission(...)`;
+- gọi service;
+- trả `Response.ok(...)`.
+
+### 12.5 Tầng client network
+
+| File | Method mới/sửa | Vai trò |
+|---|---|---|
+| `auction-client/src/main/java/com/auctionuet/client/network/AuctionClient.java` | `payAuction(...)` | Gửi `PAY_AUCTION` cho server. |
+| `auction-client/src/main/java/com/auctionuet/client/network/AuctionClient.java` | `getMyPendingPayments(...)` | Lấy các phiên cần thanh toán của user hiện tại. |
+| `auction-client/src/main/java/com/auctionuet/client/network/ItemClient.java` | `getMyItems(...)` | Lấy danh sách item user đang sở hữu. |
+| `auction-client/src/main/java/com/auctionuet/client/network/ItemClient.java` | `deleteItem(...)` | Gỡ mềm item qua server. |
+| `auction-client/src/main/java/com/auctionuet/client/network/ItemClient.java` | `getItemAuctionHistory(...)` | Lấy lịch sử auction theo item. |
+
+Các client adapter vẫn dùng `Request.fromDto(...)` hoặc `Request(...)` theo protocol chung, không tạo request shape riêng trong client.
+
+### 12.6 Tầng JavaFX UI
+
+Nhóm controller mới/touched nhiều nhất:
+
+| Controller | Luồng code chính |
+|---|---|
+| `PaymentController` | Load pending payments, merge với auction đã thanh toán/quá hạn gần đây, lọc theo chip, render grid 4 card mỗi hàng, mở popup checkout. |
+| `PaymentCheckoutController` | Nhận `AuctionDTO`, render phương thức QR/tiền mặt, tính tiền cần thanh toán thêm, tạo QR giả lập, gọi `payAuction`, đóng popup và callback refresh. |
+| `MyItemsController` | Load item của user, lấy trạng thái auction gần nhất theo item, filter/search, render card, xử lý thêm item/gỡ item/tạo auction/mở lịch sử. |
+| `ItemHistoryController` | Nhận `ItemDTO`, gọi `getItemAuctionHistory`, render thông tin item và bảng lịch sử auction. |
+| `AuctionListController` | Áp dụng `AuctionViewFilter`, bỏ pagination, render card responsive, tách hành động Seller/Bidder. |
+| `HomeController` | Card trên trang chủ dùng cùng logic với danh sách: Seller xem chi tiết, Bidder đăng ký đấu giá hoặc xem thông tin. |
+| `AuctionDetailController` | Render badge trạng thái, type badge, extra fields từng dòng, start auction cho Seller, payment area cho winner, bid chart realtime. |
+| `ProfileController` | Tính thống kê theo role, Seller xem sản phẩm đã bán, Bidder xem phiên đã tham gia, điểm uy tín dạng sao. |
+| `WalletController` | Format số dư compact và render transaction history dễ đọc hơn. |
+
+Các controller gọi network trong background thread và update UI bằng `Platform.runLater`, phù hợp quy tắc JavaFX trong repo.
+
+## 13. Chi tiết file đã tạo và file đã sửa
+
+### 13.1 File tạo mới
+
+| File tạo mới | Nội dung |
+|---|---|
+| `auction-client/src/main/java/com/auctionuet/client/view/AuctionViewFilter.java` | Helper lọc auction theo trạng thái và từ khóa. Tách logic search/filter khỏi controller để `AuctionListController` gọn hơn. |
+| `auction-client/src/main/java/com/auctionuet/client/view/CurrencyFormatter.java` | Helper format tiền VND. Có dạng full và compact để xử lý số dư quá dài trên header/ví. |
+| `auction-client/src/main/java/com/auctionuet/client/view/MyItemsController.java` | Controller lớn cho màn `Vật phẩm`: load item, search/filter, render card, thêm/gỡ item, tạo auction, mở lịch sử. |
+| `auction-client/src/main/java/com/auctionuet/client/view/ItemHistoryController.java` | Controller màn `Lịch sử vật phẩm`, render item detail và bảng các auction gắn với item. |
+| `auction-client/src/main/java/com/auctionuet/client/view/PaymentController.java` | Controller màn `Thanh toán đấu giá`, gồm filter chip, danh sách pending/paid/expired và popup checkout. |
+| `auction-client/src/main/java/com/auctionuet/client/view/PaymentCheckoutController.java` | Controller popup `Trả tiền`, chọn phương thức, QR/cash content, xác nhận thanh toán. |
+| `auction-client/src/main/resources/fxml/MyItemsView.fxml` | Layout màn quản lý vật phẩm. |
+| `auction-client/src/main/resources/fxml/ItemHistoryView.fxml` | Layout màn lịch sử vật phẩm. |
+| `auction-client/src/main/resources/fxml/PaymentView.fxml` | Layout màn thanh toán đấu giá. |
+| `auction-client/src/main/resources/fxml/PaymentCheckoutView.fxml` | Layout popup trả tiền có scroll dọc. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/dto/request/item/ItemIdRequestDTO.java` | DTO request dùng chung cho các action theo item id. |
+| `docs/Cong-refactor.md` | Báo cáo tổng hợp thay đổi tuần 6. |
+
+### 13.2 File protocol/server đã sửa
+
+| File sửa | Nội dung sửa |
+|---|---|
+| `auction-protocol/src/main/java/com/auctionuet/protocol/ActionType.java` | Thêm action item/payment/history để client-server thống nhất contract. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/enums/Permission.java` | Thêm permission tương ứng cho các action mới. |
+| `auction-protocol/src/main/java/com/auctionuet/protocol/dto/response/auction/AuctionDTO.java` | Bổ sung field phục vụ payment deadline, paid time, deposit amount và trạng thái cọc của current user. |
+| `auction-server/src/main/java/com/auctionuet/server/domain/model/Bidder.java` | Mở permission cho Bidder xem item của mình, xem lịch sử item, thanh toán. |
+| `auction-server/src/main/java/com/auctionuet/server/domain/model/Seller.java` | Mở permission phù hợp cho Seller quản lý item và xem lịch sử item. |
+| `auction-server/src/main/java/com/auctionuet/server/domain/service/AuctionService.java` | Thêm/sửa phần lớn logic lifecycle auction: start, end, waiting payment, pay, expire, item history, chống duplicate active auction. |
+| `auction-server/src/main/java/com/auctionuet/server/domain/service/ItemService.java` | Thêm ownership transfer, get my items, soft delete, check active auction trước khi gỡ. |
+| `auction-server/src/main/java/com/auctionuet/server/network/controller/AuctionController.java` | Thêm handler cho pay auction, pending payment, item auction history. |
+| `auction-server/src/main/java/com/auctionuet/server/network/controller/ItemController.java` | Thêm handler get my items và delete item. |
+| `auction-server/src/main/java/com/auctionuet/server/network/server/RequestRouter.java` | Route các action mới vào đúng controller. |
+| `auction-server/src/main/java/com/auctionuet/server/network/server/AuctionServer.java` | Khởi động thêm reconcile/schedule liên quan auction lifecycle. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/dao/AuctionDAO.java` | Bổ sung query/helper phục vụ active/pending/payment history. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/dao/ItemDAO.java` | Lọc/không hiển thị item archived trong danh sách active. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/schema/AuctionSchema.java` | Thêm `paymentDeadlineAt`, `paidAt` để persist trạng thái thanh toán. |
+| `auction-server/src/main/java/com/auctionuet/server/persistence/schema/ItemSchema.java` | Thêm `archived` để soft-delete item. |
+
+### 13.3 File client Java đã sửa
+
+| File sửa | Nội dung sửa |
+|---|---|
+| `auction-client/src/main/java/com/auctionuet/client/model/ClientSession.java` | Bổ sung helper/state nhỏ phục vụ nhận diện user hiện tại trong UI. |
+| `auction-client/src/main/java/com/auctionuet/client/network/AuctionClient.java` | Thêm call start/pay/pending payment theo action protocol. |
+| `auction-client/src/main/java/com/auctionuet/client/network/ItemClient.java` | Thêm call get my items, delete item, get item auction history. |
+| `auction-client/src/main/java/com/auctionuet/client/view/AuctionDetailController.java` | Sửa mạnh màn detail: start button seller-only, status badge, item extra fields, payment area, bid chart, realtime update. |
+| `auction-client/src/main/java/com/auctionuet/client/view/AuctionListController.java` | Sửa search/filter, layout 4 card/hàng, bỏ pagination, route Seller/Bidder khác nhau. |
+| `auction-client/src/main/java/com/auctionuet/client/view/BiddingController.java` | Render tiền cọc/ví rõ hơn, refresh wallet khi current user bid, đồng bộ `currentUserDeposited`. |
+| `auction-client/src/main/java/com/auctionuet/client/view/CreateAuctionController.java` | Auto-title theo item được chọn, không để title stale; check lịch sử item trước khi tạo phiên nếu cần. |
+| `auction-client/src/main/java/com/auctionuet/client/view/CreateItemController.java` | Sau khi đăng item thành công, form có thể được reset/ẩn theo flow mới trong màn vật phẩm. |
+| `auction-client/src/main/java/com/auctionuet/client/view/DashboardController.java` | Sidebar thêm/đổi route cho `Vật phẩm`, `Thanh toán`, đồng bộ label và active button. |
+| `auction-client/src/main/java/com/auctionuet/client/view/HomeController.java` | Nút khám phá mở danh sách; card home dùng logic đăng ký/xem chi tiết giống list. |
+| `auction-client/src/main/java/com/auctionuet/client/view/LoginController.java` | Cập nhật nhẹ để phù hợp session/navigation sau các màn mới. |
+| `auction-client/src/main/java/com/auctionuet/client/view/ProfileController.java` | Tính thống kê hoạt động thật hơn theo role và render điểm uy tín dạng sao. |
+| `auction-client/src/main/java/com/auctionuet/client/view/RegisterController.java` | Cập nhật nhẹ text/navigation để đồng bộ UI. |
+| `auction-client/src/main/java/com/auctionuet/client/view/WalletController.java` | Format tiền compact, render transaction history rõ hơn và map auction id sang title nếu có. |
+
+### 13.4 FXML và CSS đã sửa
+
+| File | Nội dung |
+|---|---|
+| `auction-client/src/main/resources/fxml/AuctionDetailView.fxml` | Thêm vùng action seller-only, sửa bố cục item criteria, gắn `fx:id` mới cho controller. |
+| `auction-client/src/main/resources/fxml/AuctionListView.fxml` | Bỏ pagination/thanh ngang thừa, giữ scroll dọc và vùng grid. |
+| `auction-client/src/main/resources/fxml/DashboardView.fxml` | Sidebar đổi `Hoạt động` thành `Vật phẩm`, thêm/đồng bộ `Thanh toán`. |
+| `auction-client/src/main/resources/fxml/HomeView.fxml` | Nút khám phá và vùng card dùng flow mới. |
+| `auction-client/src/main/resources/fxml/ProfileView.fxml` | Bố cục thống kê role-specific và reputation star. |
+| `auction-client/src/main/resources/css/styles.css` | Thêm style dùng chung: card, badge status, chip filter, payment checkout, item type badge, action buttons. |
+| `auction-client/src/main/resources/css/light-theme.css` | Màu light theme cho badge, detail metrics, item/payment cards. |
+| `auction-client/src/main/resources/css/dark-theme.css` | Màu dark theme tương ứng, sửa layout bị nhảy/thừa khoảng trống khi đổi theme. |
+
+### 13.5 Test và dữ liệu
+
+| File | Nội dung |
+|---|---|
+| `auction-server/src/test/java/com/auctionuet/server/domain/service/AuctionServiceTest.java` | Thêm test cho duplicate active auction, payment deadline, pay success, ownership transfer, timeout cancel. |
+| `data/auctions.json` | Dữ liệu demo có thêm auction trạng thái mới như `WAITING_PAYMENT`, `PAID`, `CANCELED`. |
+| `data/bids.json` | Dữ liệu demo bid phục vụ kiểm tra lịch sử/biểu đồ. |
+| `data/items.json` | Dữ liệu demo item và owner/archived. |
+| `data/transactions.json` | Dữ liệu demo giao dịch cọc, thanh toán, payout, nạp/rút. |
+| `data/users.json` | Dữ liệu demo ví user thay đổi sau test app. |
+
+Các file `data/*.json` nên được xem là seed/demo data. Khi review code, phần quan trọng là schema/service/DAO đã hỗ trợ field mới; không nên dùng dữ liệu demo cũ làm bằng chứng duy nhất cho business rule.
+
+## 14. Test và kiểm chứng
 
 Test server được mở rộng ở:
 
@@ -373,9 +568,9 @@ Kết quả đã chạy trong quá trình làm:
 | `mvn test` | Pass toàn bộ tại thời điểm kiểm tra sau phần deadline/payment service. |
 | `mvn -pl auction-client -am test` | Pass sau các chỉnh sửa UI/controller gần đây. |
 
-Vì báo cáo này chỉ thêm tài liệu, không bắt buộc chạy lại test. Trước khi merge/nộp vẫn nên chạy lại `mvn test` một lần sau khi chốt toàn bộ working tree.
+Vì lần sửa này chỉ thêm chi tiết vào tài liệu, không bắt buộc chạy lại test. Trước khi merge/nộp vẫn nên chạy lại `mvn test` một lần sau khi chốt toàn bộ working tree.
 
-## 13. Rủi ro và việc nên dọn tiếp
+## 15. Rủi ro và việc nên dọn tiếp
 
 Các điểm cần nói thật với nhóm:
 
@@ -387,7 +582,7 @@ Các điểm cần nói thật với nhóm:
 - Cần review lại tiếng Việt có dấu ở toàn bộ UI để tránh còn string cũ không dấu.
 - Trước khi chấm/demo nên chạy lại full `mvn test` và kiểm tra manual các flow: Seller tạo item, tạo auction, start auction; Bidder bid, thắng, thanh toán đủ/thiếu/quá hạn.
 
-## 14. Kết luận
+## 16. Kết luận
 
 So với bản cũ, nhánh tuần 6 đã đưa AuctionUET tiến gần hơn tới một sản phẩm đấu giá hoàn chỉnh:
 
