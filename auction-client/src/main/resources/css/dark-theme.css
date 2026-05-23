@@ -80,6 +80,10 @@
 .status-badge-open { -fx-background-color: #f39c12; -fx-text-fill: white; }
 .status-badge-finished { -fx-background-color: #7f8c8d; -fx-text-fill: white; }
 .status-badge-canceled { -fx-background-color: #e74c3c; -fx-text-fill: white; }
+.item-type-badge { -fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e; }
+.detail-price-label { -fx-text-fill: #4ecdc4; }
+.detail-leader-label { -fx-text-fill: #fbbf24; }
+.detail-time-label { -fx-text-fill: #fb923c; }
 
 .header-bar { -fx-background-color: #1a252f; }
 .content-area { -fx-background-color: #ecf0f1; }

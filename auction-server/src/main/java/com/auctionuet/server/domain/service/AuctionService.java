@@ -227,6 +227,10 @@ public class AuctionService {
         AuctionSchema schema = requireAuction(auctionId);
         requireAuctionStatus(schema, AuctionStatus.WAITING_PAYMENT, "Auction khong o trang thai cho thanh toan");
         requireWinner(winner, schema);
+        if (schema.getPaymentDeadlineAt() != null && !schema.getPaymentDeadlineAt().isAfter(LocalDateTime.now())) {
+            expirePaymentDeadline(auctionId);
+            throw new AuctionException("Da qua han thanh toan");
+        }
         ItemSchema itemSchema = requireItem(schema.getItemId());
 
         double totalPrice = schema.getHighestBid();

@@ -213,7 +213,7 @@
     "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
     "imageUrl": "cc.jpg",
     "condition": "NEW",
-    "auctionCount": 2,
+    "auctionCount": 3,
     "archived": false,
     "extraFields": {
       "brand": "Lenovo",
@@ -221,7 +221,7 @@
     },
     "id": "d1dede16-0926-4de5-a095-8a406f621082",
     "createdAt": "2026-05-23T11:19:26.2303736",
-    "updatedAt": "2026-05-23T11:33:57.6031031"
+    "updatedAt": "2026-05-23T16:30:55.312374"
   },
   {
     "name": "sexy lady",

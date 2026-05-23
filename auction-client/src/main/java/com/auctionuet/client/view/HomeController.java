@@ -9,7 +9,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -131,54 +133,93 @@ public class HomeController {
         sellerLabel.setStyle("-fx-font-size: 13px;");
         sellerLabel.getStyleClass().add("text-secondary");
 
-        Button btnDetail = new Button("Xem chi tiết");
-        btnDetail.setMaxWidth(Double.MAX_VALUE);
-        btnDetail.setStyle(
-            "-fx-background-color: #4ecdc4; " +
-            "-fx-text-fill: #1a1a2e; " +
-            "-fx-font-weight: bold; " +
-            "-fx-background-radius: 8; " +
-            "-fx-padding: 8 16; " +
-            "-fx-font-size: 13px; " +
-            "-fx-cursor: hand;"
-        );
-
-        btnDetail.setOnAction(e -> openAuctionView(btnDetail, auction, auction.getStatus()));
-
-        card.getChildren().addAll(title, price, timeLabel, sellerLabel, btnDetail);
+        card.getChildren().addAll(title, price, timeLabel, sellerLabel);
+        if (ClientSession.getInstance().isBidder()) {
+            card.getChildren().add(createBidderActions(auction));
+        } else {
+            Button btnDetail = new Button("Xem chi tiết");
+            btnDetail.setMaxWidth(Double.MAX_VALUE);
+            btnDetail.setStyle(
+                "-fx-background-color: #4ecdc4; " +
+                "-fx-text-fill: #1a1a2e; " +
+                "-fx-font-weight: bold; " +
+                "-fx-background-radius: 8; " +
+                "-fx-padding: 8 16; " +
+                "-fx-font-size: 13px; " +
+                "-fx-cursor: hand;"
+            );
+            btnDetail.setOnAction(e -> openAuctionDetail(btnDetail, auction));
+            card.getChildren().add(btnDetail);
+        }
         return card;
     }
 
-    private void openAuctionView(Button source, AuctionDTO auction, AuctionStatus status) {
-        try {
-            boolean openBidding = status == AuctionStatus.RUNNING && !ClientSession.getInstance().isSeller();
-            String fxmlPath = openBidding ? "/fxml/BiddingView.fxml" : "/fxml/AuctionDetailView.fxml";
+    private VBox createBidderActions(AuctionDTO auction) {
+        VBox actions = new VBox(6);
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+        Button registerButton = new Button("Đăng ký đấu giá");
+        registerButton.getStyleClass().add("button");
+        registerButton.setMaxWidth(Double.MAX_VALUE);
+        registerButton.setDisable(auction.getStatus() != AuctionStatus.RUNNING);
+        registerButton.setOnAction(e -> openBiddingView(registerButton, auction));
+
+        Hyperlink detailLink = new Hyperlink("Xem chi tiết thông tin");
+        detailLink.setStyle(
+                "-fx-text-fill: #14b8a6; " +
+                "-fx-font-weight: bold; " +
+                "-fx-border-color: transparent; " +
+                "-fx-padding: 0;");
+        detailLink.setOnAction(e -> openAuctionDetail(detailLink, auction));
+
+        HBox detailLinkBox = new HBox(detailLink);
+        detailLinkBox.setAlignment(javafx.geometry.Pos.CENTER);
+        detailLinkBox.setMaxWidth(Double.MAX_VALUE);
+
+        actions.getChildren().addAll(registerButton, detailLinkBox);
+        return actions;
+    }
+
+    private void openBiddingView(Node source, AuctionDTO auction) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingView.fxml"));
             Parent root = loader.load();
 
-            if (openBidding) {
-                BiddingController biddingController = loader.getController();
-                biddingController.setAuctionId(auction.getId());
-            } else {
-                AuctionDetailController detailController = loader.getController();
-                detailController.setAuctionData(auction.getId());
-            }
+            BiddingController biddingController = loader.getController();
+            biddingController.setAuctionId(auction.getId());
 
-            Parent currentRoot = source.getScene().getRoot();
-            if (currentRoot instanceof HBox) {
-                VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
-                javafx.scene.layout.StackPane contentArea =
-                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
-                contentArea.getChildren().setAll(root);
-            } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
-                ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
-            } else {
-                System.out.println("Dashboard layout không khớp.");
-            }
+            replaceContent(source, root);
         } catch (Exception ex) {
             System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
             ex.printStackTrace();
+        }
+    }
+
+    private void openAuctionDetail(Node source, AuctionDTO auction) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AuctionDetailView.fxml"));
+            Parent root = loader.load();
+
+            AuctionDetailController detailController = loader.getController();
+            detailController.setAuctionData(auction.getId());
+
+            replaceContent(source, root);
+        } catch (Exception ex) {
+            System.out.println("Lỗi chuyển màn hình: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void replaceContent(Node source, Parent root) {
+        Parent currentRoot = source.getScene().getRoot();
+        if (currentRoot instanceof HBox) {
+            VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
+            javafx.scene.layout.StackPane contentArea =
+                    (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+            contentArea.getChildren().setAll(root);
+        } else if (currentRoot instanceof javafx.scene.layout.BorderPane) {
+            ((javafx.scene.layout.BorderPane) currentRoot).setCenter(root);
+        } else {
+            System.out.println("Dashboard layout không khớp.");
         }
     }
 

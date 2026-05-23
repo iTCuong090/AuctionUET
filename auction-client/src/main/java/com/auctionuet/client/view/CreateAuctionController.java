@@ -33,6 +33,7 @@ public class CreateAuctionController {
     private final ItemClient itemClient = new ItemClient();
     private final AuctionClient auctionClient = new AuctionClient();
     private String initialItemId;
+    private String lastAutoTitle;
 
     @FXML
     public void initialize() {
@@ -44,9 +45,7 @@ public class CreateAuctionController {
                 previewPrice.setText("Giá khởi điểm: " + CurrencyFormatter.format(newVal.getStartingPrice()));
                 previewType.setText("Loại: " + newVal.getType());
 
-                if (titleField.getText().isEmpty()) {
-                    titleField.setText("Đấu giá: " + newVal.getName());
-                }
+                syncTitleWithSelectedItem(newVal);
             }
         });
 
@@ -165,6 +164,15 @@ public class CreateAuctionController {
     private void showError(String msg) {
         statusLabel.setText("Lỗi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
+    }
+
+    private void syncTitleWithSelectedItem(ItemDTO item) {
+        String currentTitle = titleField.getText() != null ? titleField.getText().trim() : "";
+        String nextAutoTitle = "Đấu giá: " + item.getName();
+        if (currentTitle.isEmpty() || currentTitle.equals(lastAutoTitle)) {
+            titleField.setText(nextAutoTitle);
+            lastAutoTitle = nextAutoTitle;
+        }
     }
 
     public void setInitialItemId(String itemId) {

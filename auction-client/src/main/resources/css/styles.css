@@ -139,6 +139,24 @@
     -fx-font-weight: bold;
 }
 
+.item-type-badge {
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+}
+
+.detail-price-label {
+    -fx-font-weight: bold;
+}
+
+.detail-leader-label {
+    -fx-font-weight: bold;
+}
+
+.detail-time-label {
+    -fx-font-weight: bold;
+}
+
 /* --- 9. LOGIN / REGISTER TITLES --- */
 .login-title {
     -fx-font-size: 32px;

@@ -30,11 +30,12 @@ import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 public class AuctionDetailController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    @FXML private Label nameLabel, sellerLabel, typeLabel, specLabel, conditionLabel, descriptionLabel;
+    @FXML private Label nameLabel, sellerLabel, typeLabel, conditionLabel, descriptionLabel;
     @FXML private Label currentPriceLabel, leaderLabel, timeLeftLabel, statusLabel;
     @FXML private ImageView productImageView;
 
@@ -43,7 +44,9 @@ public class AuctionDetailController {
     @FXML private TableColumn<BidDTO, String> bidderCol, amountCol, timeCol;
 
     @FXML private Button btnStartAuction;
+    @FXML private HBox actionArea;
     @FXML private HBox biddingArea;
+    @FXML private VBox specBox;
     @FXML private TextField bidAmountField;
     @FXML private Button btnPlaceBid;
     @FXML private Label bidErrorLabel;
@@ -73,12 +76,15 @@ public class AuctionDetailController {
 
         btnStartAuction.setVisible(false);
         btnStartAuction.setManaged(false);
+        actionArea.setVisible(false);
+        actionArea.setManaged(false);
         biddingArea.setVisible(false);
         biddingArea.setManaged(false);
         bidErrorLabel.setVisible(false);
         paymentArea.setVisible(false);
         paymentArea.setManaged(false);
         paymentErrorLabel.setText("");
+        specBox.getChildren().clear();
         bidHistoryTable.getItems().clear();
         priceSeries.getData().clear();
         chartPointIndex = 0;
@@ -93,6 +99,7 @@ public class AuctionDetailController {
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
+                    clearStatusBadgeStyle();
                     statusLabel.setText("Lỗi lấy chi tiết: " + e.getMessage());
                     statusLabel.setTextFill(javafx.scene.paint.Color.RED);
                 });
@@ -107,8 +114,7 @@ public class AuctionDetailController {
         currentPriceLabel.setText("Giá hiện tại: " + CurrencyFormatter.format(dto.getCurrentPrice()));
 
         AuctionStatus status = dto.getStatus();
-        String currentStatus = status != null ? status.name() : "UNKNOWN";
-        statusLabel.setText("Trạng thái: " + currentStatus);
+        renderStatusBadge(status);
         timeLeftLabel.setText("Kết thúc: " + formatTime(dto.getEndTime()));
 
         if (dto.getWinner() != null) {
@@ -116,25 +122,23 @@ public class AuctionDetailController {
         }
 
         if (dto.getItem() != null) {
-            typeLabel.setText("Loại: " + dto.getItem().getType());
+            typeLabel.setText(valueOrEmpty(dto.getItem().getType()));
             conditionLabel.setText("Tình trạng: " + valueOrEmpty(dto.getItem().getCondition()));
             descriptionLabel.setText(nullToEmpty(dto.getItem().getDescription()));
-            specLabel.setText(dto.getItem().getExtraFields() != null ? dto.getItem().getExtraFields().toString() : "");
+            renderExtraFields(dto.getItem().getExtraFields());
         }
 
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
         String currentUserId = currentUser != null ? currentUser.getId() : "";
         boolean isMyItem = dto.getSeller() != null && currentUserId.equals(dto.getSeller().getId());
 
-        if (isMyItem) {
-            if (status == AuctionStatus.OPEN) {
-                btnStartAuction.setVisible(true);
-                btnStartAuction.setManaged(true);
-            }
-        } else if (status == AuctionStatus.RUNNING) {
-            biddingArea.setVisible(true);
-            biddingArea.setManaged(true);
-        }
+        boolean canStartAuction = isMyItem && status == AuctionStatus.OPEN;
+        actionArea.setVisible(canStartAuction);
+        actionArea.setManaged(canStartAuction);
+        btnStartAuction.setVisible(canStartAuction);
+        btnStartAuction.setManaged(canStartAuction);
+        btnStartAuction.setDisable(false);
+        btnStartAuction.setText("🚀 Bắt đầu phiên đấu giá");
 
         renderPaymentArea(dto, currentUserId);
 
@@ -155,9 +159,12 @@ public class AuctionDetailController {
                 auctionClient.startAuction(token, currentAuctionId);
 
                 Platform.runLater(() -> {
-                    statusLabel.setText("Trạng thái: RUNNING");
+                    renderStatusBadge(AuctionStatus.RUNNING);
+                    actionArea.setVisible(false);
+                    actionArea.setManaged(false);
                     btnStartAuction.setVisible(false);
                     btnStartAuction.setManaged(false);
+                    setAuctionData(currentAuctionId);
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -324,7 +331,13 @@ public class AuctionDetailController {
                 return;
             }
 
-            Platform.runLater(this::openBiddingView);
+            Platform.runLater(() -> {
+                if (ClientSession.getInstance().isBidder()) {
+                    openBiddingView();
+                } else {
+                    setAuctionData(currentAuctionId);
+                }
+            });
             return;
         }
 
@@ -345,7 +358,7 @@ public class AuctionDetailController {
             }
 
             Platform.runLater(() -> {
-                statusLabel.setText("Trạng thái: WAITING_PAYMENT");
+                renderStatusBadge(AuctionStatus.WAITING_PAYMENT);
                 leaderLabel.setText("Người thắng: " + usernameOf(data.getWinner()));
                 setAuctionData(currentAuctionId);
             });
@@ -391,6 +404,76 @@ public class AuctionDetailController {
         bidErrorLabel.setText(message);
         bidErrorLabel.setTextFill(color);
         bidErrorLabel.setVisible(true);
+    }
+
+    private void renderStatusBadge(AuctionStatus status) {
+        clearStatusBadgeStyle();
+        statusLabel.setTextFill(null);
+        statusLabel.setText(status != null ? status.name() : "UNKNOWN");
+        if (status == AuctionStatus.RUNNING) {
+            statusLabel.getStyleClass().add("status-badge-running");
+        } else if (status == AuctionStatus.FINISHED || status == AuctionStatus.PAID) {
+            statusLabel.getStyleClass().add("status-badge-finished");
+        } else if (status == AuctionStatus.CANCELED) {
+            statusLabel.getStyleClass().add("status-badge-canceled");
+        } else {
+            statusLabel.getStyleClass().add("status-badge-open");
+        }
+    }
+
+    private void clearStatusBadgeStyle() {
+        statusLabel.getStyleClass().removeAll(
+                "status-badge-running",
+                "status-badge-open",
+                "status-badge-finished",
+                "status-badge-canceled");
+    }
+
+    private void renderExtraFields(Map<String, Object> extraFields) {
+        specBox.getChildren().clear();
+        if (extraFields == null || extraFields.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, Object> entry : extraFields.entrySet()) {
+            Label label = new Label(formatExtraFieldName(entry.getKey()) + ": "
+                    + formatExtraFieldValue(entry.getValue()));
+            label.getStyleClass().add("text-detail");
+            label.setWrapText(true);
+            specBox.getChildren().add(label);
+        }
+    }
+
+    private String formatExtraFieldName(String key) {
+        if ("brand".equals(key)) {
+            return "Brand";
+        }
+        if ("warrantyMonths".equals(key)) {
+            return "Warranty";
+        }
+        if ("vehicleYear".equals(key)) {
+            return "Vehicle year";
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < key.length(); i++) {
+            char ch = key.charAt(i);
+            if (i > 0 && Character.isUpperCase(ch)) {
+                result.append(' ');
+            }
+            result.append(i == 0 ? Character.toUpperCase(ch) : ch);
+        }
+        return result.toString();
+    }
+
+    private String formatExtraFieldValue(Object value) {
+        if (value instanceof Number number) {
+            double doubleValue = number.doubleValue();
+            if (doubleValue == Math.rint(doubleValue)) {
+                return String.format("%.0f", doubleValue);
+            }
+        }
+        return value != null ? value.toString() : "";
     }
 
     private String formatTime(LocalDateTime time) {

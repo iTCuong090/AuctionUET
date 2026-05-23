@@ -761,6 +761,33 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testWinnerPaymentAfterDeadlineIsRejectedAndForfeitsDeposit() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
+        setBalance("bidder1", 1000.0);
+
+        AuctionDTO auction = createRunningAuction(seller, 500.0);
+
+        bidService.placeBid(bidder, auction.getId(), 600.0);
+        auctionService.endAuction(auction.getId());
+
+        AuctionSchema waitingPayment = auctionDAO.findById(auction.getId());
+        waitingPayment.setPaymentDeadlineAt(LocalDateTime.now().minusMinutes(1));
+        auctionDAO.update(waitingPayment);
+
+        assertThrows(AuctionException.class, () -> auctionService.payAuction(bidder, auction.getId()));
+
+        UserSchema bidderSchema = userDAO.findById("bidder1");
+        assertEquals(950.0, bidderSchema.getBalance());
+        assertEquals(0.0, bidderSchema.getFrozenBalance());
+
+        AuctionSchema updated = auctionDAO.findById(auction.getId());
+        assertEquals(AuctionStatus.CANCELED, updated.getStatus());
+        assertFalse(updated.hasDepositedBidder("bidder1"));
+        assertEquals("seller1", itemDAO.findById(auction.getItem().getId()).getSellerId());
+    }
+
+    @Test
     public void testPaymentDeadlineForfeitsDepositAndKeepsSellerOwnership() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
