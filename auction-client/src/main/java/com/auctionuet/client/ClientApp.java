@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import com.auctionuet.client.view.SceneManager;
 
@@ -31,8 +32,16 @@ public class ClientApp extends Application {
         com.auctionuet.client.view.ThemeManager.getInstance().applyTheme(scene);
 
         primaryStage.setTitle(APP_NAME);
+        applyAppIcon(primaryStage);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void applyAppIcon(Stage stage) {
+        URL iconUrl = getClass().getResource("/images/UET-circle.png");
+        if (iconUrl != null) {
+            stage.getIcons().setAll(new Image(iconUrl.toExternalForm()));
+        }
     }
 
     public static void main(String[] args) {
