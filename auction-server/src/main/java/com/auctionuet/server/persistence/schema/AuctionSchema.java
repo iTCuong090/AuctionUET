@@ -18,6 +18,7 @@ public class AuctionSchema extends BaseSchema {
     private List<String> depositedBidderIds = new ArrayList<>();
     private List<AuctionDepositRefSchema> depositRefs = new ArrayList<>();
     private LocalDateTime paymentDeadlineAt;
+    private LocalDateTime paidAt;
     private int antiSnipingWindowSeconds = 60;     // Mặc định 60 giây
     private int antiSnipingExtensionSeconds = 120; // Mặc định gia hạn 2 phút
 
@@ -180,6 +181,9 @@ public class AuctionSchema extends BaseSchema {
 
     public LocalDateTime getPaymentDeadlineAt() { return paymentDeadlineAt; }
     public void setPaymentDeadlineAt(LocalDateTime paymentDeadlineAt) { this.paymentDeadlineAt = paymentDeadlineAt; }
+
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
 
     public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
     public void setAntiSnipingWindowSeconds(int antiSnipingWindowSeconds) { this.antiSnipingWindowSeconds = antiSnipingWindowSeconds; }

@@ -191,5 +191,31 @@
     "id": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
     "createdAt": "2026-05-22T22:07:44.8979281",
     "updatedAt": "2026-05-22T22:19:23.8163225"
+  },
+  {
+    "itemId": "c5673194-230f-4a9d-9eda-10fd1cff2c08",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "title": "Đấu giá: vin",
+    "description": "",
+    "startTime": "2026-05-23T09:05:00",
+    "endTime": "2026-05-23T09:10:00",
+    "status": "RUNNING",
+    "highestBid": 2000000.0,
+    "winnerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "depositedBidderIds": [],
+    "depositRefs": [
+      {
+        "bidderId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+        "usernameSnapshot": "ccc456",
+        "amount": 100000.0,
+        "depositTransactionId": "ef103606-6271-4d2b-b600-252be8a345df",
+        "depositedAt": "2026-05-23T09:03:45.0883918"
+      }
+    ],
+    "antiSnipingWindowSeconds": 60,
+    "antiSnipingExtensionSeconds": 120,
+    "id": "0be25183-c889-480e-ac6d-8d9f9731718e",
+    "createdAt": "2026-05-23T09:02:40.619582",
+    "updatedAt": "2026-05-23T09:03:45.1003936"
   }
 ]

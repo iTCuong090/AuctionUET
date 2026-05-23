@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -15,6 +17,13 @@
         <Label styleClass="text-heading" text="🧾 Phiên cần thanh toán">
             <font><Font name="System Bold" size="24.0" /></font>
         </Label>
+        <HBox spacing="12.0">
+            <children>
+                <Button fx:id="btnAllPayments" mnemonicParsing="false" styleClass="payment-filter-chip" text="Tất cả" />
+                <Button fx:id="btnPendingPayments" mnemonicParsing="false" styleClass="payment-filter-chip" text="Chưa thanh toán" />
+                <Button fx:id="btnPaidPayments" mnemonicParsing="false" styleClass="payment-filter-chip" text="Đã thanh toán (30 ngày)" />
+            </children>
+        </HBox>
         <Label fx:id="statusLabel" styleClass="text-secondary" text="Đang tải danh sách..." />
         <ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>

@@ -174,6 +174,7 @@ public class AuctionService {
                     "Hoan tien coc cho nguoi khong thang dau gia");
             schema.setStatus(AuctionStatus.WAITING_PAYMENT);
             schema.setPaymentDeadlineAt(LocalDateTime.now().plusMinutes(AuctionManager.PAYMENT_DEADLINE_MINUTES));
+            schema.setPaidAt(null);
             auctionDAO.update(schema);
             auctionManager.schedulePaymentDeadline(schema.getId(), schema.getPaymentDeadlineAt());
         } else {
@@ -181,6 +182,7 @@ public class AuctionService {
                     "Hoan tien coc do phien dau gia khong co nguoi thang");
             schema.setStatus(AuctionStatus.CANCELED);
             schema.setPaymentDeadlineAt(null);
+            schema.setPaidAt(null);
             auctionDAO.update(schema);
         }
         auctionManager.endAuction(auctionId);
@@ -211,6 +213,7 @@ public class AuctionService {
 
         schema.setStatus(AuctionStatus.CANCELED);
         schema.setPaymentDeadlineAt(null);
+        schema.setPaidAt(null);
         auctionDAO.update(schema);
         auctionManager.cancelPaymentDeadline(auctionId);
         auctionManager.removeLiveAuction(auctionId);
@@ -243,6 +246,7 @@ public class AuctionService {
 
             schema.setStatus(AuctionStatus.PAID);
             schema.setPaymentDeadlineAt(null);
+            schema.setPaidAt(LocalDateTime.now());
             auctionDAO.update(schema);
             auctionManager.cancelPaymentDeadline(auctionId);
         } catch (IllegalArgumentException e) {
@@ -299,6 +303,7 @@ public class AuctionService {
         auctionManager.cancelAuctionStart(schema.getId());
         schema.setStatus(AuctionStatus.RUNNING);
         schema.setPaymentDeadlineAt(null);
+        schema.setPaidAt(null);
         auctionDAO.update(schema);
         auctionManager.loadAuction(schema, item.getStartingPrice());
         auctionManager.markAuctionStarted(schema);
@@ -344,6 +349,7 @@ public class AuctionService {
         refundDepositsExcept(schema, liveAuction, null, depositAmount, description);
         schema.setStatus(AuctionStatus.CANCELED);
         schema.setPaymentDeadlineAt(null);
+        schema.setPaidAt(null);
         auctionDAO.update(schema);
         auctionManager.cancelAllTasks(schema.getId());
         auctionManager.removeLiveAuction(schema.getId());
@@ -396,11 +402,22 @@ public class AuctionService {
                 schema.getStartTime(),
                 schema.getEndTime(),
                 schema.getPaymentDeadlineAt(),
+                paidAtOf(schema),
                 schema.getStatus(),
                 schema.getAntiSnipingWindowSeconds(),
                 schema.getAntiSnipingExtensionSeconds(),
                 depositAmount,
                 currentUserDeposited);
+    }
+
+    private LocalDateTime paidAtOf(AuctionSchema schema) {
+        if (schema.getPaidAt() != null) {
+            return schema.getPaidAt();
+        }
+        if (schema.getStatus() == AuctionStatus.PAID) {
+            return schema.getUpdatedAt();
+        }
+        return null;
     }
 
     private boolean hasAuctionDeposit(AuctionSchema schema, String userId) {

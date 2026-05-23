@@ -165,3 +165,19 @@
 .wallet-card {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0.1, 0, 5);
 }
+
+.payment-filter-chip {
+    -fx-background-color: #16213e;
+    -fx-text-fill: #4ecdc4;
+    -fx-border-color: #0f3460;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 10, 0.18, 0, 3);
+}
+.payment-filter-chip:hover {
+    -fx-background-color: #1f2a4a;
+    -fx-border-color: #4ecdc4;
+}
+.payment-filter-chip.active {
+    -fx-background-color: #4ecdc4;
+    -fx-text-fill: #1a1a2e;
+    -fx-border-color: #4ecdc4;
+}

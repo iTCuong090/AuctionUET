@@ -217,5 +217,20 @@
     "id": "3924c57f-f11e-40f1-9209-fdffc6677234",
     "createdAt": "2026-05-22T23:53:11.4447351",
     "updatedAt": "2026-05-22T23:53:11.4447351"
+  },
+  {
+    "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "usernameSnapshot": "ccc456",
+    "type": "AUCTION_DEPOSIT_HOLD",
+    "amount": 100000.0,
+    "auctionId": "0be25183-c889-480e-ac6d-8d9f9731718e",
+    "balanceBefore": 1.2345645614251425E98,
+    "balanceAfter": 1.2345645614251425E98,
+    "frozenBalanceBefore": 127735.3,
+    "frozenBalanceAfter": 227735.3,
+    "description": "Giu tien coc phien dau gia 0be25183-c889-480e-ac6d-8d9f9731718e",
+    "id": "ef103606-6271-4d2b-b600-252be8a345df",
+    "createdAt": "2026-05-23T09:03:45.0843929",
+    "updatedAt": "2026-05-23T09:03:45.0843929"
   }
 ]

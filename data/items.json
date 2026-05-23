@@ -137,7 +137,7 @@
     "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
     "imageUrl": "xe.jpg",
     "condition": "LIKE_NEW",
-    "auctionCount": 1,
+    "auctionCount": 2,
     "archived": false,
     "extraFields": {
       "brand": "vinfast",
@@ -145,7 +145,7 @@
     },
     "id": "c5673194-230f-4a9d-9eda-10fd1cff2c08",
     "createdAt": "2026-05-22T16:57:42.7143448",
-    "updatedAt": "2026-05-22T16:58:34.6610302"
+    "updatedAt": "2026-05-23T09:02:40.6265819"
   },
   {
     "name": "wave",

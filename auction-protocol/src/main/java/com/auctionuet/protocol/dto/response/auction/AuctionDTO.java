@@ -20,6 +20,7 @@ public class AuctionDTO implements ValidatableDTO {
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
     private final LocalDateTime paymentDeadlineAt;
+    private final LocalDateTime paidAt;
     private final AuctionStatus status;
     private final int antiSnipingWindowSeconds;
     private final int antiSnipingExtensionSeconds;
@@ -41,7 +42,7 @@ public class AuctionDTO implements ValidatableDTO {
             int antiSnipingWindowSeconds,
             int antiSnipingExtensionSeconds) {
         this(id, item, seller, winner, currentHighestBid, currentPrice, title, description,
-                startTime, endTime, null, status, antiSnipingWindowSeconds, antiSnipingExtensionSeconds,
+                startTime, endTime, null, null, status, antiSnipingWindowSeconds, antiSnipingExtensionSeconds,
                 item != null ? item.getStartingPrice() * 0.10 : 0,
                 false);
     }
@@ -63,7 +64,7 @@ public class AuctionDTO implements ValidatableDTO {
             double depositAmount,
             boolean currentUserDeposited) {
         this(id, item, seller, winner, currentHighestBid, currentPrice, title, description,
-                startTime, endTime, null, status, antiSnipingWindowSeconds, antiSnipingExtensionSeconds,
+                startTime, endTime, null, null, status, antiSnipingWindowSeconds, antiSnipingExtensionSeconds,
                 depositAmount, currentUserDeposited);
     }
 
@@ -84,6 +85,29 @@ public class AuctionDTO implements ValidatableDTO {
             int antiSnipingExtensionSeconds,
             double depositAmount,
             boolean currentUserDeposited) {
+        this(id, item, seller, winner, currentHighestBid, currentPrice, title, description,
+                startTime, endTime, paymentDeadlineAt, null, status, antiSnipingWindowSeconds,
+                antiSnipingExtensionSeconds, depositAmount, currentUserDeposited);
+    }
+
+    public AuctionDTO(
+            String id,
+            ItemDTO item,
+            UserDTO seller,
+            UserDTO winner,
+            BidDTO currentHighestBid,
+            double currentPrice,
+            String title,
+            String description,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            LocalDateTime paymentDeadlineAt,
+            LocalDateTime paidAt,
+            AuctionStatus status,
+            int antiSnipingWindowSeconds,
+            int antiSnipingExtensionSeconds,
+            double depositAmount,
+            boolean currentUserDeposited) {
         this.id = id;
         this.item = item;
         this.seller = seller;
@@ -95,6 +119,7 @@ public class AuctionDTO implements ValidatableDTO {
         this.startTime = startTime;
         this.endTime = endTime;
         this.paymentDeadlineAt = paymentDeadlineAt;
+        this.paidAt = paidAt;
         this.status = status;
         this.antiSnipingWindowSeconds = antiSnipingWindowSeconds;
         this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
@@ -151,6 +176,7 @@ public class AuctionDTO implements ValidatableDTO {
     public LocalDateTime getStartTime() { return startTime; }
     public LocalDateTime getEndTime() { return endTime; }
     public LocalDateTime getPaymentDeadlineAt() { return paymentDeadlineAt; }
+    public LocalDateTime getPaidAt() { return paidAt; }
     public AuctionStatus getStatus() { return status; }
     public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
     public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
