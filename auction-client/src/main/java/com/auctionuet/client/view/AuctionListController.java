@@ -218,7 +218,8 @@ public class AuctionListController {
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        Label price = new Label(CurrencyFormatter.format(item.getCurrentPrice()));
+        Label price = new Label();
+        CurrencyFormatter.setMoneyText(price, item.getCurrentPrice());
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 

@@ -89,7 +89,7 @@ public class BiddingController {
                 Platform.runLater(() -> {
                     titleLabel.setText(auction.getTitle());
                     sellerLabel.setText("Seller: " + usernameOf(auction.getSeller()));
-                    priceLabel.setText(CurrencyFormatter.format(auction.getCurrentPrice()));
+                    CurrencyFormatter.setMoneyText(priceLabel, auction.getCurrentPrice());
                     auctionDepositAmount = auction.getDepositAmount() > 0
                             ? auction.getDepositAmount()
                             : auction.getItem() != null ? auction.getItem().getStartingPrice() * 0.10 : 0;
@@ -157,7 +157,7 @@ public class BiddingController {
                 BidDTO bid = data.getBid();
                 if (bid == null) return;
 
-                priceLabel.setText(CurrencyFormatter.format(bid.getAmount()));
+                CurrencyFormatter.setMoneyText(priceLabel, bid.getAmount());
                 leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vừa xong - " + formatBid(bid));
                 if (isCurrentUser(bid.getBidder())) {

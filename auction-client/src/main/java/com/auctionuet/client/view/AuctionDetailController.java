@@ -111,7 +111,7 @@ public class AuctionDetailController {
         this.currentAuction = dto;
         nameLabel.setText(dto.getTitle());
         sellerLabel.setText("Seller: " + usernameOf(dto.getSeller()));
-        currentPriceLabel.setText("Giá hiện tại: " + CurrencyFormatter.format(dto.getCurrentPrice()));
+        CurrencyFormatter.setMoneyText(currentPriceLabel, "Giá hiện tại: ", dto.getCurrentPrice());
 
         AuctionStatus status = dto.getStatus();
         renderStatusBadge(status);
@@ -276,7 +276,7 @@ public class AuctionDetailController {
         bidHistoryTable.getItems().add(bid);
         chartPointIndex++;
         priceSeries.getData().add(new XYChart.Data<>(chartPointIndex, bid.getAmount()));
-        currentPriceLabel.setText("Giá hiện tại: " + CurrencyFormatter.format(bid.getAmount()));
+        CurrencyFormatter.setMoneyText(currentPriceLabel, "Giá hiện tại: ", bid.getAmount());
         leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
     }
 
@@ -301,6 +301,10 @@ public class AuctionDetailController {
                 CurrencyFormatter.format(remaining),
                 CurrencyFormatter.format(deposit),
                 formatTime(dto.getPaymentDeadlineAt())));
+        CurrencyFormatter.installTooltip(paymentInfoLabel, String.format(
+                "Cần thanh toán: %s%nCọc đã giữ: %s",
+                CurrencyFormatter.formatFull(remaining),
+                CurrencyFormatter.formatFull(deposit)));
     }
 
     private void subscribeToAuction(String auctionId) {

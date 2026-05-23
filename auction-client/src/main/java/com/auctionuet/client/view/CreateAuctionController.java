@@ -180,7 +180,7 @@ public class CreateAuctionController {
         previewContentBox.getChildren().clear();
         List<VBox> fields = new ArrayList<>();
         fields.add(createPreviewField("Tên", item.getName(), true));
-        fields.add(createPreviewField("Giá khởi điểm", CurrencyFormatter.format(item.getStartingPrice()), true));
+        fields.add(createPreviewMoneyField("Giá khởi điểm", item.getStartingPrice()));
         fields.add(createPreviewField("Loại", valueOrEmpty(item.getType()), false));
         fields.add(createPreviewField("Tình trạng", valueOrEmpty(item.getCondition()), false));
         fields.addAll(createTypeSpecificPreviewFields(item));
@@ -248,6 +248,14 @@ public class CreateAuctionController {
                 : "-fx-font-size: 13px;");
 
         fieldBox.getChildren().add(fieldLabel);
+        return fieldBox;
+    }
+
+    private VBox createPreviewMoneyField(String name, double amount) {
+        VBox fieldBox = createPreviewField(name, CurrencyFormatter.format(amount), true);
+        if (!fieldBox.getChildren().isEmpty() && fieldBox.getChildren().get(0) instanceof Label label) {
+            CurrencyFormatter.installTooltip(label, name + ": " + CurrencyFormatter.formatFull(amount));
+        }
         return fieldBox;
     }
 

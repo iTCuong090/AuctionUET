@@ -132,6 +132,12 @@
 .main-form-right {
     -fx-background-color: #16213e;
 }
+.auth-form-scroll,
+.auth-form-scroll .viewport,
+.auth-form-scroll .content {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
 .main-login-btn {
     -fx-background-color: linear-gradient(to right, #e94560, #c0392b);
     -fx-text-fill: white;

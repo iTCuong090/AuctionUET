@@ -120,7 +120,8 @@ public class HomeController {
         title.getStyleClass().add("text-primary");
         title.setWrapText(true);
 
-        Label price = new Label(CurrencyFormatter.format(auction.getCurrentPrice()));
+        Label price = new Label();
+        CurrencyFormatter.setMoneyText(price, auction.getCurrentPrice());
         price.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         price.getStyleClass().add("text-accent");
 

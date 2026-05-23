@@ -7,12 +7,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
 final class CurrencyFormatter {
-    private static final double COMPACT_THRESHOLD = 1_000_000_000.0;
-    private static final double SCIENTIFIC_THRESHOLD = 1_000_000_000_000_000_000.0;
+    private static final double COMPACT_THRESHOLD = 100_000_000_000.0;
     private static final DecimalFormat COMPACT_FORMAT =
             new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US));
-    private static final DecimalFormat SCIENTIFIC_FORMAT =
-            new DecimalFormat("0.##E0", DecimalFormatSymbols.getInstance(Locale.US));
+    private static final DecimalFormat FULL_FORMAT =
+            new DecimalFormat("#,##0.##########", DecimalFormatSymbols.getInstance(Locale.US));
 
     private CurrencyFormatter() {}
 
@@ -22,25 +21,18 @@ final class CurrencyFormatter {
         }
 
         double absAmount = Math.abs(amount);
-        if (absAmount < COMPACT_THRESHOLD) {
-            return String.format("%,.0f VND", amount);
+        if (absAmount <= COMPACT_THRESHOLD) {
+            return formatFull(amount);
         }
-        if (absAmount >= SCIENTIFIC_THRESHOLD) {
-            return SCIENTIFIC_FORMAT.format(amount) + " VND";
-        }
-
         CompactUnit unit = findUnit(absAmount);
-        return COMPACT_FORMAT.format(amount / unit.divisor) + unit.suffix + " VND";
+        return COMPACT_FORMAT.format(amount / unit.divisor) + " " + unit.suffix + " VND";
     }
 
     static String formatFull(double amount) {
         if (!Double.isFinite(amount)) {
             return "-- VND";
         }
-        if (Math.abs(amount) >= SCIENTIFIC_THRESHOLD) {
-            return SCIENTIFIC_FORMAT.format(amount) + " VND";
-        }
-        return String.format("%,.0f VND", amount);
+        return FULL_FORMAT.format(amount) + " VND";
     }
 
     static void setMoneyText(Label label, double amount) {
@@ -48,23 +40,48 @@ final class CurrencyFormatter {
             return;
         }
         label.setText(format(amount));
-        label.setTooltip(new Tooltip(formatFull(amount)));
+        installTooltip(label, formatFull(amount));
+    }
+
+    static void setMoneyText(Label label, String prefix, double amount) {
+        setMoneyText(label, prefix, amount, "");
+    }
+
+    static void setMoneyText(Label label, String prefix, double amount, String suffix) {
+        if (label == null) {
+            return;
+        }
+        String safePrefix = prefix != null ? prefix : "";
+        String safeSuffix = suffix != null ? suffix : "";
+        label.setText(safePrefix + format(amount) + safeSuffix);
+        installTooltip(label, safePrefix + formatFull(amount) + safeSuffix);
+    }
+
+    static void installTooltip(Label label, double amount) {
+        installTooltip(label, formatFull(amount));
+    }
+
+    static void installTooltip(Label label, String text) {
+        if (label == null) {
+            return;
+        }
+        Tooltip tooltip = new Tooltip(text);
+        tooltip.setWrapText(true);
+        tooltip.setMaxWidth(420);
+        label.setTooltip(tooltip);
     }
 
     private static CompactUnit findUnit(double absAmount) {
         if (absAmount >= 1_000_000_000_000_000.0) {
-            return new CompactUnit(1_000_000_000_000_000.0, "P");
+            return new CompactUnit(1_000_000_000_000_000.0, "triệu tỷ");
         }
         if (absAmount >= 1_000_000_000_000.0) {
-            return new CompactUnit(1_000_000_000_000.0, "T");
+            return new CompactUnit(1_000_000_000_000.0, "nghìn tỷ");
         }
         if (absAmount >= 1_000_000_000.0) {
-            return new CompactUnit(1_000_000_000.0, "B");
+            return new CompactUnit(1_000_000_000.0, "tỷ");
         }
-        if (absAmount >= 1_000_000.0) {
-            return new CompactUnit(1_000_000.0, "M");
-        }
-        return new CompactUnit(1_000.0, "K");
+        return new CompactUnit(1.0, "");
     }
 
     private record CompactUnit(double divisor, String suffix) {}

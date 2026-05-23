@@ -276,11 +276,11 @@ public class PaymentController {
         double remaining = Math.max(0, auction.getCurrentPrice() - deposit);
         boolean paid = auction.getStatus() == AuctionStatus.PAID;
         boolean expired = auction.getStatus() == AuctionStatus.CANCELED;
-        Label price = new Label(paid
-                ? "Đã thanh toán: " + CurrencyFormatter.format(auction.getCurrentPrice())
-                : expired
-                        ? "Quá hạn: " + CurrencyFormatter.format(auction.getCurrentPrice())
-                        : "Phải trả: " + CurrencyFormatter.format(auction.getCurrentPrice()));
+        Label price = new Label();
+        CurrencyFormatter.setMoneyText(
+                price,
+                paid ? "Đã thanh toán: " : (expired ? "Quá hạn: " : "Phải trả: "),
+                auction.getCurrentPrice());
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
@@ -291,6 +291,11 @@ public class PaymentController {
                         + " | Trả thêm: " + CurrencyFormatter.format(remaining));
         total.getStyleClass().add("text-secondary");
         total.setWrapText(true);
+        CurrencyFormatter.installTooltip(total, paid || expired
+                ? "Giá thắng: " + CurrencyFormatter.formatFull(auction.getCurrentPrice())
+                        + "\nCọc: " + CurrencyFormatter.formatFull(deposit)
+                : "Đã gồm cọc: " + CurrencyFormatter.formatFull(deposit)
+                        + "\nTrả thêm: " + CurrencyFormatter.formatFull(remaining));
 
         Label state = new Label(expired ? "Đã quá hạn thanh toán" : (paid ? "Đã thanh toán" : "Chưa thanh toán"));
         state.getStyleClass().add(expired ? "status-badge-canceled" : (paid ? "status-badge-finished" : "status-badge-open"));

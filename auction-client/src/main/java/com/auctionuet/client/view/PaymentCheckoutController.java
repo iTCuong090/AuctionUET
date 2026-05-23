@@ -171,13 +171,23 @@ public class PaymentCheckoutController {
                 createInfoRow("Người bán", usernameOf(auction.getSeller())),
                 createInfoRow("Mã phiên", shortId(auction.getId())),
                 createDivider(),
-                createInfoRow("Tổng tiền phải trả", CurrencyFormatter.format(totalPrice) + " (đã bao gồm cọc)"),
-                createInfoRow("Cọc đã giữ", CurrencyFormatter.format(deposit)),
-                createAmountDueRow("Cần thanh toán thêm", CurrencyFormatter.format(remaining)));
+                createInfoRow(
+                        "Tổng tiền phải trả",
+                        CurrencyFormatter.format(totalPrice) + " (đã bao gồm cọc)",
+                        CurrencyFormatter.formatFull(totalPrice) + " (đã bao gồm cọc)"),
+                createInfoRow("Cọc đã giữ", CurrencyFormatter.format(deposit), CurrencyFormatter.formatFull(deposit)),
+                createAmountDueRow(
+                        "Cần thanh toán thêm",
+                        CurrencyFormatter.format(remaining),
+                        CurrencyFormatter.formatFull(remaining)));
         return card;
     }
 
     private HBox createInfoRow(String labelText, String valueText) {
+        return createInfoRow(labelText, valueText, null);
+    }
+
+    private HBox createInfoRow(String labelText, String valueText, String tooltipText) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         Label label = new Label(labelText);
@@ -185,6 +195,9 @@ public class PaymentCheckoutController {
         Label value = new Label(valueText);
         value.getStyleClass().add("payment-info-value");
         value.setWrapText(true);
+        if (tooltipText != null && !tooltipText.isBlank()) {
+            CurrencyFormatter.installTooltip(value, tooltipText);
+        }
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         row.getChildren().addAll(label, spacer, value);
@@ -192,7 +205,11 @@ public class PaymentCheckoutController {
     }
 
     private HBox createAmountDueRow(String labelText, String valueText) {
-        HBox row = createInfoRow(labelText, valueText);
+        return createAmountDueRow(labelText, valueText, null);
+    }
+
+    private HBox createAmountDueRow(String labelText, String valueText, String tooltipText) {
+        HBox row = createInfoRow(labelText, valueText, tooltipText);
         row.getStyleClass().add("payment-total-row");
         return row;
     }
@@ -246,7 +263,9 @@ public class PaymentCheckoutController {
         qrHolder.setAlignment(Pos.CENTER);
         qrHolder.setMaxWidth(Double.MAX_VALUE);
 
-        Label amount = new Label("Số tiền: " + CurrencyFormatter.format(remainingPayment(auction)));
+        double remaining = remainingPayment(auction);
+        Label amount = new Label();
+        CurrencyFormatter.setMoneyText(amount, "Số tiền: ", remaining);
         amount.getStyleClass().add("payment-action-amount");
         amount.setWrapText(true);
 
@@ -270,7 +289,9 @@ public class PaymentCheckoutController {
         second.setWrapText(true);
         instruction.getChildren().addAll(first, second);
 
-        Label amount = new Label("Số tiền cần thanh toán thêm: " + CurrencyFormatter.format(remainingPayment(auction)));
+        double remaining = remainingPayment(auction);
+        Label amount = new Label();
+        CurrencyFormatter.setMoneyText(amount, "Số tiền cần thanh toán thêm: ", remaining);
         amount.getStyleClass().add("payment-action-amount");
         amount.setWrapText(true);
 
@@ -278,6 +299,10 @@ public class PaymentCheckoutController {
                 + " (đã bao gồm cọc)");
         note.getStyleClass().add("text-secondary");
         note.setWrapText(true);
+        CurrencyFormatter.installTooltip(
+                note,
+                "Tổng tiền phải trả: " + CurrencyFormatter.formatFull(auction.getCurrentPrice())
+                        + " (đã bao gồm cọc)");
 
         return List.of(title, instruction, amount, note);
     }
