@@ -10,13 +10,17 @@ import javafx.geometry.Bounds;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,10 +32,10 @@ public class PaymentController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final int PAID_VISIBLE_DAYS = 30;
     private static final double CARD_GAP = 20.0;
-    private static final double MIN_CARD_WIDTH = 220.0;
     private static final int MAX_CARD_COLUMNS = 4;
 
-    @FXML private FlowPane paymentGrid;
+    @FXML private VBox paymentContent;
+    @FXML private TilePane paymentGrid;
     @FXML private ScrollPane paymentScrollPane;
     @FXML private Label statusLabel;
     @FXML private Button btnAllPayments, btnPendingPayments, btnPaidPayments;
@@ -62,11 +66,15 @@ public class PaymentController {
         }
 
         double width = viewportBounds.getWidth();
+        paymentContent.setMinWidth(width);
+        paymentContent.setPrefWidth(width);
+        paymentContent.setMaxWidth(width);
         paymentGrid.setMinWidth(width);
         paymentGrid.setPrefWidth(width);
         paymentGrid.setMaxWidth(width);
-        paymentGrid.setPrefWrapLength(width);
+        paymentGrid.setPrefColumns(MAX_CARD_COLUMNS);
         currentCardWidth = calculateCardWidth(width);
+        paymentGrid.setPrefTileWidth(currentCardWidth);
         paymentGrid.getChildren().forEach(node -> {
             if (node instanceof Region region) {
                 applyCardWidth(region);
@@ -75,9 +83,8 @@ public class PaymentController {
     }
 
     private double calculateCardWidth(double availableWidth) {
-        int columns = (int) ((availableWidth + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
-        columns = Math.max(1, Math.min(MAX_CARD_COLUMNS, columns));
-        return Math.floor((availableWidth - ((columns - 1) * CARD_GAP) - 2) / columns);
+        double width = Math.floor((availableWidth - ((MAX_CARD_COLUMNS - 1) * CARD_GAP) - 2) / MAX_CARD_COLUMNS);
+        return Math.max(1, width);
     }
 
     private void applyCardWidth(Region card) {
@@ -273,12 +280,15 @@ public class PaymentController {
                 ? "Đã thanh toán: " + CurrencyFormatter.format(auction.getCurrentPrice())
                 : expired
                         ? "Quá hạn: " + CurrencyFormatter.format(auction.getCurrentPrice())
-                        : "Còn cần trả: " + CurrencyFormatter.format(remaining));
+                        : "Phải trả: " + CurrencyFormatter.format(auction.getCurrentPrice()));
         price.getStyleClass().add("text-accent");
         price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
 
-        Label total = new Label("Giá thắng: " + CurrencyFormatter.format(auction.getCurrentPrice())
-                + " | Cọc: " + CurrencyFormatter.format(deposit));
+        Label total = new Label(paid || expired
+                ? "Giá thắng: " + CurrencyFormatter.format(auction.getCurrentPrice())
+                        + " | Cọc: " + CurrencyFormatter.format(deposit)
+                : "Đã gồm cọc: " + CurrencyFormatter.format(deposit)
+                        + " | Trả thêm: " + CurrencyFormatter.format(remaining));
         total.getStyleClass().add("text-secondary");
         total.setWrapText(true);
 
@@ -295,10 +305,42 @@ public class PaymentController {
         Button payButton = new Button(paid || expired ? "Xem chi tiết" : "Thanh toán");
         payButton.getStyleClass().add("button");
         payButton.setMaxWidth(Double.MAX_VALUE);
-        payButton.setOnAction(e -> openAuctionDetail(payButton, auction.getId()));
+        if (auction.getStatus() == AuctionStatus.WAITING_PAYMENT) {
+            payButton.setOnAction(e -> openCheckoutPopup(payButton, auction));
+        } else {
+            payButton.setOnAction(e -> openAuctionDetail(payButton, auction.getId()));
+        }
 
         card.getChildren().addAll(title, price, state, total, time, payButton);
         return card;
+    }
+
+    private void openCheckoutPopup(Button source, AuctionDTO auction) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PaymentCheckoutView.fxml"));
+            Parent root = loader.load();
+            PaymentCheckoutController controller = loader.getController();
+            controller.setAuctionData(auction, () -> {
+                statusLabel.setText("Thanh toán thành công. Phiên đã được chuyển sang Đã thanh toán.");
+                loadPaymentData();
+            });
+
+            Stage popup = new Stage();
+            popup.setTitle("Trả tiền");
+            popup.initModality(Modality.WINDOW_MODAL);
+            Window owner = source.getScene() != null ? source.getScene().getWindow() : null;
+            if (owner != null) {
+                popup.initOwner(owner);
+            }
+
+            Scene scene = new Scene(root, 980, 560);
+            ThemeManager.getInstance().applyTheme(scene);
+            popup.setScene(scene);
+            popup.setResizable(false);
+            popup.show();
+        } catch (Exception e) {
+            statusLabel.setText("Lỗi mở giao diện trả tiền: " + e.getMessage());
+        }
     }
 
     private void openAuctionDetail(Button source, String auctionId) {

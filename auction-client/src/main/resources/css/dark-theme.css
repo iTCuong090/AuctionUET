@@ -181,3 +181,118 @@
     -fx-text-fill: #1a1a2e;
     -fx-border-color: #4ecdc4;
 }
+
+.payment-method-card,
+.payment-info-card,
+.payment-action-card {
+    -fx-background-color: #16213e;
+    -fx-border-color: #0f3460;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0.18, 0, 4);
+}
+
+.payment-card-title {
+    -fx-text-fill: #ffffff;
+}
+
+.payment-method-row {
+    -fx-background-color: #1f2a4a;
+    -fx-border-color: #0f3460;
+}
+
+.payment-method-row:hover,
+.payment-method-row.selected {
+    -fx-background-color: #203052;
+    -fx-border-color: #4ecdc4;
+}
+
+.payment-method-check {
+    -fx-background-color: #4ecdc4;
+    -fx-border-color: #4ecdc4;
+    -fx-text-fill: #1a1a2e;
+}
+
+.payment-method-option .payment-method-check {
+    -fx-background-color: #16213e;
+    -fx-border-color: #536179;
+}
+
+.payment-method-option.selected .payment-method-check {
+    -fx-background-color: #4ecdc4;
+    -fx-border-color: #4ecdc4;
+    -fx-text-fill: #1a1a2e;
+}
+
+.payment-brand-vietqr {
+    -fx-text-fill: #ff6b6b;
+}
+
+.payment-brand-cash {
+    -fx-text-fill: #4ecdc4;
+}
+
+.payment-info-label {
+    -fx-text-fill: #a0a0b0;
+}
+
+.payment-info-value {
+    -fx-text-fill: #ffffff;
+}
+
+.payment-total-row .payment-info-value,
+.payment-action-amount {
+    -fx-text-fill: #4ecdc4;
+}
+
+.payment-divider {
+    -fx-background-color: #0f3460;
+}
+
+.payment-qr-brand {
+    -fx-text-fill: #ff6b6b;
+}
+
+.payment-qr-grid {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #0f3460;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 14, 0.18, 0, 4);
+}
+
+.payment-qr-cell-dark {
+    -fx-background-color: #111827;
+}
+
+.payment-qr-cell-light {
+    -fx-background-color: #ffffff;
+}
+
+.payment-cash-box {
+    -fx-background-color: #1f2a4a;
+    -fx-border-color: #0f3460;
+}
+
+.payment-message.success {
+    -fx-text-fill: #22c55e;
+}
+
+.payment-message.error {
+    -fx-text-fill: #ff6b6b;
+}
+
+.payment-confirm-button {
+    -fx-background-color: #4ecdc4;
+    -fx-text-fill: #1a1a2e;
+}
+
+.payment-confirm-button:hover {
+    -fx-background-color: #70e0da;
+}
+
+.payment-back-button {
+    -fx-background-color: #1f2a4a;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #0f3460;
+}
+
+.payment-back-button:hover {
+    -fx-background-color: #24375f;
+}

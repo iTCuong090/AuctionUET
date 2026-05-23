@@ -33,6 +33,12 @@ public class CreateItemController {
     @FXML private TextField artistField, artYearField, mediumField;
     @FXML private TextField makeField, modelField, mileageField, vehicleYearField;
 
+    private Runnable successCallback;
+
+    public void setSuccessCallback(Runnable successCallback) {
+        this.successCallback = successCallback;
+    }
+
     @FXML
     public void initialize() {
         for (ItemType type : ItemType.values()) {
@@ -119,6 +125,9 @@ public class CreateItemController {
                     nameField.clear();
                     priceField.clear();
                     descArea.clear();
+                    if (successCallback != null) {
+                        successCallback.run();
+                    }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> showError(e.getMessage()));

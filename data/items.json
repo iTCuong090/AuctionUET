@@ -204,5 +204,42 @@
     "id": "b0f56b8f-15ac-425a-93e6-172534128d15",
     "createdAt": "2026-05-22T22:06:44.9601122",
     "updatedAt": "2026-05-22T22:19:23.8123211"
+  },
+  {
+    "name": "legion 5",
+    "description": "cháy main",
+    "startingPrice": 2.5E7,
+    "type": "ELECTRONICS",
+    "sellerId": "4cf74e6c-2e70-45a6-9117-274996072608",
+    "imageUrl": "cc.jpg",
+    "condition": "NEW",
+    "auctionCount": 2,
+    "archived": false,
+    "extraFields": {
+      "brand": "Lenovo",
+      "warrantyMonths": 12.0
+    },
+    "id": "d1dede16-0926-4de5-a095-8a406f621082",
+    "createdAt": "2026-05-23T11:19:26.2303736",
+    "updatedAt": "2026-05-23T11:33:57.6031031"
+  },
+  {
+    "name": "sexy lady",
+    "description": "wow",
+    "startingPrice": 999999.0,
+    "type": "ART",
+    "sellerId": "d184e0c9-25db-4562-9f98-c67ad426330c",
+    "imageUrl": "wow.jpg",
+    "condition": "NEW",
+    "auctionCount": 2,
+    "archived": false,
+    "extraFields": {
+      "artist": "công",
+      "year": 2026.0,
+      "medium": "ảnh"
+    },
+    "id": "d36fdba0-b2a6-473a-af1f-94b244c17cb2",
+    "createdAt": "2026-05-23T12:10:10.5124268",
+    "updatedAt": "2026-05-23T12:42:13.3934142"
   }
 ]

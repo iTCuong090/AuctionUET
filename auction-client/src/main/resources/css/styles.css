@@ -175,3 +175,117 @@
     -fx-font-weight: bold;
     -fx-cursor: hand;
 }
+
+/* --- 13. PAYMENT CHECKOUT PANEL --- */
+.payment-checkout-flow {
+    -fx-padding: 4 0 20 0;
+}
+
+.payment-checkout-column {
+    -fx-fill-width: true;
+}
+
+.payment-method-card,
+.payment-info-card,
+.payment-action-card {
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-padding: 18;
+}
+
+.payment-action-card {
+    -fx-min-height: 360;
+}
+
+.payment-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.payment-method-row {
+    -fx-padding: 10 12;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-cursor: hand;
+}
+
+.payment-method-check {
+    -fx-min-width: 22;
+    -fx-max-width: 22;
+    -fx-min-height: 22;
+    -fx-max-height: 22;
+    -fx-alignment: center;
+    -fx-background-radius: 99;
+    -fx-border-radius: 99;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.payment-method-menu {
+    -fx-padding: 4 0 0 0;
+}
+
+.payment-brand-vietqr,
+.payment-brand-cash {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.payment-info-label {
+    -fx-font-size: 13px;
+    -fx-min-width: 145;
+}
+
+.payment-info-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+
+.payment-total-row {
+    -fx-padding: 8 0 0 0;
+}
+
+.payment-divider {
+    -fx-min-height: 1;
+    -fx-pref-height: 1;
+}
+
+.payment-qr-brand {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.payment-qr-grid {
+    -fx-padding: 12;
+    -fx-hgap: 1;
+    -fx-vgap: 1;
+    -fx-background-radius: 14;
+}
+
+.payment-action-amount {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-alignment: center;
+}
+
+.payment-cash-box {
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 14;
+}
+
+.payment-message {
+    -fx-font-size: 13px;
+    -fx-text-alignment: center;
+}
+
+.payment-confirm-button,
+.payment-back-button {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 11 18;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}

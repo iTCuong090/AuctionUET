@@ -63,7 +63,10 @@ public class MyItemsController {
     private void toggleCreateItemForm() {
         if (createItemHost.getChildren().isEmpty()) {
             try {
-                Parent form = FXMLLoader.load(getClass().getResource("/fxml/CreateItemView.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/CreateItemView.fxml"));
+                Parent form = loader.load();
+                CreateItemController controller = loader.getController();
+                controller.setSuccessCallback(this::handleItemCreated);
                 createItemHost.getChildren().setAll(form);
             } catch (Exception e) {
                 statusLabel.setText("Lỗi mở form tạo vật phẩm: " + e.getMessage());
@@ -75,6 +78,18 @@ public class MyItemsController {
         createItemHost.setVisible(visible);
         createItemHost.setManaged(visible);
         btnToggleCreate.setText(visible ? "Ẩn" : "+  New");
+    }
+
+    private void handleItemCreated() {
+        hideCreateItemForm();
+        statusLabel.setText("Đăng sản phẩm thành công. Đang tải lại danh sách...");
+        loadMyItems();
+    }
+
+    private void hideCreateItemForm() {
+        createItemHost.setVisible(false);
+        createItemHost.setManaged(false);
+        btnToggleCreate.setText("+  New");
     }
 
     private void loadMyItems() {
