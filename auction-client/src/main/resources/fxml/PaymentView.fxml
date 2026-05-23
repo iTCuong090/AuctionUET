@@ -38,7 +38,7 @@
             </children>
         </HBox>
         <Label fx:id="statusLabel" styleClass="text-secondary" text="Đang tải danh sách..." />
-        <ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+        <ScrollPane fx:id="paymentScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" VBox.vgrow="ALWAYS">
             <content>
                 <FlowPane fx:id="paymentGrid" hgap="20.0" vgap="20.0" />
             </content>
