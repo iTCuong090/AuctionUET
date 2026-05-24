@@ -17,13 +17,15 @@ import com.auctionuet.server.persistence.schema.BidSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class BidService {
     private static final double ESCROW_DEPOSIT_RATE = 0.10;
+    public static final Duration AUTO_BID_RESPONSE_DELAY = Duration.ofSeconds(3);
+    public static final Duration AUTO_BID_LEADER_STABILITY = Duration.ofSeconds(3);
 
     private final AuctionManager auctionManager;
     private final WalletService walletService;
@@ -31,15 +33,33 @@ public class BidService {
     private final ItemService itemService;
     private final AuctionDAO auctionDAO;
     private final UserService userService;
+    private final Duration autoBidResponseDelay;
+    private final Duration autoBidLeaderStability;
 
     public BidService(AuctionManager auctionManager, WalletService walletService,
             BidDAO bidDAO, ItemService itemService, AuctionDAO auctionDAO, UserService userService) {
+        this(
+                auctionManager,
+                walletService,
+                bidDAO,
+                itemService,
+                auctionDAO,
+                userService,
+                AUTO_BID_RESPONSE_DELAY,
+                AUTO_BID_LEADER_STABILITY);
+    }
+
+    public BidService(AuctionManager auctionManager, WalletService walletService,
+            BidDAO bidDAO, ItemService itemService, AuctionDAO auctionDAO, UserService userService,
+            Duration autoBidResponseDelay, Duration autoBidLeaderStability) {
         this.auctionManager = auctionManager;
         this.walletService = walletService;
         this.bidDAO = bidDAO;
         this.itemService = itemService;
         this.auctionDAO = auctionDAO;
         this.userService = userService;
+        this.autoBidResponseDelay = autoBidResponseDelay;
+        this.autoBidLeaderStability = autoBidLeaderStability;
     }
 
     public synchronized BidDTO placeBid(User bidder, String auctionId, double amount) throws Exception {
@@ -48,10 +68,9 @@ public class BidService {
         double depositAmount = calculateDepositAmount(itemSchema);
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
-        BidRecord record;
-        List<BidRecord> autoRecords = new ArrayList<>();
+        LiveAuction.BidPlacementResult result;
         try {
-            record = liveAuction.placeBid(bidder, amount, autoRecords::add);
+            result = liveAuction.placeBid(bidder, amount);
         } catch (Exception e) {
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
@@ -59,11 +78,10 @@ public class BidService {
 
         syncAuctionState(auctionId, liveAuction);
 
+        BidRecord record = result.manualBid();
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
-        for (BidRecord autoRecord : autoRecords) {
-            saveAutoBidRecord(auctionId, autoRecord);
-        }
+        schedulePendingAutoBidResponse(auctionId, result.pendingAutoBid());
 
         return toBidDTO(record, auctionId);
     }
@@ -98,9 +116,7 @@ public class BidService {
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
-        if (!bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
-            throw new IllegalArgumentException("chỉ người dẫn đầu mới được bật Autobid");
-        }
+        liveAuction.validateAutoBidCanBeEnabled(bidder.getId(), autoBidLeaderStability);
         validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
@@ -108,7 +124,7 @@ public class BidService {
 
         AutoBidConfig config = new AutoBidConfig(bidder.getId(), bidder.getUsername(), maxBid, increment);
         try {
-            liveAuction.addAutoBid(config, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+            liveAuction.addAutoBid(config, null, autoBidLeaderStability);
             syncAuctionState(auctionId, liveAuction);
         } catch (RuntimeException e) {
             liveAuction.removeAutoBid(bidder.getId());
@@ -119,7 +135,24 @@ public class BidService {
 
     public void cancelAutoBid(User bidder, String auctionId) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
-        liveAuction.removeAutoBid(bidder.getId());
+        boolean canceledPendingResponse = liveAuction.removeAutoBid(bidder.getId());
+        if (canceledPendingResponse) {
+            auctionManager.cancelAutoBidResponse(auctionId);
+        }
+    }
+
+    public synchronized void resolvePendingAutoBid(String auctionId, long sequenceId) {
+        LiveAuction liveAuction = auctionManager.getAuction(auctionId);
+        if (liveAuction == null) {
+            return;
+        }
+
+        LiveAuction.AutoBidResolution resolution = liveAuction.resolvePendingAutoBid(
+                sequenceId,
+                autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+        if (resolution.autoBid() != null) {
+            syncAuctionState(auctionId, liveAuction);
+        }
     }
 
     public AutoBidConfigDTO getAutoBidConfigDTO(User bidder, String auctionId) {
@@ -128,28 +161,28 @@ public class BidService {
             return null;
         }
 
-        AutoBidConfig config = liveAuction.getAutoBidConfig(bidder.getId());
-        if (config == null) {
+        LiveAuction.AutoBidStateSnapshot snapshot = liveAuction.getAutoBidStateSnapshot(bidder.getId());
+        if (!snapshot.hasConfig()) {
             return null;
         }
 
         AutoBidStatus status;
         double protectedUntil = 0.0;
-        if (!config.isActive()) {
+        if (!snapshot.active()) {
             status = AutoBidStatus.INEFFECTIVE;
-        } else if (bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
+        } else if (bidder.getId().equals(snapshot.currentWinnerId()) && !snapshot.pendingAgainstCurrentLeader()) {
             status = AutoBidStatus.PROTECTING;
-            protectedUntil = config.getMaxBid();
+            protectedUntil = snapshot.maxBid();
         } else {
             status = AutoBidStatus.WAITING;
-            protectedUntil = config.getMaxBid();
+            protectedUntil = snapshot.maxBid();
         }
 
         return new AutoBidConfigDTO(
                 auctionId,
                 userService.toDTO(bidder),
-                config.getMaxBid(),
-                config.getIncrement(),
+                snapshot.maxBid(),
+                snapshot.increment(),
                 status,
                 protectedUntil);
     }
@@ -288,6 +321,20 @@ public class BidService {
     private void saveAutoBidRecord(String auctionId, BidRecord autoRecord) {
         BidSchema autoBidSchema = toBidSchema(auctionId, autoRecord);
         bidDAO.save(autoBidSchema);
+    }
+
+    private void schedulePendingAutoBidResponse(String auctionId, LiveAuction.PendingAutoBid pendingAutoBid) {
+        if (pendingAutoBid == null) {
+            auctionManager.cancelAutoBidResponse(auctionId);
+            return;
+        }
+
+        long delayMs = Math.max(0, autoBidResponseDelay.toMillis());
+        long sequenceId = pendingAutoBid.sequenceId();
+        auctionManager.scheduleAutoBidResponse(
+                auctionId,
+                delayMs,
+                () -> resolvePendingAutoBid(auctionId, sequenceId));
     }
 
     private BidSchema toBidSchema(String auctionId, BidRecord record) {

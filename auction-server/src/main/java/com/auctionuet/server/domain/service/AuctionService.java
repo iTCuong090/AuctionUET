@@ -18,6 +18,7 @@ import com.auctionuet.server.persistence.schema.UserSchema;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -327,7 +328,7 @@ public class AuctionService {
         schema.setPaymentDeadlineAt(null);
         schema.setPaidAt(null);
         auctionDAO.update(schema);
-        auctionManager.loadAuction(schema, item.getStartingPrice());
+        auctionManager.loadAuction(schema, item.getStartingPrice(), resolveCurrentLeaderSince(schema));
         auctionManager.markAuctionStarted(schema);
     }
 
@@ -342,7 +343,43 @@ public class AuctionService {
         if (backfillDepositsFromBidHistory(schema, depositAmount)) {
             auctionDAO.update(schema);
         }
-        auctionManager.loadAuction(schema, item.getStartingPrice());
+
+        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
+        if (liveAuction != null) {
+            liveAuction.markDeposited(schema.getDepositedBidderIds());
+            LocalDateTime endTime = laterOf(liveAuction.getEndTime(), schema.getEndTime());
+            liveAuction.setEndTime(endTime);
+            auctionManager.scheduleAuctionEnd(schema.getId(), endTime);
+            return;
+        }
+
+        auctionManager.loadAuction(schema, item.getStartingPrice(), resolveCurrentLeaderSince(schema));
+    }
+
+    private LocalDateTime laterOf(LocalDateTime first, LocalDateTime second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return first.isAfter(second) ? first : second;
+    }
+
+    private LocalDateTime resolveCurrentLeaderSince(AuctionSchema schema) {
+        if (schema.getWinnerId() != null) {
+            return bidService.getBidHistory(schema.getId()).stream()
+                    .filter(bid -> schema.getWinnerId().equals(bid.getBidderId()))
+                    .filter(bid -> Double.compare(schema.getHighestBid(), bid.getAmount()) == 0)
+                    .max(Comparator.comparing(BidSchema::getTimestamp))
+                    .map(BidSchema::getTimestamp)
+                    .orElseGet(() -> fallbackLeaderSince(schema));
+        }
+        return fallbackLeaderSince(schema);
+    }
+
+    private LocalDateTime fallbackLeaderSince(AuctionSchema schema) {
+        return schema.getUpdatedAt() != null ? schema.getUpdatedAt() : LocalDateTime.now();
     }
 
     private void reconcilePaymentDeadline(AuctionSchema schema) {
