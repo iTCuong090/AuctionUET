@@ -328,13 +328,14 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidFreezesDepositAndBidsImmediately() throws Exception {
+    public void testLeaderSetAutoBidProtectsExistingLead() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 1000.0);
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
+        bidService.placeBid(bidder, auction.getId(), 550.0);
         bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0);
 
         AuctionSchema updated = auctionDAO.findById(auction.getId());
@@ -348,7 +349,7 @@ public class AuctionServiceTest {
 
         List<BidSchema> bids = bidDAO.findByAuctionId(auction.getId());
         assertEquals(1, bids.size());
-        assertEquals(BidType.AUTO, bids.get(0).getBidType());
+        assertEquals(BidType.MANUAL, bids.get(0).getBidType());
 
         AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
         assertEquals(AutoBidStatus.PROTECTING, state.getStatus());
@@ -356,15 +357,16 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidWithoutDepositBalanceDoesNotCreateConfigOrBid() throws Exception {
+    public void testNonLeaderSetAutoBidDoesNotCreateConfigOrDeposit() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 40.0);
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0));
+        assertEquals("chỉ người dẫn đầu mới được bật Autobid", exception.getMessage());
 
         assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
         assertFalse(AuctionManager.getInstance().getAuction(auction.getId()).hasDeposited("bidder1"));
@@ -393,16 +395,17 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testSetAutoBidPersistsDepositEvenWithoutAutoBidRecord() throws Exception {
+    public void testSetAutoBidDoesNotCreateExtraBidRecord() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         setBalance("bidder1", 1000.0);
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
-        bidService.setAutoBid(bidder, auction.getId(), 520.0, 50.0);
+        bidService.placeBid(bidder, auction.getId(), 550.0);
+        bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0);
 
-        assertEquals(0, bidDAO.findByAuctionId(auction.getId()).size());
+        assertEquals(1, bidDAO.findByAuctionId(auction.getId()).size());
         assertTrue(auctionDAO.findById(auction.getId()).hasDepositedBidder("bidder1"));
 
         UserSchema bidderSchema = userDAO.findById("bidder1");
@@ -410,8 +413,8 @@ public class AuctionServiceTest {
         assertEquals(50.0, bidderSchema.getFrozenBalance());
 
         AutoBidConfigDTO state = bidService.getAutoBidConfigDTO(bidder, auction.getId());
-        assertEquals(AutoBidStatus.WAITING, state.getStatus());
-        assertEquals(520.0, state.getProtectedUntil());
+        assertEquals(AutoBidStatus.PROTECTING, state.getStatus());
+        assertEquals(1000.0, state.getProtectedUntil());
     }
 
     @Test
@@ -424,20 +427,20 @@ public class AuctionServiceTest {
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
         bidService.setAutoBid(bidder1, auction.getId(), 900.0, 50.0);
-        bidService.setAutoBid(bidder2, auction.getId(), 1000.0, 50.0);
+        bidService.placeBid(bidder2, auction.getId(), 950.0);
 
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
         AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
 
         assertEquals(AutoBidStatus.INEFFECTIVE, bidder1State.getStatus());
         assertEquals(0.0, bidder1State.getProtectedUntil());
-        assertEquals(AutoBidStatus.PROTECTING, bidder2State.getStatus());
-        assertEquals(1000.0, bidder2State.getProtectedUntil());
+        assertNull(bidder2State);
     }
 
     @Test
-    public void testSetAutoBidEqualMaxKeepsEarlierBidderAsWinner() throws Exception {
+    public void testNonLeaderCannotSetAutoBidOverCurrentLeader() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         User bidder1 = new MockUser("bidder1", "bidder", UserRole.BIDDER, false);
         User bidder2 = new MockUser("bidder2", "bidder2", UserRole.BIDDER, false);
@@ -446,17 +449,20 @@ public class AuctionServiceTest {
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
         bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
-        bidService.setAutoBid(bidder2, auction.getId(), 1000.0, 50.0);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> bidService.setAutoBid(bidder2, auction.getId(), 1200.0, 50.0));
+        assertEquals("chỉ người dẫn đầu mới được bật Autobid", exception.getMessage());
 
         AuctionSchema updated = auctionDAO.findById(auction.getId());
         assertEquals("bidder1", updated.getWinnerId());
-        assertEquals(1000.0, updated.getHighestBid());
+        assertEquals(550.0, updated.getHighestBid());
 
         AutoBidConfigDTO bidder1State = bidService.getAutoBidConfigDTO(bidder1, auction.getId());
         AutoBidConfigDTO bidder2State = bidService.getAutoBidConfigDTO(bidder2, auction.getId());
         assertEquals(AutoBidStatus.PROTECTING, bidder1State.getStatus());
-        assertEquals(AutoBidStatus.INEFFECTIVE, bidder2State.getStatus());
+        assertNull(bidder2State);
     }
 
     @Test
@@ -469,6 +475,7 @@ public class AuctionServiceTest {
 
         AuctionDTO auction = createRunningAuction(seller, 500.0);
 
+        bidService.placeBid(bidder1, auction.getId(), 550.0);
         bidService.setAutoBid(bidder1, auction.getId(), 1000.0, 50.0);
         bidService.placeBid(bidder2, auction.getId(), 1000.0);
 
@@ -494,6 +501,7 @@ public class AuctionServiceTest {
 
         assertNull(bidService.getAutoBidConfigDTO(bidder, auction.getId()));
 
+        bidService.placeBid(bidder, auction.getId(), 550.0);
         bidService.setAutoBid(bidder, auction.getId(), 1000.0, 50.0);
         bidService.cancelAutoBid(bidder, auction.getId());
 
