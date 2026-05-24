@@ -372,5 +372,19 @@
     "id": "983800fd-87f8-488c-8988-a8a7cbea183a",
     "createdAt": "2026-05-23T12:42:13.3903986",
     "updatedAt": "2026-05-23T12:42:13.3903986"
+  },
+  {
+    "userId": "084d0277-ed74-4541-97bc-00fe3c669bf3",
+    "usernameSnapshot": "fasdfgagt",
+    "type": "WALLET_DEPOSIT",
+    "amount": 1000000.0,
+    "balanceBefore": 0.0,
+    "balanceAfter": 1000000.0,
+    "frozenBalanceBefore": 0.0,
+    "frozenBalanceAfter": 0.0,
+    "description": "Nap tien vao vi",
+    "id": "c3e7f341-3c27-412e-a41e-82c531b9a618",
+    "createdAt": "2026-05-24T16:40:29.6777196",
+    "updatedAt": "2026-05-24T16:40:29.6777196"
   }
 ]

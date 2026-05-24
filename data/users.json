@@ -108,15 +108,15 @@
     "updatedAt": "2026-05-23T12:42:13.3894099"
   },
   {
-    "username": "duyanh",
-    "hashedPassword": "bfe0f76b8ee81386957e1ce6c4fd51ffd236edff20a7276fbfe949a8095a9ac2",
-    "passwordSalt": "4a15b9c988b64f04bf4aa8fd6cd87bee",
+    "username": "fasdfgagt",
+    "hashedPassword": "792a841e6819d4846b1e9a8ecb6f2983063bb4ff440806b57a9aa372dafb68c4",
+    "passwordSalt": "bae04e6df4bb827257da8f38de884d69",
     "email": "d@g.com",
     "role": "BIDDER",
-    "balance": 0.0,
+    "balance": 1000000.0,
     "frozenBalance": 0.0,
     "id": "084d0277-ed74-4541-97bc-00fe3c669bf3",
     "createdAt": "2026-05-24T12:15:48.6654401",
-    "updatedAt": "2026-05-24T16:10:18.6623869"
+    "updatedAt": "2026-05-24T16:40:29.6757192"
   }
 ]
