@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
@@ -91,18 +88,6 @@
             <HBox spacing="30.0" VBox.vgrow="ALWAYS">
                <children>
                   <VBox spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;" HBox.hgrow="ALWAYS">
-                     <children>
-                        <Label styleClass="text-accent" text="📊 Biểu đồ giá sản phẩm (Xu hướng)">
-                           <font><Font name="System Bold" size="18.0" /></font>
-                        </Label>
-                        <LineChart fx:id="priceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;">
-                           <xAxis><NumberAxis autoRanging="true" label="Lượt bid" side="BOTTOM" /></xAxis>
-                           <yAxis><NumberAxis label="Giá (VNĐ)" side="LEFT" /></yAxis>
-                        </LineChart>
-                     </children>
-                  </VBox>
-
-                  <VBox prefWidth="350.0" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
                      <children>
                         <Label styleClass="text-accent" text="👤 Lịch sử phiên đấu giá">
                            <font><Font name="System Bold" size="18.0" /></font>
