@@ -3,6 +3,7 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.BidClient;
+import com.auctionuet.client.network.ProfileClient;
 import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
@@ -14,7 +15,10 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -26,6 +30,18 @@ public class ProfileController {
     @FXML private Label usernameLabel;
     @FXML private Label roleLabel;
     @FXML private Label balanceLabel;
+    @FXML private Button btnToggleEditProfile;
+    @FXML private Button btnSaveProfile;
+    @FXML private Button btnChooseUsernameEdit;
+    @FXML private Button btnChoosePasswordEdit;
+    @FXML private VBox editProfileBox;
+    @FXML private VBox usernameEditBox;
+    @FXML private VBox passwordEditBox;
+    @FXML private TextField editUsernameField;
+    @FXML private PasswordField currentPasswordField;
+    @FXML private PasswordField newPasswordField;
+    @FXML private PasswordField confirmPasswordField;
+    @FXML private Label profileMessageLabel;
 
     @FXML private Label statWonLabel;
     @FXML private Label statSoldLabel;
@@ -39,6 +55,7 @@ public class ProfileController {
 
         if (currentUser != null) {
             usernameLabel.setText("@" + currentUser.getUsername());
+            editUsernameField.setText(currentUser.getUsername());
 
             String role = currentUser.getRole() != null ? currentUser.getRole().name() : "GUEST";
             roleLabel.setText(role);
@@ -59,6 +76,7 @@ public class ProfileController {
 
         loadProfileStats();
         loadWalletBalance();
+        refreshProfileFromServer();
     }
 
     private void loadWalletBalance() {
@@ -73,6 +91,108 @@ public class ProfileController {
                 Platform.runLater(() -> CurrencyFormatter.setMoneyText(balanceLabel, balance));
             } catch (Exception e) {
                 Platform.runLater(() -> balanceLabel.setText("Lỗi"));
+            }
+        }).start();
+    }
+
+    @FXML
+    private void handleToggleEditProfile() {
+        boolean shouldShow = !editProfileBox.isVisible();
+        editProfileBox.setVisible(shouldShow);
+        editProfileBox.setManaged(shouldShow);
+        btnToggleEditProfile.setText(shouldShow ? "Ẩn chỉnh sửa" : "Chỉnh sửa Profile");
+        if (shouldShow) {
+            UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+            editUsernameField.setText(currentUser != null ? currentUser.getUsername() : "");
+            clearPasswordFields();
+            profileMessageLabel.setText("");
+            showUsernameEdit(false);
+            showPasswordEdit(false);
+        }
+    }
+
+    @FXML
+    private void handleChooseUsernameEdit() {
+        showUsernameEdit(true);
+        showPasswordEdit(false);
+        clearPasswordFields();
+        profileMessageLabel.setText("");
+    }
+
+    @FXML
+    private void handleChoosePasswordEdit() {
+        showUsernameEdit(false);
+        showPasswordEdit(true);
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+        editUsernameField.setText(currentUser != null ? currentUser.getUsername() : "");
+        profileMessageLabel.setText("");
+    }
+
+    @FXML
+    private void handleSaveProfile() {
+        String token = ClientSession.getInstance().getToken();
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+        if (token == null || currentUser == null) {
+            showProfileMessage("Bạn cần đăng nhập để cập nhật profile.", true);
+            return;
+        }
+
+        String username = editUsernameField.getText() != null ? editUsernameField.getText().trim() : "";
+        String currentPassword = currentPasswordField.getText();
+        String newPassword = newPasswordField.getText();
+        String confirmPassword = confirmPasswordField.getText();
+
+        boolean editingUsername = usernameEditBox.isVisible();
+        boolean editingPassword = passwordEditBox.isVisible();
+        boolean usernameChanged = editingUsername && !username.isBlank() && !username.equals(currentUser.getUsername());
+        boolean passwordTouched = editingPassword;
+
+        if (!editingUsername && !editingPassword) {
+            showProfileMessage("Vui lòng chọn Đổi tên hoặc Đổi mật khẩu.", true);
+            return;
+        }
+        if (!usernameChanged && !passwordTouched) {
+            showProfileMessage("Chưa có thay đổi nào để lưu.", true);
+            return;
+        }
+        if (passwordTouched && (isBlank(currentPassword) || isBlank(newPassword) || isBlank(confirmPassword))) {
+            showProfileMessage("Vui lòng nhập đủ các trường mật khẩu.", true);
+            return;
+        }
+        if (passwordTouched && !newPassword.equals(confirmPassword)) {
+            showProfileMessage("Xác nhận mật khẩu mới không khớp.", true);
+            return;
+        }
+
+        btnSaveProfile.setDisable(true);
+        showProfileMessage("Đang cập nhật...", false);
+        String requestedUsername = usernameChanged ? username : null;
+        String requestedCurrentPassword = passwordTouched ? currentPassword : null;
+        String requestedNewPassword = passwordTouched ? newPassword : null;
+
+        new Thread(() -> {
+            try {
+                UserDTO updatedUser = new ProfileClient().updateProfile(
+                        token,
+                        requestedUsername,
+                        requestedCurrentPassword,
+                        requestedNewPassword);
+                Platform.runLater(() -> {
+                    ClientSession.getInstance().updateCurrentUser(updatedUser);
+                    renderCurrentUser(updatedUser);
+                    clearPasswordFields();
+                    showProfileMessage("Cập nhật profile thành công.", false);
+                    if (requestedUsername != null) {
+                        showUsernameEdit(false);
+                    }
+                    if (requestedNewPassword != null) {
+                        showPasswordEdit(false);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showProfileMessage("Lỗi: " + e.getMessage(), true));
+            } finally {
+                Platform.runLater(() -> btnSaveProfile.setDisable(false));
             }
         }).start();
     }
@@ -147,6 +267,68 @@ public class ProfileController {
                 });
             }
         }).start();
+    }
+
+    private void refreshProfileFromServer() {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) {
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                UserDTO user = new ProfileClient().getProfile(token);
+                Platform.runLater(() -> {
+                    ClientSession.getInstance().updateCurrentUser(user);
+                    renderCurrentUser(user);
+                });
+            } catch (Exception ignored) {
+            }
+        }).start();
+    }
+
+    private void renderCurrentUser(UserDTO user) {
+        if (user == null) {
+            return;
+        }
+        usernameLabel.setText("@" + user.getUsername());
+        roleLabel.setText(user.getRole() != null ? user.getRole().name() : "GUEST");
+        editUsernameField.setText(user.getUsername());
+    }
+
+    private void clearPasswordFields() {
+        currentPasswordField.clear();
+        newPasswordField.clear();
+        confirmPasswordField.clear();
+    }
+
+    private void showProfileMessage(String message, boolean error) {
+        profileMessageLabel.setText(message);
+        profileMessageLabel.setTextFill(javafx.scene.paint.Color.web(error ? "#ff4757" : "#22c55e"));
+    }
+
+    private void showUsernameEdit(boolean visible) {
+        usernameEditBox.setVisible(visible);
+        usernameEditBox.setManaged(visible);
+        setChoiceButtonActive(btnChooseUsernameEdit, visible);
+    }
+
+    private void showPasswordEdit(boolean visible) {
+        passwordEditBox.setVisible(visible);
+        passwordEditBox.setManaged(visible);
+        setChoiceButtonActive(btnChoosePasswordEdit, visible);
+    }
+
+    private void setChoiceButtonActive(Button button, boolean active) {
+        String color = active ? "#4ecdc4" : "transparent";
+        String textColor = active ? "#1a1a2e" : "#4ecdc4";
+        button.setStyle("-fx-background-color: " + color
+                + "; -fx-border-color: #4ecdc4; -fx-border-radius: 8; -fx-background-radius: 8;"
+                + " -fx-text-fill: " + textColor + "; -fx-padding: 8; -fx-font-weight: bold;");
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private long countParticipatedAuctions(String token, String userId, List<AuctionDTO> auctions) {
