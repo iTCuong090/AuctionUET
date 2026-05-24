@@ -31,6 +31,10 @@ public class ClientSession {
         this.currentUser = user;
     }
 
+    public void updateCurrentUser(UserDTO user) {
+        this.currentUser = user;
+    }
+
     public void clearSession() {
         this.token = null;
         this.currentUser = null;
