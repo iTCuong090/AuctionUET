@@ -18,6 +18,8 @@ import com.auctionuet.protocol.enums.BidType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -55,12 +57,14 @@ public class BiddingController {
     @FXML private Button cancelAutoBidBtn;
     @FXML private Label autoBidStatusLabel;
 
+    @FXML private LineChart<Number, Number> bidPriceChart;
     @FXML private ListView<String> bidHistoryList;
 
     private String currentAuctionId;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
     private final WalletClient walletClient = new WalletClient();
+    private final XYChart.Series<Number, Number> bidPriceSeries = new XYChart.Series<>();
 
     private javafx.animation.Timeline countdownTimeline;
     private LocalDateTime endDateTime;
@@ -69,6 +73,11 @@ public class BiddingController {
     private AutoBidStatus lastAutoBidStatus;
     private boolean autoBidStateLoaded;
     private boolean pendingAutoBidLossNotice;
+
+    @FXML
+    public void initialize() {
+        setupBidPriceChart();
+    }
 
     public void setAuctionId(String auctionId) {
         this.currentAuctionId = auctionId;
@@ -132,9 +141,11 @@ public class BiddingController {
                 List<BidDTO> history = bidClient.getBidHistory(token, currentAuctionId);
                 Platform.runLater(() -> {
                     bidHistoryList.getItems().clear();
+                    bidPriceSeries.getData().clear();
                     if (history != null && !history.isEmpty()) {
                         for (BidDTO entry : history) {
                             bidHistoryList.getItems().add(formatBid(entry));
+                            appendBidPricePoint(entry);
                         }
 
                         BidDTO latest = history.get(history.size() - 1);
@@ -160,6 +171,7 @@ public class BiddingController {
                 CurrencyFormatter.setMoneyText(priceLabel, bid.getAmount());
                 leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
                 bidHistoryList.getItems().add(0, "Vừa xong - " + formatBid(bid));
+                appendBidPricePoint(bid);
                 if (isCurrentUser(bid.getBidder())) {
                     currentUserDeposited = true;
                     renderAuctionDeposit();
@@ -238,6 +250,19 @@ public class BiddingController {
         }));
         countdownTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
         countdownTimeline.play();
+    }
+
+    private void setupBidPriceChart() {
+        bidPriceSeries.setName("Giá bid");
+        bidPriceChart.setAnimated(false);
+        bidPriceChart.setCreateSymbols(true);
+        bidPriceChart.getData().clear();
+        bidPriceChart.getData().add(bidPriceSeries);
+    }
+
+    private void appendBidPricePoint(BidDTO bid) {
+        int bidIndex = bidPriceSeries.getData().size() + 1;
+        bidPriceSeries.getData().add(new XYChart.Data<>(bidIndex, bid.getAmount()));
     }
 
     private void checkAutoBidState() {

@@ -85,6 +85,17 @@
 .detail-leader-label { -fx-text-fill: #fbbf24; }
 .detail-time-label { -fx-text-fill: #fb923c; }
 
+.chart { -fx-background-color: transparent; }
+.chart-plot-background { -fx-background-color: #111827; }
+.chart-horizontal-grid-lines,
+.chart-vertical-grid-lines { -fx-stroke: #0f3460; }
+.axis { -fx-tick-label-fill: #a0a0b0; }
+.axis-label,
+.chart-legend-item { -fx-text-fill: #a0a0b0; }
+.chart-legend { -fx-background-color: transparent; }
+.default-color0.chart-series-line { -fx-stroke: #4ecdc4; }
+.default-color0.chart-line-symbol { -fx-background-color: #4ecdc4, #16213e; }
+
 .header-bar { -fx-background-color: #1a252f; }
 .content-area { -fx-background-color: #ecf0f1; }
 .footer-bar { -fx-background-color: #bdc3c7; }

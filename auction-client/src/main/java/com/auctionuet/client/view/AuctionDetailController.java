@@ -16,6 +16,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -39,6 +41,7 @@ public class AuctionDetailController {
 
     @FXML private TableView<BidDTO> bidHistoryTable;
     @FXML private TableColumn<BidDTO, String> bidderCol, amountCol, timeCol;
+    @FXML private LineChart<Number, Number> bidPriceChart;
 
     @FXML private Button btnStartAuction;
     @FXML private HBox actionArea;
@@ -55,6 +58,7 @@ public class AuctionDetailController {
     private boolean subscribed;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
+    private final XYChart.Series<Number, Number> bidPriceSeries = new XYChart.Series<>();
     private AuctionDTO currentAuction;
 
     @FXML
@@ -62,6 +66,7 @@ public class AuctionDetailController {
         btnPlaceBid.setOnAction(e -> handlePlaceBid());
         btnPayAuction.setOnAction(e -> handlePayAuction());
         setupBidHistoryTable();
+        setupBidPriceChart();
     }
 
     public void setAuctionData(String auctionId) {
@@ -80,6 +85,7 @@ public class AuctionDetailController {
         paymentErrorLabel.setText("");
         specBox.getChildren().clear();
         bidHistoryTable.getItems().clear();
+        bidPriceSeries.getData().clear();
 
         new Thread(() -> {
             try {
@@ -231,6 +237,14 @@ public class AuctionDetailController {
         timeCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(formatTime(cell.getValue().getTimestamp())));
     }
 
+    private void setupBidPriceChart() {
+        bidPriceSeries.setName("Giá bid");
+        bidPriceChart.setAnimated(false);
+        bidPriceChart.setCreateSymbols(true);
+        bidPriceChart.getData().clear();
+        bidPriceChart.getData().add(bidPriceSeries);
+    }
+
     private void loadBidHistory() {
         String token = ClientSession.getInstance().getToken();
         if (token == null || currentAuctionId == null) {
@@ -242,6 +256,7 @@ public class AuctionDetailController {
                 List<BidDTO> history = bidClient.getBidHistory(token, currentAuctionId);
                 Platform.runLater(() -> {
                     bidHistoryTable.getItems().clear();
+                    bidPriceSeries.getData().clear();
                     if (history != null) {
                         for (BidDTO bid : history) {
                             appendBid(bid);
@@ -256,6 +271,8 @@ public class AuctionDetailController {
 
     private void appendBid(BidDTO bid) {
         bidHistoryTable.getItems().add(bid);
+        int bidIndex = bidPriceSeries.getData().size() + 1;
+        bidPriceSeries.getData().add(new XYChart.Data<>(bidIndex, bid.getAmount()));
         CurrencyFormatter.setMoneyText(currentPriceLabel, "Giá hiện tại: ", bid.getAmount());
         leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
     }

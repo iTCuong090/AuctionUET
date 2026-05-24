@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -58,22 +56,10 @@
                <children>
                   <VBox spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label styleClass="text-accent" text="📊 Biểu đồ giá vật phẩm">
-                           <font><Font name="System Bold" size="18.0" /></font>
-                        </Label>
-                        <LineChart fx:id="priceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;">
-                           <xAxis><NumberAxis autoRanging="true" label="Phiên" side="BOTTOM" /></xAxis>
-                           <yAxis><NumberAxis label="Giá (VNĐ)" side="LEFT" /></yAxis>
-                        </LineChart>
-                     </children>
-                  </VBox>
-
-                  <VBox prefWidth="380.0" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
-                     <children>
                         <Label styleClass="text-accent" text="👤 Lịch sử vật phẩm">
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
-                        <TableView fx:id="auctionHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;">
+                        <TableView fx:id="auctionHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
                            <columns>
                               <TableColumn fx:id="titleCol" prefWidth="170.0" text="Phiên" />
                               <TableColumn fx:id="priceCol" prefWidth="150.0" text="Giá (VNĐ)" />
