@@ -118,5 +118,17 @@
     "id": "084d0277-ed74-4541-97bc-00fe3c669bf3",
     "createdAt": "2026-05-24T12:15:48.6654401",
     "updatedAt": "2026-05-24T16:40:29.6757192"
+  },
+  {
+    "username": "hello",
+    "hashedPassword": "8b4615b20c67c71dea6b9381b0499bb6776860cc4ac76a8b086e10ddccaec610",
+    "passwordSalt": "581cdac6ece9955edfa9e447fd041dcb",
+    "email": "b@g.com",
+    "role": "SELLER",
+    "balance": 0.0,
+    "frozenBalance": 0.0,
+    "id": "758e289c-2a25-48fc-b4bc-fbf96b88dc7e",
+    "createdAt": "2026-05-24T16:41:53.2896396",
+    "updatedAt": "2026-05-24T16:41:53.2896396"
   }
 ]
