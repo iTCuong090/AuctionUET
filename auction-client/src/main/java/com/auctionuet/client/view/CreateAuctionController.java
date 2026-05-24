@@ -7,13 +7,16 @@ import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -32,13 +35,18 @@ public class CreateAuctionController {
     @FXML private TextField titleField, antiSnipingWindowField, antiSnipingExtensionField;
     @FXML private TextArea descArea;
     @FXML private DatePicker startDatePicker, endDatePicker;
-    @FXML private ComboBox<String> startHourCombo, startMinuteCombo, endHourCombo, endMinuteCombo;
+    @FXML private Spinner<Integer> startHourSpinner, startMinuteSpinner, endHourSpinner, endMinuteSpinner;
+    @FXML private RadioButton startNowRadio, startInFiveRadio, startCustomRadio;
+    @FXML private RadioButton endOneHourRadio, endSixHoursRadio, endOneDayRadio, endCustomRadio;
+    @FXML private VBox startCustomBox, endCustomBox;
     @FXML private VBox previewContentBox;
 
     private final ItemClient itemClient = new ItemClient();
     private final AuctionClient auctionClient = new AuctionClient();
     private String initialItemId;
     private String lastAutoTitle;
+    private final ToggleGroup startModeGroup = new ToggleGroup();
+    private final ToggleGroup endModeGroup = new ToggleGroup();
 
     @FXML
     public void initialize() {
@@ -54,26 +62,50 @@ public class CreateAuctionController {
             }
         });
 
-        ObservableList<String> hours = FXCollections.observableArrayList();
-        for (int i = 0; i < 24; i++) hours.add(String.format("%02d", i));
+        setupTimeControls();
+    }
 
-        ObservableList<String> minutes = FXCollections.observableArrayList();
-        for (int i = 0; i < 60; i += 5) minutes.add(String.format("%02d", i));
+    private void setupTimeControls() {
+        setupSpinner(startHourSpinner, 0, 23, LocalDateTime.now().getHour());
+        setupSpinner(startMinuteSpinner, 0, 59, LocalDateTime.now().getMinute());
+        setupSpinner(endHourSpinner, 0, 23, LocalDateTime.now().plusHours(1).getHour());
+        setupSpinner(endMinuteSpinner, 0, 59, LocalDateTime.now().plusHours(1).getMinute());
 
-        startHourCombo.setItems(hours); endHourCombo.setItems(hours);
-        startMinuteCombo.setItems(minutes); endMinuteCombo.setItems(minutes);
+        startNowRadio.setToggleGroup(startModeGroup);
+        startInFiveRadio.setToggleGroup(startModeGroup);
+        startCustomRadio.setToggleGroup(startModeGroup);
+        endOneHourRadio.setToggleGroup(endModeGroup);
+        endSixHoursRadio.setToggleGroup(endModeGroup);
+        endOneDayRadio.setToggleGroup(endModeGroup);
+        endCustomRadio.setToggleGroup(endModeGroup);
 
+        startNowRadio.setSelected(true);
+        endOneHourRadio.setSelected(true);
+
+        startModeGroup.selectedToggleProperty().addListener((o, old, now) -> syncTimeModeVisibility());
+        endModeGroup.selectedToggleProperty().addListener((o, old, now) -> syncTimeModeVisibility());
+        startModeGroup.selectedToggleProperty().addListener((o, old, now) -> calculateDuration());
+        endModeGroup.selectedToggleProperty().addListener((o, old, now) -> calculateDuration());
         startDatePicker.valueProperty().addListener((o, old, now) -> calculateDuration());
         endDatePicker.valueProperty().addListener((o, old, now) -> calculateDuration());
-        startHourCombo.valueProperty().addListener((o, old, now) -> calculateDuration());
-        startMinuteCombo.valueProperty().addListener((o, old, now) -> calculateDuration());
-        endHourCombo.valueProperty().addListener((o, old, now) -> calculateDuration());
-        endMinuteCombo.valueProperty().addListener((o, old, now) -> calculateDuration());
+        startHourSpinner.valueProperty().addListener((o, old, now) -> calculateDuration());
+        startMinuteSpinner.valueProperty().addListener((o, old, now) -> calculateDuration());
+        endHourSpinner.valueProperty().addListener((o, old, now) -> calculateDuration());
+        endMinuteSpinner.valueProperty().addListener((o, old, now) -> calculateDuration());
+
+        syncTimeModeVisibility();
+        calculateDuration();
+    }
+
+    private void setupSpinner(Spinner<Integer> spinner, int min, int max, int initialValue) {
+        spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, initialValue, 1));
+        spinner.setEditable(true);
+        spinner.setPrefWidth(82);
     }
 
     private void calculateDuration() {
-        LocalDateTime start = getSelectedDateTime(startDatePicker, startHourCombo, startMinuteCombo);
-        LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
+        LocalDateTime start = resolveStartTime();
+        LocalDateTime end = resolveEndTime(start);
 
         if (start == null || end == null) {
             durationLabel.setText("Thời lượng: Vui lòng chọn đủ ngày giờ.");
@@ -96,21 +128,79 @@ public class CreateAuctionController {
         durationLabel.setStyle("-fx-text-fill: #2ecc71;");
     }
 
-    private LocalDateTime getSelectedDateTime(DatePicker date, ComboBox<String> h, ComboBox<String> m) {
-        if (date.getValue() == null || h.getValue() == null || m.getValue() == null) return null;
-        return LocalDateTime.of(date.getValue(),
-                LocalTime.of(Integer.parseInt(h.getValue()), Integer.parseInt(m.getValue())));
+    private LocalDateTime resolveStartTime() {
+        LocalDateTime now = LocalDateTime.now();
+        if (startNowRadio.isSelected()) {
+            return now;
+        }
+        if (startInFiveRadio.isSelected()) {
+            return now.plusMinutes(5);
+        }
+        return getCustomDateTime(startDatePicker, startHourSpinner, startMinuteSpinner);
+    }
+
+    private LocalDateTime resolveEndTime(LocalDateTime start) {
+        if (start == null) {
+            return null;
+        }
+        if (endOneHourRadio.isSelected()) {
+            return start.plusHours(1);
+        }
+        if (endSixHoursRadio.isSelected()) {
+            return start.plusHours(6);
+        }
+        if (endOneDayRadio.isSelected()) {
+            return start.plusDays(1);
+        }
+        return getCustomDateTime(endDatePicker, endHourSpinner, endMinuteSpinner);
+    }
+
+    private LocalDateTime getCustomDateTime(
+            DatePicker date,
+            Spinner<Integer> hourSpinner,
+            Spinner<Integer> minuteSpinner) {
+        if (date.getValue() == null || hourSpinner.getValue() == null || minuteSpinner.getValue() == null) {
+            return null;
+        }
+        commitSpinnerValue(hourSpinner);
+        commitSpinnerValue(minuteSpinner);
+        return LocalDateTime.of(date.getValue(), LocalTime.of(hourSpinner.getValue(), minuteSpinner.getValue()));
+    }
+
+    private void commitSpinnerValue(Spinner<Integer> spinner) {
+        if (spinner.getValueFactory() == null) {
+            return;
+        }
+        String text = spinner.getEditor().getText();
+        try {
+            spinner.getValueFactory().setValue(Integer.parseInt(text));
+        } catch (NumberFormatException ignored) {
+            spinner.getEditor().setText(String.valueOf(spinner.getValue()));
+        }
+    }
+
+    private void syncTimeModeVisibility() {
+        boolean customStart = startCustomRadio.isSelected();
+        boolean customEnd = endCustomRadio.isSelected();
+        startCustomBox.setVisible(customStart);
+        startCustomBox.setManaged(customStart);
+        endCustomBox.setVisible(customEnd);
+        endCustomBox.setManaged(customEnd);
     }
 
     @FXML
     public void handleCreateAuction() {
         ItemDTO selectedItem = itemComboBox.getValue();
         String title = titleField.getText();
-        LocalDateTime start = getSelectedDateTime(startDatePicker, startHourCombo, startMinuteCombo);
-        LocalDateTime end = getSelectedDateTime(endDatePicker, endHourCombo, endMinuteCombo);
+        LocalDateTime start = resolveStartTime();
+        LocalDateTime end = resolveEndTime(start);
 
         if (selectedItem == null || title.isBlank() || start == null || end == null) {
             showError("Vui lòng điền đầy đủ thông tin bắt buộc.");
+            return;
+        }
+        if (start.isBefore(LocalDateTime.now().minusSeconds(5))) {
+            showError("Thời gian bắt đầu không được trước hiện tại.");
             return;
         }
         if (!end.isAfter(start)) {
