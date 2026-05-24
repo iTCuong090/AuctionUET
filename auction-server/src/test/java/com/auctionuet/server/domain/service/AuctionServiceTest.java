@@ -204,6 +204,34 @@ public class AuctionServiceTest {
     }
 
     @Test
+    public void testCreateAuctionAllowsStartTimeJustNow() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        AuctionDTO auction = auctionService.createAuction(seller, item.getId(), LocalDateTime.now().minusSeconds(2),
+                LocalDateTime.now().plusHours(1), "Auction now", "Desc", 60, 120);
+
+        assertNotNull(auction);
+        AuctionSchema saved = auctionDAO.findById(auction.getId());
+        assertNotNull(saved);
+        assertFalse(saved.getStartTime().isBefore(LocalDateTime.now().minusSeconds(10)));
+    }
+
+    @Test
+    public void testCreateAuctionRejectsStartTimeTooFarInPast() throws Exception {
+        User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
+        ItemDTO dto = createElectronicsDTO();
+        ItemDTO item = itemService.createItem(seller, dto.getName(), dto.getDescription(), dto.getStartingPrice(),
+                dto.getType(), dto.getImageUrl(), dto.getCondition(), dto.getExtraFields());
+
+        assertThrows(AuctionException.class, () ->
+                auctionService.createAuction(seller, item.getId(), LocalDateTime.now().minusMinutes(1),
+                        LocalDateTime.now().plusHours(1), "Auction past", "Desc", 60, 120));
+    }
+
+    @Test
     public void testCreateAuctionRejectsItemWithActiveAuction() throws Exception {
         User seller = new MockUser("seller1", "seller", UserRole.SELLER, true);
         ItemDTO dto = createElectronicsDTO();

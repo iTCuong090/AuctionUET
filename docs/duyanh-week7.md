@@ -231,7 +231,8 @@ Khi bấm tạo phiên, controller vẫn kiểm tra:
 - Thời gian kết thúc phải sau thời gian bắt đầu.
 - Các giá trị chống sniping hợp lệ.
 
-Phần thời gian bắt đầu có dung sai nhỏ khoảng vài giây để tránh trường hợp người dùng chọn "Ngay bây giờ" nhưng lúc validate thì đồng hồ hệ thống đã chạy qua.
+Phần thời gian bắt đầu có dung sai nhỏ để tránh trường hợp người dùng chọn "Ngay bây giờ" nhưng request đi qua socket tới server thì đồng hồ hệ thống đã chạy qua.
+Server hiện cho phép thời gian bắt đầu chậm tối đa `10` giây so với thời điểm xử lý request. Nếu thời gian bắt đầu nằm trong khoảng này, server chuẩn hóa lại thành thời điểm hiện tại và cho tạo phiên. Nếu thời gian bắt đầu cũ hơn khoảng dung sai này, server vẫn từ chối vì đó là thời gian quá khứ thật sự.
 
 ### 2.6. Không thay đổi logic gia hạn giờ đấu giá
 

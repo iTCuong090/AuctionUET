@@ -27,6 +27,8 @@ import java.util.UUID;
 
 public class AuctionService {
 
+    private static final int CREATE_AUCTION_START_GRACE_SECONDS = 10;
+
     private final ItemService itemService;
     private final BidService bidService;
     private final UserService userService;
@@ -58,7 +60,7 @@ public class AuctionService {
         }
         requireItemOwner(seller, item);
         validateAuctionTimeRange(startTime, endTime);
-        requireFutureStartTime(startTime);
+        startTime = normalizeCreateAuctionStartTime(startTime);
         requireItemAvailableForNewAuction(itemId);
 
         AuctionSchema schema = new AuctionSchema(
@@ -783,9 +785,11 @@ public class AuctionService {
         }
     }
 
-    private void requireFutureStartTime(LocalDateTime startTime) throws AuctionException {
-        if (startTime.isBefore(LocalDateTime.now())) {
+    private LocalDateTime normalizeCreateAuctionStartTime(LocalDateTime startTime) throws AuctionException {
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime.isBefore(now.minusSeconds(CREATE_AUCTION_START_GRACE_SECONDS))) {
             throw new AuctionException("Thoi gian bat dau phai o trong tuong lai");
         }
+        return startTime.isBefore(now) ? now : startTime;
     }
 }
