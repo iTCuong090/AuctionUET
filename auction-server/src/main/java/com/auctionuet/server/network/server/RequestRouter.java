@@ -11,14 +11,16 @@ public class RequestRouter {
     private final AuthController authController;
     private final ItemController itemController;
     private final AuctionController auctionController;
+    private final UserController userController;
 
     public RequestRouter(BidController bidController, WalletController walletController, AuthController authController, ItemController itemController,
-                         AuctionController auctionController) {
+                         AuctionController auctionController, UserController userController) {
         this.bidController = bidController;
         this.walletController = walletController;
         this.authController = authController;
         this.itemController = itemController;
         this.auctionController = auctionController;
+        this.userController = userController;
     }
 
     public Response route(Request request,ClientHandler clientHandler) {
@@ -48,6 +50,12 @@ public class RequestRouter {
 
             case LOGOUT:
                 return authController.handleLogout(request);
+
+            case GET_PROFILE:
+                return userController.handleGetProfile(request);
+
+            case UPDATE_PROFILE:
+                return userController.handleUpdateProfile(request);
 
             // ── Item Management ──
             case CREATE_ITEM:
