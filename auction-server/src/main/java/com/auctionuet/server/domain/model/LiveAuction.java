@@ -95,6 +95,8 @@ public class LiveAuction {
                 throw new InvalidBidException("Người bán không được tự đấu giá");
             }
 
+            AutoBidConfig previousLeaderAutoBid = getActiveAutoBidConfig(currentWinnerId);
+
             // 2. Update state
             BidRecord record = new BidRecord(
                     bidder.getId(), bidder.getUsername(), amount, LocalDateTime.now(), BidType.MANUAL);
@@ -108,8 +110,7 @@ public class LiveAuction {
             // Notify observers
             notifyObservers(record);
 
-            // Trigger Auto-Bid resolution — THÊM MỚI
-            resolveAutoBids(onAutoBidPlaced);
+            resolveAutoBidAfterManualBid(previousLeaderAutoBid, bidder.getId(), onAutoBidPlaced);
 
             return record;
         } finally {
@@ -142,12 +143,14 @@ public class LiveAuction {
     public void addAutoBid(AutoBidConfig config, Consumer<BidRecord> onAutoBidPlaced) {
         bidLock.lock();
         try {
+            if (!config.getBidderId().equals(currentWinnerId)) {
+                throw new IllegalArgumentException("chỉ người dẫn đầu mới được bật Autobid");
+            }
             // Remove existing config for same bidder (update scenario)
             autoBidQueue.removeIf(c -> c.getBidderId().equals(config.getBidderId()));
             autoBidQueue.add(config);
             // Also store in map for quick lookup
             autoBids.put(config.getBidderId(), config);
-            resolveAutoBids(onAutoBidPlaced);
         } finally {
             bidLock.unlock();
         }
@@ -163,35 +166,36 @@ public class LiveAuction {
         }
     }
 
-    /**
-     * Xử lý auto-bid theo kiểu proxy:
-     * người có trần cao nhất thắng, hòa trần thì người bật sớm hơn thắng.
-     * Giá thắng được đẩy tới trần cao thứ hai cộng increment của người thắng.
-     */
-    public void resolveAutoBids(Consumer<BidRecord> onAutoBidPlaced) {
+    private void resolveAutoBidAfterManualBid(
+            AutoBidConfig previousLeaderAutoBid,
+            String manualBidderId,
+            Consumer<BidRecord> onAutoBidPlaced) {
         // KHÔNG CẦN lock vì hàm này luôn được gọi khi đã giữ bidLock.
-        deactivateAutoBidsBelowCurrentPrice();
-
-        AutoBidConfig winningConfig = findBestAutoBidConfig();
-        if (winningConfig == null) {
+        if (previousLeaderAutoBid == null || !previousLeaderAutoBid.isActive()) {
             return;
         }
 
-        double newBidAmount = calculateProxyAutoBidAmount(winningConfig);
-        if (!canApplyAutoBid(winningConfig, newBidAmount)) {
-            deactivateExhaustedAutoBids();
+        double currentPrice = getCurrentPrice();
+        if (currentPrice > previousLeaderAutoBid.getMaxBid()) {
+            deactivateAutoBid(previousLeaderAutoBid);
+            return;
+        }
+        if (previousLeaderAutoBid.getBidderId().equals(manualBidderId)) {
             return;
         }
 
+        double newBidAmount = Math.min(
+                previousLeaderAutoBid.getMaxBid(),
+                currentPrice + previousLeaderAutoBid.getIncrement());
         BidRecord autoRecord = new BidRecord(
-                winningConfig.getBidderId(),
-                winningConfig.getBidderName(),
+                previousLeaderAutoBid.getBidderId(),
+                previousLeaderAutoBid.getBidderName(),
                 newBidAmount,
                 LocalDateTime.now(),
                 BidType.AUTO
         );
         this.currentHighestBid = newBidAmount;
-        this.currentWinnerId = winningConfig.getBidderId();
+        this.currentWinnerId = previousLeaderAutoBid.getBidderId();
         this.bidHistory.add(autoRecord);
 
         // Gửi callback để lưu vào DB.
@@ -202,108 +206,20 @@ public class LiveAuction {
         // Anti-sniping cho auto-bid.
         extendIfSniping();
 
-        deactivateExhaustedAutoBids();
         notifyObservers(autoRecord);
     }
 
-    private AutoBidConfig findBestAutoBidConfig() {
-        return autoBidQueue.stream()
-                .filter(AutoBidConfig::isActive)
-                .min(AutoBidConfig::comparePriority)
-                .orElse(null);
+    private AutoBidConfig getActiveAutoBidConfig(String bidderId) {
+        if (bidderId == null) {
+            return null;
+        }
+        AutoBidConfig config = autoBids.get(bidderId);
+        return config != null && config.isActive() ? config : null;
     }
 
-    private AutoBidConfig findBestCompetingAutoBidConfig(String bidderId) {
-        return autoBidQueue.stream()
-                .filter(AutoBidConfig::isActive)
-                .filter(config -> !config.getBidderId().equals(bidderId))
-                .min(AutoBidConfig::comparePriority)
-                .orElse(null);
-    }
-
-    private double calculateProxyAutoBidAmount(AutoBidConfig winningConfig) {
-        AutoBidConfig competingConfig = findBestCompetingAutoBidConfig(winningConfig.getBidderId());
-        if (winningConfig.getBidderId().equals(currentWinnerId)) {
-            if (competingConfig == null) {
-                return getCurrentPrice();
-            }
-            return Math.min(
-                    winningConfig.getMaxBid(),
-                    competingConfig.getMaxBid() + winningConfig.getIncrement());
-        }
-
-        double priceToBeat = getCurrentPrice();
-        if (competingConfig != null) {
-            priceToBeat = Math.max(priceToBeat, competingConfig.getMaxBid());
-            return Math.min(winningConfig.getMaxBid(), priceToBeat + winningConfig.getIncrement());
-        }
-
-        double nextBidAmount = priceToBeat + winningConfig.getIncrement();
-        if (nextBidAmount <= winningConfig.getMaxBid()) {
-            return nextBidAmount;
-        }
-        return currentWinnerId == null ? getCurrentPrice() : winningConfig.getMaxBid();
-    }
-
-    private boolean canApplyAutoBid(AutoBidConfig winningConfig, double newBidAmount) {
-        double currentPrice = getCurrentPrice();
-        if (newBidAmount > currentPrice) {
-            return true;
-        }
-        if (Double.compare(newBidAmount, currentPrice) != 0) {
-            return false;
-        }
-        return canClaimCurrentPriceTie(winningConfig);
-    }
-
-    private boolean canClaimCurrentPriceTie(AutoBidConfig winningConfig) {
-        if (currentWinnerId == null
-                || winningConfig.getBidderId().equals(currentWinnerId)
-                || Double.compare(winningConfig.getMaxBid(), getCurrentPrice()) != 0) {
-            return false;
-        }
-
-        BidRecord currentWinningBid = findCurrentWinningBidRecord();
-        return currentWinningBid != null
-                && !winningConfig.getRegisteredAt().isAfter(currentWinningBid.getTimestamp());
-    }
-
-    private BidRecord findCurrentWinningBidRecord() {
-        BidRecord latestWinningBid = null;
-        for (BidRecord record : bidHistory) {
-            if (!record.getBidderId().equals(currentWinnerId)
-                    || Double.compare(record.getAmount(), getCurrentPrice()) != 0) {
-                continue;
-            }
-            if (latestWinningBid == null
-                    || record.getTimestamp().isAfter(latestWinningBid.getTimestamp())) {
-                latestWinningBid = record;
-            }
-        }
-        return latestWinningBid;
-    }
-
-    private void deactivateAutoBidsBelowCurrentPrice() {
-        deactivateAutoBids(false);
-    }
-
-    private void deactivateExhaustedAutoBids() {
-        deactivateAutoBids(true);
-    }
-
-    private void deactivateAutoBids(boolean includeCurrentPriceTies) {
-        List<AutoBidConfig> exhaustedConfigs = autoBidQueue.stream()
-                .filter(AutoBidConfig::isActive)
-                .filter(config -> !config.getBidderId().equals(currentWinnerId))
-                .filter(config -> includeCurrentPriceTies
-                        ? config.getMaxBid() <= getCurrentPrice()
-                        : config.getMaxBid() < getCurrentPrice())
-                .toList();
-
-        for (AutoBidConfig config : exhaustedConfigs) {
-            config.markInactive();
-            autoBidQueue.remove(config);
-        }
+    private void deactivateAutoBid(AutoBidConfig config) {
+        config.markInactive();
+        autoBidQueue.remove(config);
     }
 
     // === DEPOSIT TRACKING ===
