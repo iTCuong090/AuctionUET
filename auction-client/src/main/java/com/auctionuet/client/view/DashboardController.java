@@ -2,12 +2,15 @@ package com.auctionuet.client.view;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+
+import java.util.function.Consumer;
 
 public class DashboardController {
 
@@ -17,20 +20,13 @@ public class DashboardController {
     // Các nút trên Sidebar
     @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnPayments, btnProfile, btnLogout, btnWallet;
     @FXML private Button btnToggleTheme;
+    private final Consumer<UserDTO> userChangeListener = user ->
+            Platform.runLater(() -> renderUserHeader(user));
 
     @FXML
     public void initialize() {
-        // 1. Lấy thông tin User từ Session mới
-        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
-
-        if (currentUser != null) {
-            String name = currentUser.getUsername();
-            // Lấy tên của Role từ Enum
-            String roleName = currentUser.getRole() != null ? currentUser.getRole().name() : "UNKNOWN";
-            userNameLabel.setText("◎ " + name + " (" + roleName + ")");
-        } else {
-            userNameLabel.setText("◎ Guest");
-        }
+        ClientSession.getInstance().addUserChangeListener(userChangeListener);
+        renderUserHeader(ClientSession.getInstance().getCurrentUser());
 
         // 2. Phân quyền: Ẩn các nút dựa trên Role (Test D.1, D.2)
         setupPermissions();
@@ -86,6 +82,16 @@ public class DashboardController {
         // 5. Cập nhật icon nút toggle theme theo trạng thái hiện tại
         if (btnToggleTheme != null) {
             btnToggleTheme.setText(ThemeManager.getInstance().isDarkMode() ? "T" : "S");
+        }
+    }
+
+    private void renderUserHeader(UserDTO currentUser) {
+        if (currentUser != null) {
+            String name = currentUser.getUsername();
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().name() : "UNKNOWN";
+            userNameLabel.setText("◎ " + name + " (" + roleName + ")");
+        } else {
+            userNameLabel.setText("◎ Guest");
         }
     }
 
