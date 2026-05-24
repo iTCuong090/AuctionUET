@@ -13,6 +13,7 @@ import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AuthController;
 import com.auctionuet.server.network.controller.BidController;
 import com.auctionuet.server.network.controller.ItemController;
+import com.auctionuet.server.network.controller.UserController;
 import com.auctionuet.server.network.controller.WalletController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
@@ -105,7 +106,16 @@ public class AuctionServer {
             BidController bidController = new BidController(bidService);
             AppLogger.logInit("BidController", null);
 
-            this.router = new RequestRouter(bidController, walletController, authController, itemController, auctionController);
+            UserController userController = new UserController(userService);
+            AppLogger.logInit("UserController", null);
+
+            this.router = new RequestRouter(
+                    bidController,
+                    walletController,
+                    authController,
+                    itemController,
+                    auctionController,
+                    userController);
             AppLogger.logInit("RequestRouter", "Ready");
 
             isRunning = true;
