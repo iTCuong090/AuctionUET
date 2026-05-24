@@ -18,6 +18,7 @@ import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -48,8 +49,9 @@ public class BidService {
         DepositHoldResult deposit = ensureDepositFrozen(auctionId, liveAuction, bidder, depositAmount);
 
         BidRecord record;
+        List<BidRecord> autoRecords = new ArrayList<>();
         try {
-            record = liveAuction.placeBid(bidder, amount, autoRecord -> saveAutoBidRecord(auctionId, autoRecord));
+            record = liveAuction.placeBid(bidder, amount, autoRecords::add);
         } catch (Exception e) {
             rollbackDepositIfNeeded(auctionId, liveAuction, bidder, depositAmount, deposit);
             throw e;
@@ -59,6 +61,9 @@ public class BidService {
 
         BidSchema bidSchema = toBidSchema(auctionId, record);
         bidDAO.save(bidSchema);
+        for (BidRecord autoRecord : autoRecords) {
+            saveAutoBidRecord(auctionId, autoRecord);
+        }
 
         return toBidDTO(record, auctionId);
     }
@@ -93,6 +98,9 @@ public class BidService {
 
     public synchronized void setAutoBid(User bidder, String auctionId, double maxBid, double increment) {
         LiveAuction liveAuction = requireLiveAuction(auctionId, "Auction not found");
+        if (!bidder.getId().equals(liveAuction.getCurrentWinnerId())) {
+            throw new IllegalArgumentException("chỉ người dẫn đầu mới được bật Autobid");
+        }
         validateAutoBidParams(maxBid, increment, liveAuction.getCurrentPrice());
         ItemSchema itemSchema = requireItemSchema(liveAuction.getItemId());
         double depositAmount = calculateDepositAmount(itemSchema);
