@@ -51,24 +51,43 @@
         </VBox>
 
         <HBox spacing="20.0">
-            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                 <children>
                     <Label styleClass="text-secondary" text="Thời gian bắt đầu (*)" />
-                    <HBox spacing="5.0">
-                        <DatePicker fx:id="startDatePicker" prefWidth="130.0" promptText="Ngày" styleClass="date-picker" />
-                        <ComboBox fx:id="startHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
-                        <ComboBox fx:id="startMinuteCombo" prefWidth="80.0" promptText="Phút" styleClass="combo-box" />
+                    <HBox spacing="8.0">
+                        <RadioButton fx:id="startNowRadio" mnemonicParsing="false" text="Ngay bây giờ" />
+                        <RadioButton fx:id="startInFiveRadio" mnemonicParsing="false" text="Sau 5 phút" />
+                        <RadioButton fx:id="startCustomRadio" mnemonicParsing="false" text="Tùy chỉnh" />
                     </HBox>
+                    <VBox fx:id="startCustomBox" managed="false" spacing="6.0" visible="false">
+                        <children>
+                            <DatePicker fx:id="startDatePicker" prefWidth="150.0" promptText="Ngày" styleClass="date-picker" />
+                            <HBox spacing="8.0">
+                                <Spinner fx:id="startHourSpinner" editable="true" prefWidth="82.0" />
+                                <Spinner fx:id="startMinuteSpinner" editable="true" prefWidth="82.0" />
+                            </HBox>
+                        </children>
+                    </VBox>
                 </children>
             </VBox>
-            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                 <children>
                     <Label styleClass="text-secondary" text="Thời gian kết thúc (*)" />
-                    <HBox spacing="5.0">
-                        <DatePicker fx:id="endDatePicker" prefWidth="130.0" promptText="Ngày" styleClass="date-picker" />
-                        <ComboBox fx:id="endHourCombo" prefWidth="70.0" promptText="Giờ" styleClass="combo-box" />
-                        <ComboBox fx:id="endMinuteCombo" prefWidth="80.0" promptText="Phút" styleClass="combo-box" />
+                    <HBox spacing="8.0">
+                        <RadioButton fx:id="endOneHourRadio" mnemonicParsing="false" text="Sau 1 giờ" />
+                        <RadioButton fx:id="endSixHoursRadio" mnemonicParsing="false" text="Sau 6 giờ" />
+                        <RadioButton fx:id="endOneDayRadio" mnemonicParsing="false" text="Sau 1 ngày" />
+                        <RadioButton fx:id="endCustomRadio" mnemonicParsing="false" text="Tùy chỉnh" />
                     </HBox>
+                    <VBox fx:id="endCustomBox" managed="false" spacing="6.0" visible="false">
+                        <children>
+                            <DatePicker fx:id="endDatePicker" prefWidth="150.0" promptText="Ngày" styleClass="date-picker" />
+                            <HBox spacing="8.0">
+                                <Spinner fx:id="endHourSpinner" editable="true" prefWidth="82.0" />
+                                <Spinner fx:id="endMinuteSpinner" editable="true" prefWidth="82.0" />
+                            </HBox>
+                        </children>
+                    </VBox>
                 </children>
             </VBox>
         </HBox>
