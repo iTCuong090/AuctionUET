@@ -97,4 +97,16 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.updateProfile(schema.getId(), null, "password123", "123"));
     }
+
+    @Test
+    void testUpdatePasswordClearsRequiredChangeFlag() {
+        authService.register("forcedpass", "password123", "forced@uet.vn", UserRole.BIDDER);
+        UserSchema schema = userDAO.findByUsername("forcedpass");
+        schema.setMustChangePassword(true);
+        userDAO.update(schema);
+
+        userService.updateProfile(schema.getId(), null, "password123", "newpass123");
+
+        assertEquals(false, userDAO.findById(schema.getId()).isMustChangePassword());
+    }
 }

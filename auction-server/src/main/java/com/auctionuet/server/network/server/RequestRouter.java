@@ -1,6 +1,8 @@
 package com.auctionuet.server.network.server;
 
 import com.auctionuet.server.domain.manager.SessionManager;
+import com.auctionuet.server.domain.model.User;
+import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.network.controller.*;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
@@ -12,15 +14,20 @@ public class RequestRouter {
     private final ItemController itemController;
     private final AuctionController auctionController;
     private final UserController userController;
+    private final AdminController adminController;
+    private final UserService userService;
 
     public RequestRouter(BidController bidController, WalletController walletController, AuthController authController, ItemController itemController,
-                         AuctionController auctionController, UserController userController) {
+                         AuctionController auctionController, UserController userController,
+                         AdminController adminController, UserService userService) {
         this.bidController = bidController;
         this.walletController = walletController;
         this.authController = authController;
         this.itemController = itemController;
         this.auctionController = auctionController;
         this.userController = userController;
+        this.adminController = adminController;
+        this.userService = userService;
     }
 
     public Response route(Request request,ClientHandler clientHandler) {
@@ -38,6 +45,7 @@ public class RequestRouter {
 
     private Response internalRoute(Request request,ClientHandler clientHandler) throws Exception {
         String action = request.getAction().name();
+        requirePasswordChangedForProtectedAction(request);
 
         switch (request.getAction()) {
 
@@ -113,6 +121,11 @@ public class RequestRouter {
                 return auctionController.handlePayAuction(request);
             case GET_MY_PENDING_PAYMENTS:
                 return auctionController.handleGetMyPendingPayments(request);
+            // ── Admin ──
+            case GET_ALL_USERS:
+                return adminController.handleGetAllUsers(request);
+            case UPDATE_USER_STATUS:
+                return adminController.handleUpdateUserStatus(request);
             // ── Utils ──
             case PING:
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
@@ -122,6 +135,23 @@ public class RequestRouter {
 
             default:
                 return Response.error("Unknown action: " + action);
+        }
+    }
+
+    private void requirePasswordChangedForProtectedAction(Request request) {
+        switch (request.getAction()) {
+            case LOGIN, REGISTER, LOGOUT, PING, GET_PROFILE, UPDATE_PROFILE:
+                return;
+            default:
+                break;
+        }
+
+        if (request.getToken() == null || request.getToken().isBlank()) {
+            return;
+        }
+        User user = SessionManager.getInstance().validateToken(request.getToken());
+        if (userService.mustChangePassword(user.getId())) {
+            throw new IllegalArgumentException("Bạn phải đổi mật khẩu trước khi tiếp tục");
         }
     }
 }

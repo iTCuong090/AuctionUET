@@ -83,7 +83,7 @@
                         </VBox>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button mnemonicParsing="false" onAction="#handleTopUp" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 16px;" text="Nạp thêm tiền" />
+                                <Button fx:id="btnTopUp" mnemonicParsing="false" onAction="#handleTopUp" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 16px;" text="Nạp thêm tiền" />
                             </children>
                         </HBox>
                     </children>

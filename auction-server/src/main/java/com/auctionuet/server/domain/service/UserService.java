@@ -50,6 +50,10 @@ public class UserService {
         return schema;
     }
 
+    public boolean mustChangePassword(String userId) {
+        return getUserSchemaById(userId).isMustChangePassword();
+    }
+
     public User toDomainUser(UserSchema schema) {
         if (schema == null) {
             return null;
@@ -100,6 +104,7 @@ public class UserService {
             String salt = PasswordUtils.generateSalt();
             schema.setPasswordSalt(salt);
             schema.setHashedPassword(PasswordUtils.hash(newPassword, salt));
+            schema.setMustChangePassword(false);
         }
 
         userDAO.update(schema);

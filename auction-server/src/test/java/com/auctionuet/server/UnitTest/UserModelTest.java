@@ -47,6 +47,7 @@ public class UserModelTest {
         assertTrue(admin.hasPermission(Permission.GET_PROFILE));
         assertTrue(admin.hasPermission(Permission.UPDATE_PROFILE));
         assertTrue(admin.hasPermission(Permission.VIEW_BID_HISTORY));
+        assertTrue(admin.hasPermission(Permission.UPDATE_USER_STATUS));
 
         assertFalse(admin.hasPermission(Permission.PLACE_BID));
         assertFalse(admin.hasPermission(Permission.CREATE_AUCTION));
