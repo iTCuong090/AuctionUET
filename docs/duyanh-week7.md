@@ -683,3 +683,16 @@ Sau các thay đổi này, hệ thống có các hành vi chính:
 - Header tên người dùng cập nhật sau khi đổi username.
 - Socket có heartbeat và có thể tự reconnect nếu mất kết nối tạm thời.
 - Chỉ yêu cầu đăng nhập lại khi server xác nhận token không còn hợp lệ.
+
+## 8. Admin đợt 1: tài khoản hệ thống và quản lý user
+
+Hệ thống bổ sung một phạm vi quản trị an toàn, chưa thay đổi role hoặc can thiệp phiên đấu giá:
+
+- Khi server khởi động mà chưa có tài khoản `ADMIN`, server tự tạo tài khoản `admin` với mật khẩu mặc định `admin@123`.
+- Mật khẩu mặc định được salt/hash như các tài khoản khác; server đánh dấu `mustChangePassword = true`.
+- Admin đăng nhập lần đầu chỉ được mở Profile để đổi mật khẩu hoặc đăng xuất. Sau khi đổi password thành công, cờ bắt buộc được xóa và menu quản trị mới khả dụng.
+- Tài khoản có thêm trạng thái `ACTIVE` hoặc `BLOCKED`. User cũ không có trường trạng thái được hiểu là `ACTIVE`, và không có cờ bắt đổi mật khẩu được hiểu là `false`.
+- Màn `Quản lý người dùng` cho Admin tìm username, lọc theo role/trạng thái, khóa hoặc mở khóa tài khoản `BIDDER` và `SELLER`.
+- Khi khóa tài khoản, server hủy ngay token đang hoạt động của user đó và chặn đăng nhập mới.
+- Không xóa cứng user và không cho khóa tài khoản Admin, nhờ đó lịch sử vật phẩm, bid, phiên đấu giá và giao dịch không mất tham chiếu.
+- `UPDATE_ROLE` và `DELETE_USER` không được route trong đợt này; danh sách trả về client dùng DTO riêng và không chứa hash hay salt.
