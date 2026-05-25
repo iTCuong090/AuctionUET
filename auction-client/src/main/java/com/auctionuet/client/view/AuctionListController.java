@@ -43,8 +43,13 @@ public class AuctionListController {
     public void initialize() {
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
-        btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
-        updateMyAuctionsButtonStyle();
+        boolean seller = ClientSession.getInstance().isSeller();
+        btnMyAuctions.setVisible(seller);
+        btnMyAuctions.setManaged(seller);
+        if (seller) {
+            btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
+            updateMyAuctionsButtonStyle();
+        }
         setupStableGridWidth();
 
         loadAuctionsFromServer();
@@ -159,25 +164,9 @@ public class AuctionListController {
         if (auction == null || currentUserId == null || currentUserId.isBlank()) {
             return false;
         }
-
-        if (ClientSession.getInstance().isSeller()) {
-            return auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
-        }
-
-        if (!ClientSession.getInstance().isBidder()) {
-            return false;
-        }
-
-        AuctionStatus status = auction.getStatus();
-        boolean isWinner = auction.getWinner() != null && currentUserId.equals(auction.getWinner().getId());
-        boolean isCurrentHighestBidder = auction.getCurrentHighestBid() != null
-                && auction.getCurrentHighestBid().getBidder() != null
-                && currentUserId.equals(auction.getCurrentHighestBid().getBidder().getId());
-
-        boolean isRunningParticipant = status == AuctionStatus.RUNNING
-                && (auction.isCurrentUserDeposited() || isCurrentHighestBidder);
-        boolean isWaitingPaymentWinner = status == AuctionStatus.WAITING_PAYMENT && isWinner;
-        return isRunningParticipant || isWaitingPaymentWinner;
+        return ClientSession.getInstance().isSeller()
+                && auction.getSeller() != null
+                && currentUserId.equals(auction.getSeller().getId());
     }
 
     private String currentUserId() {

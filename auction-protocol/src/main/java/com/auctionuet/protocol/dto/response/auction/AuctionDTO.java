@@ -26,6 +26,9 @@ public class AuctionDTO implements ValidatableDTO {
     private final int antiSnipingExtensionSeconds;
     private final double depositAmount;
     private final boolean currentUserDeposited;
+    private final String canceledReason;
+    private final String canceledByUserId;
+    private final LocalDateTime canceledAt;
 
     public AuctionDTO(
             String id,
@@ -108,6 +111,32 @@ public class AuctionDTO implements ValidatableDTO {
             int antiSnipingExtensionSeconds,
             double depositAmount,
             boolean currentUserDeposited) {
+        this(id, item, seller, winner, currentHighestBid, currentPrice, title, description,
+                startTime, endTime, paymentDeadlineAt, paidAt, status, antiSnipingWindowSeconds,
+                antiSnipingExtensionSeconds, depositAmount, currentUserDeposited, null, null, null);
+    }
+
+    public AuctionDTO(
+            String id,
+            ItemDTO item,
+            UserDTO seller,
+            UserDTO winner,
+            BidDTO currentHighestBid,
+            double currentPrice,
+            String title,
+            String description,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            LocalDateTime paymentDeadlineAt,
+            LocalDateTime paidAt,
+            AuctionStatus status,
+            int antiSnipingWindowSeconds,
+            int antiSnipingExtensionSeconds,
+            double depositAmount,
+            boolean currentUserDeposited,
+            String canceledReason,
+            String canceledByUserId,
+            LocalDateTime canceledAt) {
         this.id = id;
         this.item = item;
         this.seller = seller;
@@ -125,6 +154,9 @@ public class AuctionDTO implements ValidatableDTO {
         this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
         this.depositAmount = depositAmount;
         this.currentUserDeposited = currentUserDeposited;
+        this.canceledReason = canceledReason;
+        this.canceledByUserId = canceledByUserId;
+        this.canceledAt = canceledAt;
         validate();
     }
 
@@ -182,4 +214,7 @@ public class AuctionDTO implements ValidatableDTO {
     public int getAntiSnipingExtensionSeconds() { return antiSnipingExtensionSeconds; }
     public double getDepositAmount() { return depositAmount; }
     public boolean isCurrentUserDeposited() { return currentUserDeposited; }
+    public String getCanceledReason() { return canceledReason; }
+    public String getCanceledByUserId() { return canceledByUserId; }
+    public LocalDateTime getCanceledAt() { return canceledAt; }
 }

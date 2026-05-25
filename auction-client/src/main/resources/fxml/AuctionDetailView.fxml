@@ -82,6 +82,7 @@
                               </Label>
                            </children>
                         </HBox>
+                        <Label fx:id="cancelReasonLabel" managed="false" styleClass="error-label" text="" visible="false" wrapText="true" />
                      </children>
                   </VBox>
                </children>
@@ -106,7 +107,7 @@
                         <Label styleClass="text-accent" text="👤 Lịch sử phiên đấu giá">
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
-                        <TableView fx:id="bidHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;">
+                        <TableView fx:id="bidHistoryTable" prefHeight="300.0">
                            <columns>
                               <TableColumn fx:id="bidderCol" prefWidth="120.0" text="Người đấu" />
                               <TableColumn fx:id="amountCol" prefWidth="120.0" text="Giá ra (VNĐ)" />
@@ -142,6 +143,14 @@
                   <Label fx:id="paymentInfoLabel" styleClass="text-primary" text="Thông tin thanh toán" />
                   <Button fx:id="btnPayAuction" mnemonicParsing="false" prefHeight="42.0" prefWidth="180.0" style="-fx-background-color: #22c55e; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;" text="Thanh toán" />
                   <Label fx:id="paymentErrorLabel" styleClass="error-label" text="" />
+               </children>
+            </VBox>
+
+            <VBox fx:id="adminCancelArea" managed="false" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #e94560; -fx-border-radius: 15;" visible="false">
+               <children>
+                  <Label styleClass="text-primary" text="Kiểm duyệt phiên đấu giá" />
+                  <Button fx:id="btnAdminCancelAuction" mnemonicParsing="false" onAction="#handleAdminCancelAuction" prefHeight="42.0" prefWidth="180.0" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;" text="Hủy phiên" />
+                  <Label fx:id="adminCancelErrorLabel" styleClass="error-label" text="" wrapText="true" />
                </children>
             </VBox>
          </children>

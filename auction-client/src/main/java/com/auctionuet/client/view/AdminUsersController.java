@@ -46,6 +46,7 @@ public class AdminUsersController {
             private final Button actionButton = new Button();
 
             {
+                actionButton.getStyleClass().add("table-action-button");
                 actionButton.setOnAction(event -> {
                     AdminUserDTO user = getTableView().getItems().get(getIndex());
                     AccountStatus nextStatus = user.getStatus() == AccountStatus.ACTIVE

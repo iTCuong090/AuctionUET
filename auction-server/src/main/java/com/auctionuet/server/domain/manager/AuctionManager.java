@@ -165,6 +165,12 @@ public class AuctionManager implements AuctionObserver {
         liveAuctions.remove(auctionId);
     }
 
+    public void notifyAuctionCanceled(String auctionId, String reason, LocalDateTime canceledAt) {
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onAuctionCanceled(auctionId, reason, canceledAt);
+        }
+    }
+
     public void extendAuction(String auctionId, LocalDateTime newEndTime) {
         LiveAuction auction = liveAuctions.get(auctionId);
         if (auction != null) {
