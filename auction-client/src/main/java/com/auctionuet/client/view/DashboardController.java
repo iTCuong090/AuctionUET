@@ -19,7 +19,7 @@ public class DashboardController {
 
     // Các nút trên Sidebar
     @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnPayments, btnProfile, btnLogout, btnWallet;
-    @FXML private Button btnAdminUsers;
+    @FXML private Button btnAdminUsers, btnAdminItems;
     @FXML private Button btnToggleTheme;
     private final Consumer<UserDTO> userChangeListener = user ->
             Platform.runLater(() -> renderUserHeader(user));
@@ -78,6 +78,12 @@ public class DashboardController {
                 setActiveButton(btnAdminUsers);
             });
         }
+        if (btnAdminItems != null) {
+            btnAdminItems.setOnAction(e -> {
+                loadView("/fxml/AdminItemsView.fxml");
+                setActiveButton(btnAdminItems);
+            });
+        }
 
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
@@ -118,6 +124,7 @@ public class DashboardController {
             hideButton(btnPayments);
             hideButton(btnWallet);
             hideButton(btnAdminUsers);
+            hideButton(btnAdminItems);
             return;
         }
 
@@ -130,8 +137,10 @@ public class DashboardController {
         }
         if (!isAdmin) {
             hideButton(btnAdminUsers);
+            hideButton(btnAdminItems);
         } else {
             hideButton(btnMyItems);
+            hideButton(btnWallet);
         }
         // Nếu là Seller -> Các nút vẫn hiển thị bình thường (do FXML mặc định là visible)
     }
@@ -171,7 +180,7 @@ public class DashboardController {
         if (btnWallet != null) btnWallet.getStyleClass().remove("active");
         if (btnProfile != null) btnProfile.getStyleClass().remove("active");
         if (btnAdminUsers != null) btnAdminUsers.getStyleClass().remove("active");
-
+        if (btnAdminItems != null) btnAdminItems.getStyleClass().remove("active");
         // Khoác áo "active" cho cái nút vừa được bấm
         if (clickedButton != null && !clickedButton.getStyleClass().contains("active")) {
             clickedButton.getStyleClass().add("active");
