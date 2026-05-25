@@ -1,7 +1,9 @@
 package com.auctionuet.server.domain.service;
 
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.admin.ItemApprovalSettingsDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
 import com.auctionuet.protocol.enums.Permission;
@@ -10,6 +12,7 @@ import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuctionException;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
+import com.auctionuet.server.persistence.dao.SystemSettingDAO;
 import com.auctionuet.server.persistence.schema.AuctionSchema;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.IdGenerator;
@@ -19,6 +22,7 @@ import java.time.Year;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 public class ItemService {
@@ -26,18 +30,25 @@ public class ItemService {
     private final ItemDAO itemDAO;
     private final UserService userService;
     private final AuctionDAO auctionDAO;
+    private final SystemSettingDAO systemSettingDAO;
 
     public ItemService(ItemDAO itemDAO, UserService userService) {
-        this(itemDAO, userService, new AuctionDAO());
+        this(itemDAO, userService, new AuctionDAO(), new SystemSettingDAO());
     }
 
     public ItemService(ItemDAO itemDAO, UserService userService, AuctionDAO auctionDAO) {
+        this(itemDAO, userService, auctionDAO, new SystemSettingDAO());
+    }
+
+    public ItemService(ItemDAO itemDAO, UserService userService, AuctionDAO auctionDAO,
+            SystemSettingDAO systemSettingDAO) {
         this.itemDAO = itemDAO;
         this.userService = userService;
         this.auctionDAO = auctionDAO;
+        this.systemSettingDAO = systemSettingDAO;
     }
 
-    public ItemDTO createItem(
+    public synchronized ItemDTO createItem(
             User seller,
             String name,
             String description,
@@ -60,8 +71,64 @@ public class ItemService {
                 extraFields,
                 seller.getId()
         );
+        schema.setApprovalStatus(systemSettingDAO.isItemApprovalEnabled()
+                ? ItemApprovalStatus.PENDING
+                : ItemApprovalStatus.APPROVED);
         itemDAO.save(schema);
         return toItemDTO(schema, userService.toDTO(seller));
+    }
+
+    public ItemApprovalSettingsDTO getApprovalSettings() {
+        return new ItemApprovalSettingsDTO(systemSettingDAO.isItemApprovalEnabled());
+    }
+
+    public synchronized ItemApprovalSettingsDTO updateApprovalSettings(boolean enabled) {
+        boolean wasEnabled = systemSettingDAO.isItemApprovalEnabled();
+        systemSettingDAO.setItemApprovalEnabled(enabled);
+        if (wasEnabled && !enabled) {
+            for (ItemSchema item : itemDAO.findAll()) {
+                if (!item.isArchived() && item.getApprovalStatus() == ItemApprovalStatus.PENDING) {
+                    item.setApprovalStatus(ItemApprovalStatus.APPROVED);
+                    itemDAO.update(item);
+                }
+            }
+        }
+        return new ItemApprovalSettingsDTO(enabled);
+    }
+
+    public List<ItemDTO> getItemsForApproval() {
+        return itemDAO.findAll().stream()
+                .filter(item -> !item.isArchived())
+                .sorted(Comparator
+                        .comparingInt((ItemSchema item) ->
+                                item.getApprovalStatus() == ItemApprovalStatus.PENDING ? 0 : 1)
+                        .thenComparing(ItemSchema::getCreatedAt,
+                                Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toItemDTO)
+                .toList();
+    }
+
+    public synchronized ItemDTO updateApprovalStatus(String itemId, ItemApprovalStatus status)
+            throws AuctionException {
+        if (status != ItemApprovalStatus.APPROVED && status != ItemApprovalStatus.REJECTED) {
+            throw new AuctionException("Trang thai duyet khong hop le");
+        }
+        ItemSchema item = requireItemSchema(itemId);
+        if (item.isArchived()) {
+            throw new AuctionException("Item da bi go khoi danh sach");
+        }
+        if (item.getApprovalStatus() != ItemApprovalStatus.PENDING) {
+            throw new AuctionException("Chi co the xu ly item dang cho duyet");
+        }
+        item.setApprovalStatus(status);
+        itemDAO.update(item);
+        return toItemDTO(item);
+    }
+
+    public void requireApprovedForAuction(ItemSchema item) throws AuctionException {
+        if (item.getApprovalStatus() != ItemApprovalStatus.APPROVED) {
+            throw new AuctionException("San pham chua duoc phe duyet de tao phien dau gia");
+        }
     }
 
     public List<ItemDTO> getItemsBySellerId(String sellerId) {
@@ -152,7 +219,9 @@ public class ItemService {
                 seller,
                 schema.getImageUrl(),
                 schema.getCondition(),
-                normalizedExtra
+                normalizedExtra,
+                schema.getApprovalStatus(),
+                schema.getCreatedAt()
         );
     }
 

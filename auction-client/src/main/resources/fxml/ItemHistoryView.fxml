@@ -59,7 +59,7 @@
                         <Label styleClass="text-accent" text="👤 Lịch sử vật phẩm">
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
-                        <TableView fx:id="auctionHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="auctionHistoryTable" prefHeight="300.0" VBox.vgrow="ALWAYS">
                            <columns>
                               <TableColumn fx:id="titleCol" prefWidth="170.0" text="Phiên" />
                               <TableColumn fx:id="priceCol" prefWidth="150.0" text="Giá (VNĐ)" />

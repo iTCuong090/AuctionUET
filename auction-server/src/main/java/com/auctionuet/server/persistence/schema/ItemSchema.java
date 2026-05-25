@@ -1,6 +1,7 @@
 package com.auctionuet.server.persistence.schema;
 
 import com.auctionuet.protocol.enums.ItemCondition;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import com.auctionuet.protocol.enums.ItemType;
 
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ public class ItemSchema extends BaseSchema {
     private int auctionCount;
     private boolean archived;
     private Map<String, Object> extraFields;
+    private ItemApprovalStatus approvalStatus;
 
     protected ItemSchema() {
     }
@@ -68,5 +70,11 @@ public class ItemSchema extends BaseSchema {
     public Map<String, Object> getExtraFields() { return extraFields; }
     public void setExtraFields(Map<String, Object> extraFields) {
         this.extraFields = extraFields != null ? new LinkedHashMap<>(extraFields) : new LinkedHashMap<>();
+    }
+    public ItemApprovalStatus getApprovalStatus() {
+        return approvalStatus != null ? approvalStatus : ItemApprovalStatus.APPROVED;
+    }
+    public void setApprovalStatus(ItemApprovalStatus approvalStatus) {
+        this.approvalStatus = approvalStatus != null ? approvalStatus : ItemApprovalStatus.APPROVED;
     }
 }
