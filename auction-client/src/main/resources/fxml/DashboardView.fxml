@@ -46,6 +46,7 @@
                     <Button fx:id="btnPayments" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="💳   Thanh toán" alignment="BASELINE_LEFT" />
                     <Button fx:id="btnWallet" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="💰   Ví tiền" alignment="BASELINE_LEFT" />
                     <Button fx:id="btnAdminUsers" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="👥   Quản lý người dùng" alignment="BASELINE_LEFT" />
+                    <Button fx:id="btnAdminItems" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-item" text="✓   Duyệt sản phẩm" alignment="BASELINE_LEFT" />
                 </children>
             </VBox>
 
