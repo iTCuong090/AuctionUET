@@ -124,10 +124,10 @@ class DomainModelTest {
 
         auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
         auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
-        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 980.0);
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 950.0);
 
         assertEquals("bid2", auction.getCurrentWinnerId());
-        assertEquals(980.0, auction.getCurrentHighestBid());
+        assertEquals(950.0, auction.getCurrentHighestBid());
         assertTrue(auction.getAutoBidConfig("bid1").isActive());
 
         auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
@@ -139,7 +139,24 @@ class DomainModelTest {
     }
 
     @Test
-    void testAutoBidProtectsLeaderWhenManualBidMatchesMaxBid() throws Exception {
+    void testAutoBidBecomesInactiveWhenFullIncrementWouldExceedMaxBid() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 980.0);
+
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
+
+        assertEquals("bid2", auction.getCurrentWinnerId());
+        assertEquals(980.0, auction.getCurrentHighestBid());
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(2, auction.getBidHistory().size());
+    }
+
+    @Test
+    void testAutoBidBecomesInactiveWhenManualBidMatchesMaxBid() throws Exception {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
@@ -152,10 +169,10 @@ class DomainModelTest {
 
         auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
 
-        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals("bid2", auction.getCurrentWinnerId());
         assertEquals(1000.0, auction.getCurrentHighestBid());
-        assertTrue(auction.getAutoBidConfig("bid1").isActive());
-        assertEquals(BidType.AUTO, auction.getBidHistory().get(2).getBidType());
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(2, auction.getBidHistory().size());
     }
 
     @Test
