@@ -18,7 +18,7 @@ Logic Autobid được chỉnh lại theo hướng:
 - Chỉ người đang dẫn đầu phiên đấu giá mới được bật Autobid.
 - Autobid không tự tạo bid ngay khi bật.
 - Autobid chỉ đóng vai trò bảo vệ người đang dẫn đầu khi có người khác đặt giá thủ công.
-- Nếu người đặt giá thủ công vượt quá mức tối đa của Autobid cũ, người đó trở thành người dẫn đầu mới.
+- Nếu Autobid không đủ trần để phản ứng thêm trọn một bước nhảy, người đặt giá thủ công trở thành người dẫn đầu mới.
 - Khi người dẫn đầu mới là B, B có quyền bật Autobid của chính B.
 
 Nói ngắn gọn: Autobid không phải là hệ thống cho nhiều người cùng đặt proxy bid cạnh tranh liên tục. Autobid hiện tại là cơ chế bảo vệ người đang dẫn đầu.
@@ -90,42 +90,42 @@ Ví dụ:
 - A bật Autobid tối đa 200, bước nhảy 10.
 - B đặt giá thủ công 150.
 
-Vì 150 chưa vượt quá `maxBid = 200` của A, hệ thống tự đặt một bid cho A:
+Hệ thống tính mức phản ứng tiếp theo của A:
 
 ```text
-autoBidAmount = min(maxBid, currentPrice + increment)
+autoBidAmount = currentPrice + increment
 ```
 
 Trong ví dụ này:
 
 ```text
-autoBidAmount = min(200, 150 + 10) = 160
+autoBidAmount = 150 + 10 = 160
 ```
 
-Kết quả:
+Vì `160 <= maxBid = 200`, kết quả:
 
 - Giá hiện tại là 160.
 - Người dẫn đầu quay lại là A.
 - Bid tự động được ghi với loại `BidType.AUTO`.
 - UI realtime được thông báo như một bid mới.
 
-### 1.7. Trường hợp bid thủ công vượt Autobid
+### 1.7. Trường hợp Autobid không còn đủ một bước nhảy
 
 Ví dụ:
 
 - A đang dẫn đầu giá 100.
 - A bật Autobid tối đa 200.
-- B đặt giá thủ công 250.
+- B đặt giá thủ công 195.
 
-Vì 250 lớn hơn `maxBid = 200`, Autobid của A không còn hiệu lực.
+Autobid của A cần phản ứng bằng `195 + 10 = 205`. Vì `205 > maxBid = 200`, Autobid của A không còn hiệu lực.
 
 Kết quả:
 
 - A bị tắt Autobid.
-- B trở thành người dẫn đầu.
+- B trở thành người dẫn đầu với giá 195.
 - Nếu B muốn bảo vệ vị trí dẫn đầu, B có thể bật Autobid của B.
 
-Đây là câu trả lời cho trường hợp: nếu B vượt A thì B được bật Autobid. Điều kiện là B đã trở thành người dẫn đầu sau bid đó.
+Quy tắc này cũng áp dụng khi B bid đúng bằng `maxBid`: A không được giành lại vị trí bằng một bid bằng giá B. Khi B đã trở thành người dẫn đầu, B có thể bật Autobid của B.
 
 ### 1.8. Lưu bid và thứ tự ghi dữ liệu
 
