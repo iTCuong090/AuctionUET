@@ -11,7 +11,7 @@ public class Admin extends User {
     @Override
     public boolean hasPermission(Permission action) {
         return switch (action) {
-            case MANAGE_USERS, GET_ALL_USERS, DELETE_USER, UPDATE_ROLE,
+            case MANAGE_USERS, GET_ALL_USERS, DELETE_USER, UPDATE_ROLE, UPDATE_USER_STATUS,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
                  GET_PROFILE, UPDATE_PROFILE,
                  GET_WALLET, GET_MY_TRANSACTIONS
