@@ -69,7 +69,7 @@
                     <font><Font name="System Bold" size="26.0" /></font>
                 </Label>
 
-                <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="card-bg" style="-fx-background-radius: 12; -fx-padding: 25; -fx-border-color: #0f3460; -fx-border-radius: 12;">
+                <HBox fx:id="balanceSummaryBox" alignment="CENTER_LEFT" spacing="20.0" styleClass="card-bg" style="-fx-background-radius: 12; -fx-padding: 25; -fx-border-color: #0f3460; -fx-border-radius: 12;">
                     <children>
                         <VBox spacing="8.0">
                             <children>
