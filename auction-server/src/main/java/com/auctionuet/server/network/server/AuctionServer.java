@@ -3,6 +3,7 @@ package com.auctionuet.server.network.server;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.manager.DataManager;
 import com.auctionuet.server.domain.service.AuctionService;
+import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.service.BidService;
 import com.auctionuet.server.domain.service.ItemService;
@@ -10,6 +11,7 @@ import com.auctionuet.server.domain.service.TransactionService;
 import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.domain.service.WalletService;
 import com.auctionuet.server.network.controller.AuctionController;
+import com.auctionuet.server.network.controller.AdminController;
 import com.auctionuet.server.network.controller.AuthController;
 import com.auctionuet.server.network.controller.BidController;
 import com.auctionuet.server.network.controller.ItemController;
@@ -58,6 +60,10 @@ public class AuctionServer {
 
             UserService userService = new UserService(userDAO);
             AppLogger.logInit("UserService", null);
+
+            AdminService adminService = new AdminService(userDAO);
+            adminService.ensureDefaultAdminExists();
+            AppLogger.logInit("AdminSeed", "Checked");
 
             AuthService authService = new AuthService(userDAO, userService);
             AppLogger.logInit("AuthService", null);
@@ -109,13 +115,18 @@ public class AuctionServer {
             UserController userController = new UserController(userService);
             AppLogger.logInit("UserController", null);
 
+            AdminController adminController = new AdminController(adminService);
+            AppLogger.logInit("AdminController", null);
+
             this.router = new RequestRouter(
                     bidController,
                     walletController,
                     authController,
                     itemController,
                     auctionController,
-                    userController);
+                    userController,
+                    adminController,
+                    userService);
             AppLogger.logInit("RequestRouter", "Ready");
 
             isRunning = true;
