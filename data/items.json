@@ -277,5 +277,101 @@
     "id": "130a7e88-6ed4-4ece-b308-d7d132ecf306",
     "createdAt": "2026-05-24T17:11:17.7803763",
     "updatedAt": "2026-05-24T17:11:39.6304307"
+  },
+  {
+    "name": "ip",
+    "description": "ip",
+    "startingPrice": 1000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "4b838f03-85d2-4f90-b035-ab4456428546",
+    "imageUrl": "",
+    "condition": "GOOD",
+    "auctionCount": 1,
+    "archived": true,
+    "extraFields": {
+      "brand": "ip",
+      "warrantyMonths": 12.0
+    },
+    "id": "a7a63de2-1221-4b9a-b1af-ccf940ceeb62",
+    "createdAt": "2026-05-25T16:00:10.9122596",
+    "updatedAt": "2026-05-25T18:28:55.7649303"
+  },
+  {
+    "name": "Siêu xe",
+    "description": "Mới",
+    "startingPrice": 1000000.0,
+    "type": "VEHICLE",
+    "sellerId": "4b838f03-85d2-4f90-b035-ab4456428546",
+    "imageUrl": "",
+    "condition": "NEW",
+    "auctionCount": 2,
+    "archived": false,
+    "extraFields": {
+      "make": "oto",
+      "model": "Mẹc",
+      "mileage": 0.0,
+      "vehicleYear": 2026.0
+    },
+    "id": "88bf2b88-d3ca-4158-afec-ed8a7bd35e65",
+    "createdAt": "2026-05-25T18:29:30.5166632",
+    "updatedAt": "2026-05-25T19:40:29.9787513"
+  },
+  {
+    "name": "Ip20",
+    "description": "",
+    "startingPrice": 1000000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "4b838f03-85d2-4f90-b035-ab4456428546",
+    "imageUrl": "",
+    "condition": "NEW",
+    "auctionCount": 0,
+    "archived": true,
+    "extraFields": {
+      "brand": "Appple",
+      "warrantyMonths": 36.0
+    },
+    "approvalStatus": "APPROVED",
+    "id": "4f80bb3f-e3ed-43d7-9914-0d009f726826",
+    "createdAt": "2026-05-25T19:12:23.9026539",
+    "updatedAt": "2026-05-25T19:42:59.0282844"
+  },
+  {
+    "name": "qưe",
+    "description": "qưe",
+    "startingPrice": 1000.0,
+    "type": "ART",
+    "sellerId": "4b838f03-85d2-4f90-b035-ab4456428546",
+    "imageUrl": "",
+    "condition": "FAIR",
+    "auctionCount": 0,
+    "archived": true,
+    "extraFields": {
+      "artist": "qưe",
+      "year": 2021.0,
+      "medium": "sơn"
+    },
+    "approvalStatus": "REJECTED",
+    "id": "4d06022f-1ae2-4d95-b6f5-ef0ff52e85c2",
+    "createdAt": "2026-05-25T19:41:09.1552569",
+    "updatedAt": "2026-05-25T19:42:57.9643031"
+  },
+  {
+    "name": "123",
+    "description": "",
+    "startingPrice": 109.0,
+    "type": "ELECTRONICS",
+    "sellerId": "4b838f03-85d2-4f90-b035-ab4456428546",
+    "imageUrl": "",
+    "condition": "NEW",
+    "auctionCount": 0,
+    "archived": false,
+    "extraFields": {
+      "brand": "1",
+      "warrantyMonths": 23.0
+    },
+    "approvalStatus": "APPROVED",
+    "id": "8026a924-4bc1-4899-93e9-ece3702913f0",
+    "createdAt": "2026-05-25T19:54:31.7011317",
+    "updatedAt": "2026-05-25T19:55:11.1377775"
   }
 ]
