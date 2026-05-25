@@ -255,12 +255,13 @@ public class LiveAuction {
                 return new AutoBidResolution(null, false);
             }
 
-            if (currentHighestBid > autoBid.getMaxBid()) {
+            double nextAutoBidAmount = currentHighestBid + autoBid.getIncrement();
+            if (nextAutoBidAmount > autoBid.getMaxBid()) {
                 deactivateAutoBid(autoBid);
                 return new AutoBidResolution(null, true);
             }
 
-            BidRecord autoRecord = createAutoBidRecord(autoBid);
+            BidRecord autoRecord = createAutoBidRecord(autoBid, nextAutoBidAmount);
             this.currentHighestBid = autoRecord.getAmount();
             this.currentWinnerId = autoBid.getBidderId();
             this.currentLeaderSince = autoRecord.getTimestamp();
@@ -342,10 +343,7 @@ public class LiveAuction {
         return pendingAutoBid;
     }
 
-    private BidRecord createAutoBidRecord(AutoBidConfig previousLeaderAutoBid) {
-        double newBidAmount = Math.min(
-                previousLeaderAutoBid.getMaxBid(),
-                currentHighestBid + previousLeaderAutoBid.getIncrement());
+    private BidRecord createAutoBidRecord(AutoBidConfig previousLeaderAutoBid, double newBidAmount) {
         return new BidRecord(
                 previousLeaderAutoBid.getBidderId(),
                 previousLeaderAutoBid.getBidderName(),
