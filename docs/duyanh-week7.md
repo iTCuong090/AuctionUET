@@ -696,3 +696,33 @@ Hệ thống bổ sung một phạm vi quản trị an toàn, chưa thay đổi 
 - Khi khóa tài khoản, server hủy ngay token đang hoạt động của user đó và chặn đăng nhập mới.
 - Không xóa cứng user và không cho khóa tài khoản Admin, nhờ đó lịch sử vật phẩm, bid, phiên đấu giá và giao dịch không mất tham chiếu.
 - `UPDATE_ROLE` và `DELETE_USER` không được route trong đợt này; danh sách trả về client dùng DTO riêng và không chứa hash hay salt.
+- Admin không có ví cá nhân trên giao diện và không được gọi API nạp, rút, xem số dư hoặc lịch sử giao dịch cá nhân; các field ví chung của schema vẫn được giữ cho Bidder/Seller.
+
+## 9. Admin đợt 2: quản lý và cưỡng chế hủy phiên đấu giá
+
+Phần quản trị phiên đấu giá được bổ sung theo đúng luồng service hiện có:
+
+- Admin sử dụng màn `Danh sách đấu giá` hiện có để mở chi tiết phiên; trong màn chi tiết, các phiên còn được phép kiểm duyệt hiển thị nút `Hủy phiên`.
+- Action mới `ADMIN_CANCEL_AUCTION` chỉ được runtime user role `ADMIN` gọi thông qua permission `CANCEL_AUCTION_AS_ADMIN`. Permission thuộc logic phân quyền theo role, không được ghi vào file JSON.
+- Admin chỉ hủy được phiên `OPEN`, `RUNNING` hoặc `WAITING_PAYMENT`. Phiên đã `PAID` hoặc đã `CANCELED` bị từ chối để không đảo ngược giao dịch hoàn tất hoặc xử lý hủy hai lần.
+- Khi hủy, `AuctionService` lưu `canceledReason`, `canceledByUserId`, `canceledAt`, chuyển trạng thái sang `CANCELED`, xóa payment deadline và hủy các task scheduler/Autobid liên quan.
+- Với phiên đã có người tham gia, service tái sử dụng luồng hoàn cọc hiện có với `retainedBidderId = null`, nghĩa là hoàn lại toàn bộ cọc đang giữ, kể cả người đang dẫn đầu hoặc người đang chờ thanh toán.
+- `winnerId` và giá cao nhất vẫn được giữ trong schema sau khi hủy để phục vụ kiểm tra lịch sử; giao diện chỉ hiển thị đó là thông tin dẫn đầu trước khi hủy, không coi là giao dịch thắng hợp lệ.
+- Server gửi push `AUCTION_CANCELED` chứa lý do và thời điểm hủy tới client đang subscribe. Màn chi tiết hoặc màn bid đang mở chuyển sang trạng thái hủy, hiển thị lý do và khóa thao tác đặt giá/Autobid.
+- Không tạo menu quản lý phiên riêng và không bổ sung bộ lọc trạng thái vào danh sách chung; thao tác hủy được đặt tại đúng ngữ cảnh xem chi tiết.
+
+## 10. Admin đợt 3: phê duyệt sản phẩm trước khi tạo phiên
+
+Luồng sản phẩm được bổ sung lớp kiểm duyệt trước khi Seller mở phiên:
+
+- `ItemSchema` và `ItemDTO` có trạng thái duyệt `PENDING`, `APPROVED`, `REJECTED`. Dữ liệu item cũ không có field này được hiểu là `APPROVED`, nên các vật phẩm và phiên đã có không bị chặn sau khi nâng cấp.
+- Server lưu thiết lập `itemApprovalEnabled` trong `data/system_settings.json`. Nếu chưa có thiết lập, chế độ phê duyệt mặc định bật.
+- Khi chế độ bật, item mới do Seller tạo có trạng thái `PENDING`. Khi chế độ tắt, item mới được `APPROVED` ngay.
+- Admin có màn `Duyệt sản phẩm` riêng dạng thẻ, xem các item chưa bị gỡ; các item `PENDING` được xếp trước và có thao tác `Chi tiết`, `Duyệt` hoặc `Từ chối`. Item đã xử lý vẫn có thể mở chi tiết nhưng không thể duyệt lại. Việc từ chối không yêu cầu lý do.
+- Khi Admin tắt chế độ duyệt, toàn bộ item đang `PENDING` lập tức chuyển thành `APPROVED`; item đã `APPROVED` hoặc `REJECTED` được giữ nguyên. Bật lại chỉ tác động tới các item tạo sau đó.
+- Nút bật/tắt phê duyệt được hiển thị theo dạng switch; thao tác tắt vẫn yêu cầu xác nhận trước khi server tự duyệt các item chờ.
+- Các bảng dữ liệu còn lại trên client (quản lý người dùng, lịch sử bid và lịch sử phiên của vật phẩm) có màu nền, tiêu đề, dòng và vùng chọn tương ứng với light/dark theme để không còn nền trắng lệch màu trong chế độ tối.
+- `AuctionService.createAuction(...)` kiểm tra trạng thái ở server và chỉ tạo phiên cho item `APPROVED`, do đó Seller không thể vượt qua kiểm duyệt bằng cách gửi request trực tiếp.
+- Ở giao diện Seller, màn vật phẩm hiển thị trạng thái duyệt và khóa nút tạo phiên đối với item đang chờ hoặc đã bị từ chối. Màn tạo phiên chỉ liệt kê item đã duyệt và chưa có phiên đang chặn.
+
+Đợt này chưa triển khai sửa item hoặc gửi duyệt lại sau khi bị từ chối; Seller có thể gỡ sản phẩm và tạo sản phẩm mới.
