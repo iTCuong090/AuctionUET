@@ -37,6 +37,12 @@ public class SessionManager {
         tokenMap.remove(token);
     }
 
+    public void updateSessionUser(String token, User user) {
+        if (token != null && user != null && tokenMap.containsKey(token)) {
+            tokenMap.put(token, user);
+        }
+    }
+
     public void invalidateByUserId(String userId) {
         tokenMap.entrySet().removeIf(entry -> entry.getValue().getId().equals(userId));
     }

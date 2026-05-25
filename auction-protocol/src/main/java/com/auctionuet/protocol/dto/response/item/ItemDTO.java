@@ -3,10 +3,12 @@ package com.auctionuet.protocol.dto.response.item;
 import com.auctionuet.protocol.dto.ValidatableDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.ItemCondition;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import com.auctionuet.protocol.enums.ItemType;
 
 import java.util.Collections;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 public class ItemDTO implements ValidatableDTO {
     private final String id;
@@ -18,6 +20,8 @@ public class ItemDTO implements ValidatableDTO {
     private final String imageUrl;
     private final ItemCondition condition;
     private final Map<String, Object> extraFields;
+    private final ItemApprovalStatus approvalStatus;
+    private final LocalDateTime createdAt;
 
     public ItemDTO(
             String id,
@@ -29,6 +33,37 @@ public class ItemDTO implements ValidatableDTO {
             String imageUrl,
             ItemCondition condition,
             Map<String, Object> extraFields) {
+        this(id, name, description, startingPrice, type, seller, imageUrl, condition, extraFields,
+                ItemApprovalStatus.APPROVED, null);
+    }
+
+    public ItemDTO(
+            String id,
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            UserDTO seller,
+            String imageUrl,
+            ItemCondition condition,
+            Map<String, Object> extraFields,
+            ItemApprovalStatus approvalStatus) {
+        this(id, name, description, startingPrice, type, seller, imageUrl, condition, extraFields,
+                approvalStatus, null);
+    }
+
+    public ItemDTO(
+            String id,
+            String name,
+            String description,
+            double startingPrice,
+            ItemType type,
+            UserDTO seller,
+            String imageUrl,
+            ItemCondition condition,
+            Map<String, Object> extraFields,
+            ItemApprovalStatus approvalStatus,
+            LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -38,6 +73,8 @@ public class ItemDTO implements ValidatableDTO {
         this.imageUrl = imageUrl;
         this.condition = condition;
         this.extraFields = extraFields != null ? Collections.unmodifiableMap(extraFields) : null;
+        this.approvalStatus = approvalStatus != null ? approvalStatus : ItemApprovalStatus.APPROVED;
+        this.createdAt = createdAt;
         validate();
     }
 
@@ -73,6 +110,10 @@ public class ItemDTO implements ValidatableDTO {
     public String getImageUrl() { return imageUrl; }
     public ItemCondition getCondition() { return condition; }
     public Map<String, Object> getExtraFields() { return extraFields; }
+    public ItemApprovalStatus getApprovalStatus() {
+        return approvalStatus != null ? approvalStatus : ItemApprovalStatus.APPROVED;
+    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     @Override
     public String toString() {

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="18.0" styleClass="dark-bg" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.AdminItemsController">
+    <padding>
+        <Insets bottom="18.0" left="12.0" right="12.0" top="8.0" />
+    </padding>
+    <children>
+        <Label styleClass="text-heading" text="Duyệt sản phẩm">
+            <font><Font name="System Bold" size="25.0" /></font>
+        </Label>
+        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="approval-toolbar">
+            <children>
+                <Label styleClass="text-primary" text="Bật phê duyệt sản phẩm" />
+                <StackPane fx:id="approvalSwitch" alignment="CENTER_LEFT" onMouseClicked="#handleApprovalToggle" styleClass="approval-switch">
+                    <children>
+                        <Region fx:id="approvalThumb" styleClass="approval-switch-thumb" />
+                    </children>
+                </StackPane>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#handleRefresh" styleClass="approval-action-button" text="Làm mới" />
+            </children>
+        </HBox>
+        <Label fx:id="statusLabel" styleClass="text-secondary" text="" wrapText="true" />
+        <ScrollPane fx:id="itemScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="dark-bg-scroll" VBox.vgrow="ALWAYS">
+            <content>
+                <FlowPane fx:id="itemGrid" hgap="18.0" vgap="18.0">
+                    <padding><Insets bottom="16.0" right="10.0" top="4.0" /></padding>
+                </FlowPane>
+            </content>
+        </ScrollPane>
+    </children>
+</VBox>

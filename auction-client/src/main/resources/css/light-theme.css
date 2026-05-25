@@ -81,12 +81,24 @@
 .detail-leader-label { -fx-text-fill: #d97706; }
 .detail-time-label { -fx-text-fill: #ea580c; }
 
+.chart { -fx-background-color: transparent; }
+.chart-plot-background { -fx-background-color: #f8fbff; }
+.chart-horizontal-grid-lines,
+.chart-vertical-grid-lines { -fx-stroke: #dce8f3; }
+.axis { -fx-tick-label-fill: #6b7780; }
+.axis-label,
+.chart-legend-item { -fx-text-fill: #6b7780; }
+.chart-legend { -fx-background-color: transparent; }
+.default-color0.chart-series-line { -fx-stroke: #0374B5; }
+.default-color0.chart-line-symbol { -fx-background-color: #0374B5, #ffffff; }
+
 .header-bar { -fx-background-color: #2d3b45; }
 .content-area { -fx-background-color: #f5f5f5; }
 .footer-bar { -fx-background-color: #e5e7eb; }
 .footer-label { -fx-text-fill: #6b7780; }
 .dark-bg { -fx-background-color: #f5f5f5; }
 .dark-bg-scroll { -fx-background: #f5f5f5; -fx-background-color: #f5f5f5; }
+.dark-bg-scroll > .viewport { -fx-background-color: #f5f5f5; }
 .card-bg { -fx-background-color: #ffffff; }
 .card-border { -fx-border-color: #c7cdd1; }
 
@@ -119,6 +131,110 @@
 .theme-toggle-btn:hover {
     -fx-background-color: #d1d5db;
     -fx-border-color: #9ca3af;
+}
+
+.approval-toolbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dce8f3;
+    -fx-border-radius: 8;
+}
+
+.approval-switch {
+    -fx-background-color: #cbd5e1;
+}
+
+.approval-switch.enabled {
+    -fx-background-color: #22c55e;
+}
+
+.approval-switch-thumb {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0.15, 0, 1);
+}
+
+.approval-switch:disabled {
+    -fx-opacity: 0.6;
+}
+
+.approval-card-title,
+.approval-detail-title {
+    -fx-text-fill: #2d3b45;
+}
+
+.approval-card-price,
+.approval-detail-price {
+    -fx-text-fill: #0374B5;
+}
+
+.approval-detail-panel,
+.approval-detail-image {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dce8f3;
+}
+
+.danger-action-button {
+    -fx-background-color: #ef4444;
+}
+
+.danger-action-button:hover {
+    -fx-background-color: #dc2626;
+}
+
+/* === TABLE VIEW === */
+.table-view {
+    -fx-background-color: #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-border-color: #dce8f3;
+}
+
+.table-view .column-header-background,
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #eef7fd;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #2d3b45;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-table-cell-border-color: #e2e8f0;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #f8fbff;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #eef7fd;
+}
+
+.table-view .table-row-cell:selected,
+.table-view .table-row-cell:selected:hover {
+    -fx-background-color: #0374B5;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #2d3b45;
+    -fx-border-color: transparent transparent #e2e8f0 transparent;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: #6b7780;
+}
+
+.table-view .virtual-flow .scroll-bar .track {
+    -fx-background-color: #eef7fd;
+}
+
+.table-view .virtual-flow .scroll-bar .thumb {
+    -fx-background-color: #b9c7d4;
+    -fx-background-radius: 99;
 }
 
 /* === MAIN VIEW SPLIT LAYOUT === */

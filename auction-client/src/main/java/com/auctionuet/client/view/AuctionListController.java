@@ -7,7 +7,6 @@ import com.auctionuet.protocol.enums.AuctionStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -33,7 +32,6 @@ public class AuctionListController {
 
     @FXML private FlowPane auctionGrid;
     @FXML private ScrollPane auctionScrollPane;
-    @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField searchField;
     @FXML private Button btnMyAuctions;
 
@@ -43,13 +41,15 @@ public class AuctionListController {
 
     @FXML
     public void initialize() {
-        filterComboBox.getItems().addAll("Tất cả", "OPEN", "RUNNING", "FINISHED", "WAITING_PAYMENT", "PAID", "CANCELED");
-        filterComboBox.setValue("Tất cả");
-        filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
         searchField.setOnAction(e -> applyFilters());
-        btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
-        updateMyAuctionsButtonStyle();
+        boolean seller = ClientSession.getInstance().isSeller();
+        btnMyAuctions.setVisible(seller);
+        btnMyAuctions.setManaged(seller);
+        if (seller) {
+            btnMyAuctions.setOnAction(e -> toggleMyAuctionsFilter());
+            updateMyAuctionsButtonStyle();
+        }
         setupStableGridWidth();
 
         loadAuctionsFromServer();
@@ -115,13 +115,11 @@ public class AuctionListController {
     }
 
     private void applyFilters() {
-        String selectedStatus = filterComboBox.getValue();
         String keyword = searchField.getText() != null
                 ? searchField.getText().trim().toLowerCase(Locale.ROOT)
                 : "";
 
         List<AuctionDTO> filtered = allAuctions.stream()
-                .filter(auction -> matchesStatus(auction, selectedStatus))
                 .filter(auction -> !myAuctionsOnly || matchesCurrentUser(auction))
                 .filter(auction -> matchesKeyword(auction, keyword))
                 .toList();
@@ -142,13 +140,6 @@ public class AuctionListController {
         if (myAuctionsOnly) {
             btnMyAuctions.getStyleClass().add("active");
         }
-    }
-
-    private boolean matchesStatus(AuctionDTO auction, String selectedStatus) {
-        if (selectedStatus == null || selectedStatus.equals("Tất cả")) {
-            return true;
-        }
-        return auction.getStatus() != null && selectedStatus.equals(auction.getStatus().name());
     }
 
     private boolean matchesKeyword(AuctionDTO auction, String keyword) {
@@ -173,25 +164,9 @@ public class AuctionListController {
         if (auction == null || currentUserId == null || currentUserId.isBlank()) {
             return false;
         }
-
-        if (ClientSession.getInstance().isSeller()) {
-            return auction.getSeller() != null && currentUserId.equals(auction.getSeller().getId());
-        }
-
-        if (!ClientSession.getInstance().isBidder()) {
-            return false;
-        }
-
-        AuctionStatus status = auction.getStatus();
-        boolean isWinner = auction.getWinner() != null && currentUserId.equals(auction.getWinner().getId());
-        boolean isCurrentHighestBidder = auction.getCurrentHighestBid() != null
-                && auction.getCurrentHighestBid().getBidder() != null
-                && currentUserId.equals(auction.getCurrentHighestBid().getBidder().getId());
-
-        boolean isRunningParticipant = status == AuctionStatus.RUNNING
-                && (auction.isCurrentUserDeposited() || isCurrentHighestBidder);
-        boolean isWaitingPaymentWinner = status == AuctionStatus.WAITING_PAYMENT && isWinner;
-        return isRunningParticipant || isWaitingPaymentWinner;
+        return ClientSession.getInstance().isSeller()
+                && auction.getSeller() != null
+                && currentUserId.equals(auction.getSeller().getId());
     }
 
     private String currentUserId() {

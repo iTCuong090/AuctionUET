@@ -307,3 +307,93 @@
     -fx-border-radius: 8;
     -fx-cursor: hand;
 }
+
+/* --- 14. KIỂM DUYỆT SẢN PHẨM --- */
+.approval-toolbar {
+    -fx-padding: 10 12;
+    -fx-background-radius: 8;
+}
+
+.approval-switch {
+    -fx-min-width: 52;
+    -fx-pref-width: 52;
+    -fx-max-width: 52;
+    -fx-min-height: 28;
+    -fx-pref-height: 28;
+    -fx-max-height: 28;
+    -fx-padding: 3;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+}
+
+.approval-switch-thumb {
+    -fx-min-width: 22;
+    -fx-pref-width: 22;
+    -fx-max-width: 22;
+    -fx-min-height: 22;
+    -fx-pref-height: 22;
+    -fx-max-height: 22;
+    -fx-background-radius: 999;
+}
+
+.approval-item-card {
+    -fx-min-height: 236;
+}
+
+.approval-card-title,
+.approval-detail-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+}
+
+.approval-card-price,
+.approval-detail-price {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.approval-card-actions {
+    -fx-padding: 5 0 0 0;
+}
+
+.approval-action-button {
+    -fx-font-size: 13px;
+    -fx-padding: 8 14;
+}
+
+.approval-detail-panel,
+.approval-detail-image {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 18;
+}
+
+/* --- 15. BẢNG DỮ LIỆU --- */
+.table-view {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+}
+
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background {
+    -fx-pref-height: 38;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-padding: 10 9;
+}
+
+.table-action-button {
+    -fx-font-size: 13px;
+    -fx-padding: 8 12;
+    -fx-min-width: 88;
+    -fx-pref-width: 88;
+    -fx-max-width: 96;
+}

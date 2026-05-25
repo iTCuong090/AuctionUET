@@ -1,6 +1,7 @@
 package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
+import com.auctionuet.client.network.AdminClient;
 import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.ServerConnection;
@@ -23,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -31,17 +33,19 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class AuctionDetailController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @FXML private Label nameLabel, sellerLabel, typeLabel, conditionLabel, descriptionLabel;
     @FXML private Label currentPriceLabel, leaderLabel, timeLeftLabel, statusLabel;
+    @FXML private Label cancelReasonLabel;
     @FXML private ImageView productImageView;
 
-    @FXML private LineChart<Number, Number> priceChart;
     @FXML private TableView<BidDTO> bidHistoryTable;
     @FXML private TableColumn<BidDTO, String> bidderCol, amountCol, timeCol;
+    @FXML private LineChart<Number, Number> bidPriceChart;
 
     @FXML private Button btnStartAuction;
     @FXML private HBox actionArea;
@@ -53,13 +57,16 @@ public class AuctionDetailController {
     @FXML private VBox paymentArea;
     @FXML private Button btnPayAuction;
     @FXML private Label paymentInfoLabel, paymentErrorLabel;
+    @FXML private VBox adminCancelArea;
+    @FXML private Button btnAdminCancelAuction;
+    @FXML private Label adminCancelErrorLabel;
 
     private String currentAuctionId;
     private boolean subscribed;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
-    private final XYChart.Series<Number, Number> priceSeries = new XYChart.Series<>();
-    private int chartPointIndex;
+    private final AdminClient adminClient = new AdminClient();
+    private final XYChart.Series<Number, Number> bidPriceSeries = new XYChart.Series<>();
     private AuctionDTO currentAuction;
 
     @FXML
@@ -67,7 +74,7 @@ public class AuctionDetailController {
         btnPlaceBid.setOnAction(e -> handlePlaceBid());
         btnPayAuction.setOnAction(e -> handlePayAuction());
         setupBidHistoryTable();
-        setupPriceChart();
+        setupBidPriceChart();
     }
 
     public void setAuctionData(String auctionId) {
@@ -84,10 +91,15 @@ public class AuctionDetailController {
         paymentArea.setVisible(false);
         paymentArea.setManaged(false);
         paymentErrorLabel.setText("");
+        adminCancelArea.setVisible(false);
+        adminCancelArea.setManaged(false);
+        btnAdminCancelAuction.setDisable(false);
+        adminCancelErrorLabel.setText("");
+        cancelReasonLabel.setVisible(false);
+        cancelReasonLabel.setManaged(false);
         specBox.getChildren().clear();
         bidHistoryTable.getItems().clear();
-        priceSeries.getData().clear();
-        chartPointIndex = 0;
+        bidPriceSeries.getData().clear();
 
         new Thread(() -> {
             try {
@@ -117,9 +129,14 @@ public class AuctionDetailController {
         renderStatusBadge(status);
         timeLeftLabel.setText("Kết thúc: " + formatTime(dto.getEndTime()));
 
-        if (dto.getWinner() != null) {
+        if (status == AuctionStatus.CANCELED && dto.getWinner() != null) {
+            leaderLabel.setText("Dẫn đầu trước khi hủy: " + usernameOf(dto.getWinner()));
+        } else if (dto.getWinner() != null) {
             leaderLabel.setText("Người dẫn đầu: " + usernameOf(dto.getWinner()));
+        } else {
+            leaderLabel.setText("Người dẫn đầu: Chưa có");
         }
+        renderCancellationInfo(dto);
 
         if (dto.getItem() != null) {
             typeLabel.setText(valueOrEmpty(dto.getItem().getType()));
@@ -141,8 +158,11 @@ public class AuctionDetailController {
         btnStartAuction.setText("🚀 Bắt đầu phiên đấu giá");
 
         renderPaymentArea(dto, currentUserId);
+        renderAdminCancelArea(dto);
 
-        if (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING) {
+        if (status == AuctionStatus.OPEN
+                || status == AuctionStatus.RUNNING
+                || status == AuctionStatus.WAITING_PAYMENT) {
             subscribeToAuction(dto.getId());
             ServerConnection.getInstance().setPushListener(this::onPushMessage);
         }
@@ -231,6 +251,39 @@ public class AuctionDetailController {
         }).start();
     }
 
+    @FXML
+    private void handleAdminCancelAuction() {
+        if (currentAuction == null || !canAdminCancel(currentAuction.getStatus())) {
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Hủy phiên đấu giá");
+        dialog.setHeaderText("Nhập lý do hủy phiên: " + currentAuction.getTitle());
+        dialog.setContentText("Lý do:");
+        Optional<String> answer = dialog.showAndWait();
+        if (answer.isEmpty() || answer.get().isBlank()) {
+            showAdminCancelError("Lý do hủy không được để trống.");
+            return;
+        }
+
+        btnAdminCancelAuction.setDisable(true);
+        showAdminCancelError("Đang hủy phiên...");
+        String token = ClientSession.getInstance().getToken();
+        String reason = answer.get().trim();
+        new Thread(() -> {
+            try {
+                adminClient.cancelAuction(token, currentAuctionId, reason);
+                Platform.runLater(() -> setAuctionData(currentAuctionId));
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    btnAdminCancelAuction.setDisable(false);
+                    showAdminCancelError("Lỗi hủy phiên: " + e.getMessage());
+                });
+            }
+        }, "admin-cancel-auction").start();
+    }
+
     private void setupBidHistoryTable() {
         bidderCol.setCellValueFactory(cell ->
                 new ReadOnlyStringWrapper(usernameOf(cell.getValue().getBidder())));
@@ -239,12 +292,12 @@ public class AuctionDetailController {
         timeCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(formatTime(cell.getValue().getTimestamp())));
     }
 
-    private void setupPriceChart() {
-        priceSeries.setName("Giá bid");
-        priceChart.setAnimated(false);
-        priceChart.setCreateSymbols(false);
-        priceChart.getData().clear();
-        priceChart.getData().add(priceSeries);
+    private void setupBidPriceChart() {
+        bidPriceSeries.setName("Giá bid");
+        bidPriceChart.setAnimated(false);
+        bidPriceChart.setCreateSymbols(true);
+        bidPriceChart.getData().clear();
+        bidPriceChart.getData().add(bidPriceSeries);
     }
 
     private void loadBidHistory() {
@@ -258,8 +311,7 @@ public class AuctionDetailController {
                 List<BidDTO> history = bidClient.getBidHistory(token, currentAuctionId);
                 Platform.runLater(() -> {
                     bidHistoryTable.getItems().clear();
-                    priceSeries.getData().clear();
-                    chartPointIndex = 0;
+                    bidPriceSeries.getData().clear();
                     if (history != null) {
                         for (BidDTO bid : history) {
                             appendBid(bid);
@@ -274,8 +326,8 @@ public class AuctionDetailController {
 
     private void appendBid(BidDTO bid) {
         bidHistoryTable.getItems().add(bid);
-        chartPointIndex++;
-        priceSeries.getData().add(new XYChart.Data<>(chartPointIndex, bid.getAmount()));
+        int bidIndex = bidPriceSeries.getData().size() + 1;
+        bidPriceSeries.getData().add(new XYChart.Data<>(bidIndex, bid.getAmount()));
         CurrencyFormatter.setMoneyText(currentPriceLabel, "Giá hiện tại: ", bid.getAmount());
         leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
     }
@@ -366,7 +418,52 @@ public class AuctionDetailController {
                 leaderLabel.setText("Người thắng: " + usernameOf(data.getWinner()));
                 setAuctionData(currentAuctionId);
             });
+            return;
         }
+
+        if (push.getPushType() == PushActionType.AUCTION_CANCELED) {
+            PushEvents.AuctionCanceledPush data = push.getDataAs(PushEvents.AuctionCanceledPush.class);
+            if (data == null || !currentAuctionId.equals(data.getAuctionId())) {
+                return;
+            }
+
+            Platform.runLater(() -> {
+                renderStatusBadge(AuctionStatus.CANCELED);
+                cancelReasonLabel.setText("Lý do hủy: " + data.getReason());
+                cancelReasonLabel.setVisible(true);
+                cancelReasonLabel.setManaged(true);
+                setAuctionData(currentAuctionId);
+            });
+        }
+    }
+
+    private void renderAdminCancelArea(AuctionDTO dto) {
+        boolean visible = ClientSession.getInstance().isAdmin() && canAdminCancel(dto.getStatus());
+        adminCancelArea.setVisible(visible);
+        adminCancelArea.setManaged(visible);
+        btnAdminCancelAuction.setDisable(false);
+        if (!visible) {
+            adminCancelErrorLabel.setText("");
+        }
+    }
+
+    private boolean canAdminCancel(AuctionStatus status) {
+        return status == AuctionStatus.OPEN
+                || status == AuctionStatus.RUNNING
+                || status == AuctionStatus.WAITING_PAYMENT;
+    }
+
+    private void showAdminCancelError(String message) {
+        adminCancelErrorLabel.setText(message);
+    }
+
+    private void renderCancellationInfo(AuctionDTO dto) {
+        boolean canceled = dto.getStatus() == AuctionStatus.CANCELED
+                && dto.getCanceledReason() != null
+                && !dto.getCanceledReason().isBlank();
+        cancelReasonLabel.setVisible(canceled);
+        cancelReasonLabel.setManaged(canceled);
+        cancelReasonLabel.setText(canceled ? "Lý do hủy: " + dto.getCanceledReason() : "");
     }
 
     private void openBiddingView() {

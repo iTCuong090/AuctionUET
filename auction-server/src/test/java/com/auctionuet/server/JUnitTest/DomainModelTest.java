@@ -11,10 +11,13 @@ import com.auctionuet.server.exception.AuctionClosedException;
 import com.auctionuet.server.exception.InvalidBidException;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -62,27 +65,72 @@ class DomainModelTest {
     }
 
     @Test
-    void testAutoBidEqualMaxPrioritizesEarlierRegistration() throws Exception {
+    void testAutoBidRequiresCurrentLeader() {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
-        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
-        Thread.sleep(2);
-        auction.addAutoBid(new AutoBidConfig("bid2", "user2", 1000.0, 50.0));
-
-        assertEquals("bid1", auction.getCurrentWinnerId());
-        assertEquals(1000.0, auction.getCurrentHighestBid());
-        assertTrue(auction.getAutoBidConfig("bid1").isActive());
-        assertFalse(auction.getAutoBidConfig("bid2").isActive());
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0)));
+        assertEquals("chỉ người dẫn đầu mới được bật Autobid", exception.getMessage());
+        assertEquals(500.0, auction.getCurrentHighestBid());
+        assertNull(auction.getCurrentWinnerId());
     }
 
     @Test
-    void testAutoBidKeepsPriorityWhenManualBidMatchesMax() throws Exception {
+    void testCurrentLeaderCanEnableAutoBid() throws Exception {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
         auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
-        auction.placeBid(new Bidder("bid2", "user2"), 1000.0, null);
+
+        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals(550.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(1, auction.getBidHistory().size());
+    }
+
+    @Test
+    void testCurrentLeaderMustBeStableBeforeEnablingAutoBid() throws Exception {
+        LocalDateTime baseTime = LocalDateTime.of(2026, 1, 1, 10, 0);
+        AtomicReference<LocalDateTime> now = new AtomicReference<>(baseTime);
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                baseTime.plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120,
+                500.0, null, now::get);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> auction.addAutoBid(
+                        new AutoBidConfig("bid1", "user1", 1000.0, 50.0),
+                        null,
+                        Duration.ofSeconds(3)));
+        assertEquals("Bạn cần dẫn đầu ít nhất 3 giây để bật Auto-Bid", exception.getMessage());
+
+        now.set(baseTime.plusSeconds(3));
+        auction.addAutoBid(
+                new AutoBidConfig("bid1", "user1", 1000.0, 50.0),
+                null,
+                Duration.ofSeconds(3));
+
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+    }
+
+    @Test
+    void testAutoBidProtectsLeaderWithinMaxBid() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 950.0);
+
+        assertEquals("bid2", auction.getCurrentWinnerId());
+        assertEquals(950.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
 
         assertEquals("bid1", auction.getCurrentWinnerId());
         assertEquals(1000.0, auction.getCurrentHighestBid());
@@ -91,72 +139,125 @@ class DomainModelTest {
     }
 
     @Test
-    void testAutoBidUsesMaxWhenManualBidIsBelowMaxButIncrementWouldOvershoot() throws Exception {
+    void testAutoBidBecomesInactiveWhenFullIncrementWouldExceedMaxBid() throws Exception {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
         auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
-        auction.placeBid(new Bidder("bid2", "user2"), 980.0, null);
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 980.0);
 
-        assertEquals("bid1", auction.getCurrentWinnerId());
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
+
+        assertEquals("bid2", auction.getCurrentWinnerId());
+        assertEquals(980.0, auction.getCurrentHighestBid());
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+        assertEquals(2, auction.getBidHistory().size());
+    }
+
+    @Test
+    void testAutoBidBecomesInactiveWhenManualBidMatchesMaxBid() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 1000.0);
+
+        assertEquals("bid2", auction.getCurrentWinnerId());
         assertEquals(1000.0, auction.getCurrentHighestBid());
-        assertTrue(auction.getAutoBidConfig("bid1").isActive());
-    }
 
-    @Test
-    void testAutoBidHigherMaxHasPriority() throws Exception {
-        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
-
-        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 900.0, 50.0));
-        Thread.sleep(2);
-        auction.addAutoBid(new AutoBidConfig("bid2", "user2", 1000.0, 50.0));
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
 
         assertEquals("bid2", auction.getCurrentWinnerId());
-        assertEquals(950.0, auction.getCurrentHighestBid());
+        assertEquals(1000.0, auction.getCurrentHighestBid());
         assertFalse(auction.getAutoBidConfig("bid1").isActive());
-        assertTrue(auction.getAutoBidConfig("bid2").isActive());
+        assertEquals(2, auction.getBidHistory().size());
     }
 
     @Test
-    void testAutoBidFinalPriceUsesWinnerIncrement() {
+    void testAutoBidBecomesInactiveWhenManualBidExceedsMaxBid() throws Exception {
         LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
                 LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
 
-        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 900.0, 100.0));
-        auction.addAutoBid(new AutoBidConfig("bid2", "user2", 1000.0, 25.0));
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 1050.0);
 
         assertEquals("bid2", auction.getCurrentWinnerId());
-        assertEquals(925.0, auction.getCurrentHighestBid());
-        assertFalse(auction.getAutoBidConfig("bid1").isActive());
-        assertTrue(auction.getAutoBidConfig("bid2").isActive());
-    }
-
-    @Test
-    void testAutoBidWaitingConfigRemainsActive() {
-        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
-
-        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0));
-
-        assertEquals(500.0, auction.getCurrentHighestBid());
+        assertEquals(1050.0, auction.getCurrentHighestBid());
         assertTrue(auction.getAutoBidConfig("bid1").isActive());
-    }
 
-    @Test
-    void testAutoBidCanBeEnabledAgainAfterInactive() throws Exception {
-        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
-                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
-
-        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 520.0, 50.0));
-        auction.placeBid(new Bidder("bid2", "user2"), 530.0, null);
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
 
         assertFalse(auction.getAutoBidConfig("bid1").isActive());
 
+        LiveAuction.BidPlacementResult nextBid = auction.placeBid(new Bidder("bid3", "user3"), 1100.0);
+
+        assertNull(nextBid.pendingAutoBid());
+        assertEquals("bid3", auction.getCurrentWinnerId());
+    }
+
+    @Test
+    void testAutoBidCanBeEnabledAgainAfterBidderRegainsLead() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
         auction.addAutoBid(new AutoBidConfig("bid1", "user1", 700.0, 50.0));
+        LiveAuction.BidPlacementResult result = auction.placeBid(new Bidder("bid2", "user2"), 750.0);
+
+        auction.resolvePendingAutoBid(result.pendingAutoBid().sequenceId(), null);
+
+        assertFalse(auction.getAutoBidConfig("bid1").isActive());
+
+        auction.placeBid(new Bidder("bid1", "user1"), 800.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
 
         assertEquals("bid1", auction.getCurrentWinnerId());
-        assertEquals(580.0, auction.getCurrentHighestBid());
+        assertEquals(800.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+    }
+
+    @Test
+    void testLatestManualBidReplacesPendingAutoBidTarget() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult firstPending = auction.placeBid(new Bidder("bid2", "user2"), 600.0);
+        LiveAuction.BidPlacementResult latestPending = auction.placeBid(new Bidder("bid3", "user3"), 700.0);
+
+        auction.resolvePendingAutoBid(firstPending.pendingAutoBid().sequenceId(), null);
+
+        assertEquals("bid3", auction.getCurrentWinnerId());
+        assertEquals(700.0, auction.getCurrentHighestBid());
+
+        auction.resolvePendingAutoBid(latestPending.pendingAutoBid().sequenceId(), null);
+
+        assertEquals("bid1", auction.getCurrentWinnerId());
+        assertEquals(750.0, auction.getCurrentHighestBid());
+        assertTrue(auction.getAutoBidConfig("bid1").isActive());
+    }
+
+    @Test
+    void testPendingAutoBidDoesNothingAfterAuctionFinished() throws Exception {
+        LiveAuction auction = new LiveAuction("auc1", "item1", "seller1",
+                LocalDateTime.now().plusHours(1), AuctionStatus.RUNNING, 500.0, null, 60, 120);
+
+        auction.placeBid(new Bidder("bid1", "user1"), 550.0, null);
+        auction.addAutoBid(new AutoBidConfig("bid1", "user1", 1000.0, 50.0));
+        LiveAuction.BidPlacementResult pending = auction.placeBid(new Bidder("bid2", "user2"), 600.0);
+
+        auction.setStatus(AuctionStatus.FINISHED);
+        LiveAuction.AutoBidResolution resolution =
+                auction.resolvePendingAutoBid(pending.pendingAutoBid().sequenceId(), null);
+
+        assertNull(resolution.autoBid());
+        assertFalse(resolution.autoBidDeactivated());
+        assertEquals("bid2", auction.getCurrentWinnerId());
+        assertEquals(600.0, auction.getCurrentHighestBid());
         assertTrue(auction.getAutoBidConfig("bid1").isActive());
     }
 }

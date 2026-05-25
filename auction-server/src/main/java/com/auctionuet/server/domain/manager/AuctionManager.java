@@ -32,6 +32,7 @@ public class AuctionManager implements AuctionObserver {
     private final Map<String, ScheduledFuture<?>> startTasks = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> endTasks = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> paymentDeadlineTasks = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> autoBidResponseTasks = new ConcurrentHashMap<>();
     private final Map<String, Set<AuctionObserver>> observers = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
@@ -84,6 +85,10 @@ public class AuctionManager implements AuctionObserver {
         });
     }
 
+    public void scheduleAutoBidResponse(String auctionId, long delayMs, Runnable taskBody) {
+        scheduleTask(autoBidResponseTasks, auctionId, delayMs, taskBody);
+    }
+
     public void cancelAuctionStart(String auctionId) {
         cancelTask(startTasks, auctionId);
     }
@@ -96,10 +101,15 @@ public class AuctionManager implements AuctionObserver {
         cancelTask(paymentDeadlineTasks, auctionId);
     }
 
+    public void cancelAutoBidResponse(String auctionId) {
+        cancelTask(autoBidResponseTasks, auctionId);
+    }
+
     public void cancelAllTasks(String auctionId) {
         cancelAuctionStart(auctionId);
         cancelAuctionEnd(auctionId);
         cancelPaymentDeadline(auctionId);
+        cancelAutoBidResponse(auctionId);
     }
 
     public synchronized void startPeriodicReconcile() {
@@ -118,7 +128,11 @@ public class AuctionManager implements AuctionObserver {
     }
 
     public LiveAuction loadAuction(AuctionSchema schema, double startingPrice) {
-        LiveAuction auction = toDomain(schema, startingPrice);
+        return loadAuction(schema, startingPrice, null);
+    }
+
+    public LiveAuction loadAuction(AuctionSchema schema, double startingPrice, LocalDateTime currentLeaderSince) {
+        LiveAuction auction = toDomain(schema, startingPrice, currentLeaderSince);
         auction.markDeposited(schema.getDepositedBidderIds());
         liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this);
@@ -137,6 +151,7 @@ public class AuctionManager implements AuctionObserver {
 
     public void endAuction(String auctionId) {
         cancelAuctionEnd(auctionId);
+        cancelAutoBidResponse(auctionId);
         LiveAuction auction = liveAuctions.remove(auctionId);
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);
@@ -146,7 +161,14 @@ public class AuctionManager implements AuctionObserver {
 
     public void removeLiveAuction(String auctionId) {
         cancelAuctionEnd(auctionId);
+        cancelAutoBidResponse(auctionId);
         liveAuctions.remove(auctionId);
+    }
+
+    public void notifyAuctionCanceled(String auctionId, String reason, LocalDateTime canceledAt) {
+        for (AuctionObserver observer : observers.getOrDefault(auctionId, Set.of())) {
+            observer.onAuctionCanceled(auctionId, reason, canceledAt);
+        }
     }
 
     public void extendAuction(String auctionId, LocalDateTime newEndTime) {
@@ -229,7 +251,7 @@ public class AuctionManager implements AuctionObserver {
         }
     }
 
-    private LiveAuction toDomain(AuctionSchema schema, double startingPrice) {
+    private LiveAuction toDomain(AuctionSchema schema, double startingPrice, LocalDateTime currentLeaderSince) {
         return new LiveAuction(
                 schema.getId(),
                 schema.getItemId(),
@@ -240,7 +262,8 @@ public class AuctionManager implements AuctionObserver {
                 schema.getWinnerId(),
                 schema.getAntiSnipingWindowSeconds(),
                 schema.getAntiSnipingExtensionSeconds(),
-                startingPrice
+                startingPrice,
+                currentLeaderSince
         );
     }
 }

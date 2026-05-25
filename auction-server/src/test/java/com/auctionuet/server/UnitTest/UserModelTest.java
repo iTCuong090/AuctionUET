@@ -19,6 +19,10 @@ public class UserModelTest {
         assertTrue(bidder.hasPermission(Permission.VIEW_BID_HISTORY));
         assertTrue(bidder.hasPermission(Permission.GET_PROFILE));
         assertTrue(bidder.hasPermission(Permission.UPDATE_PROFILE));
+        assertTrue(bidder.hasPermission(Permission.DEPOSIT));
+        assertTrue(bidder.hasPermission(Permission.WITHDRAW));
+        assertTrue(bidder.hasPermission(Permission.GET_WALLET));
+        assertTrue(bidder.hasPermission(Permission.GET_MY_TRANSACTIONS));
 
         assertFalse(bidder.hasPermission(Permission.CREATE_AUCTION));
         assertFalse(bidder.hasPermission(Permission.MANAGE_USERS));
@@ -33,6 +37,10 @@ public class UserModelTest {
         assertTrue(seller.hasPermission(Permission.GET_PROFILE));
         assertTrue(seller.hasPermission(Permission.UPDATE_PROFILE));
         assertTrue(seller.hasPermission(Permission.VIEW_BID_HISTORY));
+        assertTrue(seller.hasPermission(Permission.DEPOSIT));
+        assertTrue(seller.hasPermission(Permission.WITHDRAW));
+        assertTrue(seller.hasPermission(Permission.GET_WALLET));
+        assertTrue(seller.hasPermission(Permission.GET_MY_TRANSACTIONS));
 
         assertFalse(seller.hasPermission(Permission.PLACE_BID));
         assertFalse(seller.hasPermission(Permission.MANAGE_USERS));
@@ -47,9 +55,17 @@ public class UserModelTest {
         assertTrue(admin.hasPermission(Permission.GET_PROFILE));
         assertTrue(admin.hasPermission(Permission.UPDATE_PROFILE));
         assertTrue(admin.hasPermission(Permission.VIEW_BID_HISTORY));
+        assertTrue(admin.hasPermission(Permission.UPDATE_USER_STATUS));
+        assertTrue(admin.hasPermission(Permission.CANCEL_AUCTION_AS_ADMIN));
+        assertTrue(admin.hasPermission(Permission.VIEW_ITEM_APPROVAL));
+        assertTrue(admin.hasPermission(Permission.MANAGE_ITEM_APPROVAL));
 
         assertFalse(admin.hasPermission(Permission.PLACE_BID));
         assertFalse(admin.hasPermission(Permission.CREATE_AUCTION));
+        assertFalse(admin.hasPermission(Permission.DEPOSIT));
+        assertFalse(admin.hasPermission(Permission.WITHDRAW));
+        assertFalse(admin.hasPermission(Permission.GET_WALLET));
+        assertFalse(admin.hasPermission(Permission.GET_MY_TRANSACTIONS));
     }
 
     @Test

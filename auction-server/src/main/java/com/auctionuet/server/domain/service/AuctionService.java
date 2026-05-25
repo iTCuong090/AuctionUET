@@ -5,6 +5,7 @@ import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.model.LiveAuction;
 import com.auctionuet.server.domain.model.User;
@@ -18,6 +19,7 @@ import com.auctionuet.server.persistence.schema.UserSchema;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,6 +28,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public class AuctionService {
+
+    private static final int CREATE_AUCTION_START_GRACE_SECONDS = 10;
 
     private final ItemService itemService;
     private final BidService bidService;
@@ -56,9 +60,10 @@ public class AuctionService {
         if (item.isArchived()) {
             throw new AuctionException("Item da bi go khoi danh sach dau gia");
         }
+        itemService.requireApprovedForAuction(item);
         requireItemOwner(seller, item);
         validateAuctionTimeRange(startTime, endTime);
-        requireFutureStartTime(startTime);
+        startTime = normalizeCreateAuctionStartTime(startTime);
         requireItemAvailableForNewAuction(itemId);
 
         AuctionSchema schema = new AuctionSchema(
@@ -190,6 +195,54 @@ public class AuctionService {
             auctionDAO.update(schema);
         }
         auctionManager.endAuction(auctionId);
+    }
+
+    public synchronized AuctionDTO adminCancelAuction(User admin, String auctionId, String reason)
+            throws AuctionException {
+        if (!admin.hasPermission(Permission.CANCEL_AUCTION_AS_ADMIN)) {
+            throw new AuctionException("Bạn không có quyền hủy phiên đấu giá");
+        }
+
+        AuctionSchema schema = requireAuction(auctionId);
+        if (schema.getStatus() == AuctionStatus.PAID) {
+            throw new AuctionException("Không thể hủy phiên đã thanh toán");
+        }
+        if (schema.getStatus() == AuctionStatus.CANCELED) {
+            throw new AuctionException("Phiên đấu giá đã bị hủy");
+        }
+        if (schema.getStatus() != AuctionStatus.OPEN
+                && schema.getStatus() != AuctionStatus.RUNNING
+                && schema.getStatus() != AuctionStatus.WAITING_PAYMENT) {
+            throw new AuctionException("Trạng thái phiên không cho phép Admin hủy");
+        }
+
+        LiveAuction liveAuction = auctionManager.getAuction(auctionId);
+        ItemSchema item = itemService.getItemSchemaById(schema.getItemId());
+        double depositAmount = item != null ? calculateDepositAmount(item) : 0;
+        String normalizedReason = reason != null ? reason.trim() : "";
+        if (normalizedReason.isEmpty()) {
+            throw new AuctionException("Lý do hủy không được để trống");
+        }
+
+        refundDepositsExcept(
+                schema,
+                liveAuction,
+                null,
+                depositAmount,
+                "Hoàn tiền cọc do Admin hủy phiên: " + normalizedReason);
+        LocalDateTime canceledAt = LocalDateTime.now();
+        schema.setStatus(AuctionStatus.CANCELED);
+        schema.setPaymentDeadlineAt(null);
+        schema.setPaidAt(null);
+        schema.setCanceledReason(normalizedReason);
+        schema.setCanceledByUserId(admin.getId());
+        schema.setCanceledAt(canceledAt);
+        auctionDAO.update(schema);
+
+        auctionManager.cancelAllTasks(auctionId);
+        auctionManager.removeLiveAuction(auctionId);
+        auctionManager.notifyAuctionCanceled(auctionId, normalizedReason, canceledAt);
+        return toAuctionDTO(schema, admin.getId());
     }
 
     public synchronized void expirePaymentDeadline(String auctionId) {
@@ -325,7 +378,7 @@ public class AuctionService {
         schema.setPaymentDeadlineAt(null);
         schema.setPaidAt(null);
         auctionDAO.update(schema);
-        auctionManager.loadAuction(schema, item.getStartingPrice());
+        auctionManager.loadAuction(schema, item.getStartingPrice(), resolveCurrentLeaderSince(schema));
         auctionManager.markAuctionStarted(schema);
     }
 
@@ -340,7 +393,43 @@ public class AuctionService {
         if (backfillDepositsFromBidHistory(schema, depositAmount)) {
             auctionDAO.update(schema);
         }
-        auctionManager.loadAuction(schema, item.getStartingPrice());
+
+        LiveAuction liveAuction = auctionManager.getAuction(schema.getId());
+        if (liveAuction != null) {
+            liveAuction.markDeposited(schema.getDepositedBidderIds());
+            LocalDateTime endTime = laterOf(liveAuction.getEndTime(), schema.getEndTime());
+            liveAuction.setEndTime(endTime);
+            auctionManager.scheduleAuctionEnd(schema.getId(), endTime);
+            return;
+        }
+
+        auctionManager.loadAuction(schema, item.getStartingPrice(), resolveCurrentLeaderSince(schema));
+    }
+
+    private LocalDateTime laterOf(LocalDateTime first, LocalDateTime second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return first.isAfter(second) ? first : second;
+    }
+
+    private LocalDateTime resolveCurrentLeaderSince(AuctionSchema schema) {
+        if (schema.getWinnerId() != null) {
+            return bidService.getBidHistory(schema.getId()).stream()
+                    .filter(bid -> schema.getWinnerId().equals(bid.getBidderId()))
+                    .filter(bid -> Double.compare(schema.getHighestBid(), bid.getAmount()) == 0)
+                    .max(Comparator.comparing(BidSchema::getTimestamp))
+                    .map(BidSchema::getTimestamp)
+                    .orElseGet(() -> fallbackLeaderSince(schema));
+        }
+        return fallbackLeaderSince(schema);
+    }
+
+    private LocalDateTime fallbackLeaderSince(AuctionSchema schema) {
+        return schema.getUpdatedAt() != null ? schema.getUpdatedAt() : LocalDateTime.now();
     }
 
     private void reconcilePaymentDeadline(AuctionSchema schema) {
@@ -536,7 +625,10 @@ public class AuctionService {
                 schema.getAntiSnipingWindowSeconds(),
                 schema.getAntiSnipingExtensionSeconds(),
                 depositAmount,
-                currentUserDeposited);
+                currentUserDeposited,
+                schema.getCanceledReason(),
+                schema.getCanceledByUserId(),
+                schema.getCanceledAt());
     }
 
     private LocalDateTime paidAtOf(AuctionSchema schema) {
@@ -783,9 +875,11 @@ public class AuctionService {
         }
     }
 
-    private void requireFutureStartTime(LocalDateTime startTime) throws AuctionException {
-        if (startTime.isBefore(LocalDateTime.now())) {
+    private LocalDateTime normalizeCreateAuctionStartTime(LocalDateTime startTime) throws AuctionException {
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime.isBefore(now.minusSeconds(CREATE_AUCTION_START_GRACE_SECONDS))) {
             throw new AuctionException("Thoi gian bat dau phai o trong tuong lai");
         }
+        return startTime.isBefore(now) ? now : startTime;
     }
 }

@@ -4,6 +4,7 @@ public enum PushActionType {
     AUCTION_STARTED,
     BID_UPDATE,
     AUCTION_ENDED,
-    AUCTION_EXTENDED
+    AUCTION_EXTENDED,
+    AUCTION_CANCELED
 }
 

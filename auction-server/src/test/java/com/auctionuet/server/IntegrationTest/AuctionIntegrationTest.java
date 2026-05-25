@@ -24,7 +24,7 @@ public class AuctionIntegrationTest {
 
     @BeforeAll
     static void setup() throws Exception {
-        TestHelper.startTestServer(PORT);
+        TestHelper.startTestServer(PORT, false);
         Thread.sleep(500);
     }
 

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
@@ -83,6 +82,7 @@
                               </Label>
                            </children>
                         </HBox>
+                        <Label fx:id="cancelReasonLabel" managed="false" styleClass="error-label" text="" visible="false" wrapText="true" />
                      </children>
                   </VBox>
                </children>
@@ -92,22 +92,22 @@
                <children>
                   <VBox spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label styleClass="text-accent" text="📊 Biểu đồ giá sản phẩm (Xu hướng)">
+                        <Label styleClass="text-accent" text="📈 Biểu đồ giá bid">
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
-                        <LineChart fx:id="priceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;">
+                        <LineChart fx:id="bidPriceChart" legendSide="TOP" prefHeight="300.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
                            <xAxis><NumberAxis autoRanging="true" label="Lượt bid" side="BOTTOM" /></xAxis>
                            <yAxis><NumberAxis label="Giá (VNĐ)" side="LEFT" /></yAxis>
                         </LineChart>
                      </children>
                   </VBox>
 
-                  <VBox prefWidth="350.0" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
+                  <VBox prefWidth="380.0" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #0f3460; -fx-border-radius: 15;">
                      <children>
                         <Label styleClass="text-accent" text="👤 Lịch sử phiên đấu giá">
                            <font><Font name="System Bold" size="18.0" /></font>
                         </Label>
-                        <TableView fx:id="bidHistoryTable" prefHeight="300.0" style="-fx-background-color: transparent;">
+                        <TableView fx:id="bidHistoryTable" prefHeight="300.0">
                            <columns>
                               <TableColumn fx:id="bidderCol" prefWidth="120.0" text="Người đấu" />
                               <TableColumn fx:id="amountCol" prefWidth="120.0" text="Giá ra (VNĐ)" />
@@ -143,6 +143,14 @@
                   <Label fx:id="paymentInfoLabel" styleClass="text-primary" text="Thông tin thanh toán" />
                   <Button fx:id="btnPayAuction" mnemonicParsing="false" prefHeight="42.0" prefWidth="180.0" style="-fx-background-color: #22c55e; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;" text="Thanh toán" />
                   <Label fx:id="paymentErrorLabel" styleClass="error-label" text="" />
+               </children>
+            </VBox>
+
+            <VBox fx:id="adminCancelArea" managed="false" spacing="10.0" styleClass="card-bg" style="-fx-padding: 20; -fx-background-radius: 15; -fx-border-color: #e94560; -fx-border-radius: 15;" visible="false">
+               <children>
+                  <Label styleClass="text-primary" text="Kiểm duyệt phiên đấu giá" />
+                  <Button fx:id="btnAdminCancelAuction" mnemonicParsing="false" onAction="#handleAdminCancelAuction" prefHeight="42.0" prefWidth="180.0" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;" text="Hủy phiên" />
+                  <Label fx:id="adminCancelErrorLabel" styleClass="error-label" text="" wrapText="true" />
                </children>
             </VBox>
          </children>

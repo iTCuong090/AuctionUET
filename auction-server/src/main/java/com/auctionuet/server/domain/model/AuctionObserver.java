@@ -38,4 +38,7 @@ public interface AuctionObserver {
      * @param newEndTime thời gian kết thúc mới
      */
     void onAuctionExtended(String auctionId, LocalDateTime newEndTime);
+
+    default void onAuctionCanceled(String auctionId, String reason, LocalDateTime canceledAt) {
+    }
 }

@@ -3,7 +3,9 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -30,10 +32,34 @@
                     <VBox.margin><Insets top="15.0" /></VBox.margin>
                     <font><Font size="14.0" /></font>
                 </Label>
-                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-border-color: #4ecdc4; -fx-border-radius: 25; -fx-text-fill: #4ecdc4; -fx-padding: 10; -fx-font-weight: bold;" text="Chỉnh sửa Profile">
+                <Button fx:id="btnToggleEditProfile" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleToggleEditProfile" style="-fx-background-color: transparent; -fx-border-color: #4ecdc4; -fx-border-radius: 25; -fx-text-fill: #4ecdc4; -fx-padding: 10; -fx-font-weight: bold;" text="Chỉnh sửa Profile">
                     <VBox.margin><Insets top="30.0" /></VBox.margin>
                     <font><Font size="14.0" /></font>
                 </Button>
+                <VBox fx:id="editProfileBox" managed="false" spacing="10.0" visible="false" style="-fx-padding: 10 0 0 0;">
+                    <children>
+                        <HBox spacing="8.0">
+                            <children>
+                                <Button fx:id="btnChooseUsernameEdit" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleChooseUsernameEdit" style="-fx-background-color: transparent; -fx-border-color: #4ecdc4; -fx-border-radius: 8; -fx-text-fill: #4ecdc4; -fx-padding: 8; -fx-font-weight: bold;" text="Đổi tên" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="btnChoosePasswordEdit" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleChoosePasswordEdit" style="-fx-background-color: transparent; -fx-border-color: #4ecdc4; -fx-border-radius: 8; -fx-text-fill: #4ecdc4; -fx-padding: 8; -fx-font-weight: bold;" text="Đổi mật khẩu" HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+                        <VBox fx:id="usernameEditBox" managed="false" spacing="8.0" visible="false">
+                            <children>
+                                <TextField fx:id="editUsernameField" promptText="Username mới" />
+                            </children>
+                        </VBox>
+                        <VBox fx:id="passwordEditBox" managed="false" spacing="8.0" visible="false">
+                            <children>
+                                <PasswordField fx:id="currentPasswordField" promptText="Mật khẩu hiện tại" />
+                                <PasswordField fx:id="newPasswordField" promptText="Mật khẩu mới" />
+                                <PasswordField fx:id="confirmPasswordField" promptText="Xác nhận mật khẩu mới" />
+                            </children>
+                        </VBox>
+                        <Button fx:id="btnSaveProfile" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleSaveProfile" style="-fx-background-color: #4ecdc4; -fx-text-fill: #1a1a2e; -fx-padding: 10; -fx-font-weight: bold; -fx-background-radius: 8;" text="Lưu thay đổi" />
+                        <Label fx:id="profileMessageLabel" text="" wrapText="true" />
+                    </children>
+                </VBox>
             </children>
         </VBox>
 
@@ -43,7 +69,7 @@
                     <font><Font name="System Bold" size="26.0" /></font>
                 </Label>
 
-                <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="card-bg" style="-fx-background-radius: 12; -fx-padding: 25; -fx-border-color: #0f3460; -fx-border-radius: 12;">
+                <HBox fx:id="balanceSummaryBox" alignment="CENTER_LEFT" spacing="20.0" styleClass="card-bg" style="-fx-background-radius: 12; -fx-padding: 25; -fx-border-color: #0f3460; -fx-border-radius: 12;">
                     <children>
                         <VBox spacing="8.0">
                             <children>
@@ -57,7 +83,7 @@
                         </VBox>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button mnemonicParsing="false" onAction="#handleTopUp" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 16px;" text="Nạp thêm tiền" />
+                                <Button fx:id="btnTopUp" mnemonicParsing="false" onAction="#handleTopUp" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 16px;" text="Nạp thêm tiền" />
                             </children>
                         </HBox>
                     </children>

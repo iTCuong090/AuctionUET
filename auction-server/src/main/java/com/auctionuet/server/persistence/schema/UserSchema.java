@@ -1,6 +1,7 @@
 package com.auctionuet.server.persistence.schema;
 
 import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.AccountStatus;
 import java.time.LocalDateTime;
 
 public class UserSchema extends BaseSchema {
@@ -9,6 +10,8 @@ public class UserSchema extends BaseSchema {
     private String passwordSalt;
     private String email;
     private UserRole role;
+    private AccountStatus status = AccountStatus.ACTIVE;
+    private boolean mustChangePassword;
     private double balance = 0;
     private double frozenBalance = 0;
 
@@ -65,6 +68,22 @@ public class UserSchema extends BaseSchema {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public AccountStatus getStatus() {
+        return status != null ? status : AccountStatus.ACTIVE;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status != null ? status : AccountStatus.ACTIVE;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 
     public double getBalance() { return balance; }

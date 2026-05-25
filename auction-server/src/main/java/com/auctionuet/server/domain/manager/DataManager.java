@@ -5,6 +5,7 @@ import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.persistence.dao.SystemSettingDAO;
 
 public class DataManager {
 
@@ -15,6 +16,7 @@ public class DataManager {
     private final AuctionDAO auctionDAO;
     private final BidDAO bidDAO;
     private final TransactionDAO transactionDAO;
+    private final SystemSettingDAO systemSettingDAO;
 
     private DataManager() {
         this.userDAO = new UserDAO();
@@ -22,6 +24,7 @@ public class DataManager {
         this.auctionDAO = new AuctionDAO();
         this.bidDAO = new BidDAO();
         this.transactionDAO = new TransactionDAO();
+        this.systemSettingDAO = new SystemSettingDAO();
     }
 
     public static DataManager getInstance() {
@@ -46,5 +49,9 @@ public class DataManager {
 
     public TransactionDAO getTransactionDAO() {
         return transactionDAO;
+    }
+
+    public SystemSettingDAO getSystemSettingDAO() {
+        return systemSettingDAO;
     }
 }

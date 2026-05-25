@@ -8,8 +8,6 @@ import com.auctionuet.protocol.dto.response.user.UserDTO;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -26,18 +24,15 @@ public class ItemHistoryController {
 
     @FXML private Label nameLabel, ownerLabel, typeLabel, specLabel, conditionLabel, descriptionLabel, statusLabel;
     @FXML private ImageView productImageView;
-    @FXML private LineChart<Number, Number> priceChart;
     @FXML private TableView<AuctionDTO> auctionHistoryTable;
     @FXML private TableColumn<AuctionDTO, String> titleCol, priceCol, statusCol, timeCol;
 
     private final ItemClient itemClient = new ItemClient();
-    private final XYChart.Series<Number, Number> priceSeries = new XYChart.Series<>();
     private ItemDTO currentItem;
 
     @FXML
     public void initialize() {
         setupAuctionHistoryTable();
-        setupPriceChart();
     }
 
     public void setItem(ItemDTO item) {
@@ -87,17 +82,8 @@ public class ItemHistoryController {
         timeCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(formatTime(cell.getValue().getEndTime())));
     }
 
-    private void setupPriceChart() {
-        priceSeries.setName("Giá phiên");
-        priceChart.setAnimated(false);
-        priceChart.setCreateSymbols(true);
-        priceChart.getData().clear();
-        priceChart.getData().add(priceSeries);
-    }
-
     private void renderAuctionHistory(List<AuctionDTO> history) {
         auctionHistoryTable.getItems().clear();
-        priceSeries.getData().clear();
 
         if (history == null || history.isEmpty()) {
             statusLabel.setText("Vật phẩm này chưa từng gắn với phiên đấu giá nào.");
@@ -109,10 +95,6 @@ public class ItemHistoryController {
                 .toList();
 
         auctionHistoryTable.getItems().setAll(sortedHistory);
-        for (int i = 0; i < sortedHistory.size(); i++) {
-            AuctionDTO auction = sortedHistory.get(i);
-            priceSeries.getData().add(new XYChart.Data<>(i + 1, auction.getCurrentPrice()));
-        }
 
         statusLabel.setText("Có " + sortedHistory.size() + " phiên đấu giá gắn với vật phẩm này.");
     }

@@ -2,6 +2,7 @@ package com.auctionuet.server.persistence.dao;
 
 import com.auctionuet.protocol.enums.ItemCondition;
 import com.auctionuet.protocol.enums.ItemType;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import com.auctionuet.server.persistence.schema.ItemSchema;
 import com.auctionuet.server.util.json.GsonFactory;
 import com.google.gson.Gson;
@@ -137,5 +138,6 @@ public class ItemDAOTest {
         assertNotNull(parsed);
         assertEquals(ItemType.VEHICLE, parsed.getType());
         assertEquals("Toyota", parsed.getExtraFields().get("make"));
+        assertEquals(ItemApprovalStatus.APPROVED, parsed.getApprovalStatus());
     }
 }

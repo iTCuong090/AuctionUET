@@ -3,6 +3,7 @@ package com.auctionuet.server.network.server;
 import com.auctionuet.server.domain.manager.AuctionManager;
 import com.auctionuet.server.domain.manager.DataManager;
 import com.auctionuet.server.domain.service.AuctionService;
+import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.service.BidService;
 import com.auctionuet.server.domain.service.ItemService;
@@ -10,15 +11,18 @@ import com.auctionuet.server.domain.service.TransactionService;
 import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.domain.service.WalletService;
 import com.auctionuet.server.network.controller.AuctionController;
+import com.auctionuet.server.network.controller.AdminController;
 import com.auctionuet.server.network.controller.AuthController;
 import com.auctionuet.server.network.controller.BidController;
 import com.auctionuet.server.network.controller.ItemController;
+import com.auctionuet.server.network.controller.UserController;
 import com.auctionuet.server.network.controller.WalletController;
 import com.auctionuet.server.persistence.dao.AuctionDAO;
 import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.persistence.dao.SystemSettingDAO;
 import com.auctionuet.server.util.AppLogger;
 
 import java.io.IOException;
@@ -55,13 +59,20 @@ public class AuctionServer {
             TransactionDAO transactionDAO = DataManager.getInstance().getTransactionDAO();
             AppLogger.logInit("TransactionDAO", null);
 
+            SystemSettingDAO systemSettingDAO = DataManager.getInstance().getSystemSettingDAO();
+            AppLogger.logInit("SystemSettingDAO", null);
+
             UserService userService = new UserService(userDAO);
             AppLogger.logInit("UserService", null);
+
+            AdminService adminService = new AdminService(userDAO);
+            adminService.ensureDefaultAdminExists();
+            AppLogger.logInit("AdminSeed", "Checked");
 
             AuthService authService = new AuthService(userDAO, userService);
             AppLogger.logInit("AuthService", null);
 
-            ItemService itemService = new ItemService(itemDAO, userService, auctionDAO);
+            ItemService itemService = new ItemService(itemDAO, userService, auctionDAO, systemSettingDAO);
             AppLogger.logInit("ItemService", null);
 
             TransactionService transactionService = new TransactionService(transactionDAO);
@@ -105,7 +116,21 @@ public class AuctionServer {
             BidController bidController = new BidController(bidService);
             AppLogger.logInit("BidController", null);
 
-            this.router = new RequestRouter(bidController, walletController, authController, itemController, auctionController);
+            UserController userController = new UserController(userService);
+            AppLogger.logInit("UserController", null);
+
+            AdminController adminController = new AdminController(adminService, auctionService, itemService);
+            AppLogger.logInit("AdminController", null);
+
+            this.router = new RequestRouter(
+                    bidController,
+                    walletController,
+                    authController,
+                    itemController,
+                    auctionController,
+                    userController,
+                    adminController,
+                    userService);
             AppLogger.logInit("RequestRouter", "Ready");
 
             isRunning = true;

@@ -69,4 +69,23 @@ public class PushEvents {
         public String getAuctionId() { return auctionId; }
         public LocalDateTime getNewEndTime() { return newEndTime; }
     }
+
+    public static class AuctionCanceledPush {
+        private String auctionId;
+        private String reason;
+        private LocalDateTime canceledAt;
+        private String message;
+
+        public AuctionCanceledPush(String auctionId, String reason, LocalDateTime canceledAt, String message) {
+            this.auctionId = auctionId;
+            this.reason = reason;
+            this.canceledAt = canceledAt;
+            this.message = message;
+        }
+
+        public String getAuctionId() { return auctionId; }
+        public String getReason() { return reason; }
+        public LocalDateTime getCanceledAt() { return canceledAt; }
+        public String getMessage() { return message; }
+    }
 }

@@ -18,6 +18,8 @@ import com.auctionuet.protocol.enums.BidType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -32,8 +34,13 @@ import java.util.List;
 
 public class BiddingController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final double AUTO_BID_STABILITY_CHECK_SECONDS = 3.2;
     private static final String AUTO_BID_INEFFECTIVE_NOTICE =
-            "Auto-Bid của bạn không còn hiệu lực vì đã bị Auto-Bid khác vượt trần.";
+            "Auto-Bid đã hết hiệu lực vì giá hiện tại vượt trần. Hãy dẫn đầu lại, giữ vị trí 3 giây, rồi bật Auto-Bid mới.";
+    private static final String AUTO_BID_REGAIN_LEAD_HINT =
+            "Bạn đang dẫn đầu trở lại. Giữ vị trí đủ 3 giây rồi bật lại Auto-Bid.";
+    private static final String AUTO_BID_REENABLE_HINT =
+            "Bạn đang dẫn đầu ổn định. Có thể bật Auto-Bid mới.";
 
     @FXML private Label titleLabel;
     @FXML private Label priceLabel;
@@ -41,6 +48,7 @@ public class BiddingController {
     @FXML private Label timeLeftLabel;
     @FXML private Label sellerLabel;
     @FXML private Label statusBadge;
+    @FXML private Label cancelReasonLabel;
 
     @FXML private Label depositLabel;
     @FXML private Label balanceLabel;
@@ -55,12 +63,14 @@ public class BiddingController {
     @FXML private Button cancelAutoBidBtn;
     @FXML private Label autoBidStatusLabel;
 
+    @FXML private LineChart<Number, Number> bidPriceChart;
     @FXML private ListView<String> bidHistoryList;
 
     private String currentAuctionId;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
     private final WalletClient walletClient = new WalletClient();
+    private final XYChart.Series<Number, Number> bidPriceSeries = new XYChart.Series<>();
 
     private javafx.animation.Timeline countdownTimeline;
     private LocalDateTime endDateTime;
@@ -69,6 +79,14 @@ public class BiddingController {
     private AutoBidStatus lastAutoBidStatus;
     private boolean autoBidStateLoaded;
     private boolean pendingAutoBidLossNotice;
+    private String currentLeaderId;
+    private LocalDateTime currentUserLeaderObservedAt;
+    private javafx.animation.PauseTransition delayedAutoBidCheck;
+
+    @FXML
+    public void initialize() {
+        setupBidPriceChart();
+    }
 
     public void setAuctionId(String auctionId) {
         this.currentAuctionId = auctionId;
@@ -97,12 +115,15 @@ public class BiddingController {
                     renderAuctionDeposit();
 
                     if (auction.getCurrentHighestBid() != null) {
-                        leaderLabel.setText("Người dẫn đầu: " + usernameOf(auction.getCurrentHighestBid().getBidder()));
+                        updateCurrentLeader(auction.getCurrentHighestBid().getBidder());
                     }
 
                     if (auction.getEndTime() != null) {
                         endDateTime = auction.getEndTime();
                         startCountdown();
+                    }
+                    if (auction.getStatus() == com.auctionuet.protocol.enums.AuctionStatus.CANCELED) {
+                        showCanceledState(auction.getCanceledReason());
                     }
                 });
             } catch (Exception e) {
@@ -132,13 +153,15 @@ public class BiddingController {
                 List<BidDTO> history = bidClient.getBidHistory(token, currentAuctionId);
                 Platform.runLater(() -> {
                     bidHistoryList.getItems().clear();
+                    bidPriceSeries.getData().clear();
                     if (history != null && !history.isEmpty()) {
                         for (BidDTO entry : history) {
                             bidHistoryList.getItems().add(formatBid(entry));
+                            appendBidPricePoint(entry);
                         }
 
                         BidDTO latest = history.get(history.size() - 1);
-                        leaderLabel.setText("Người dẫn đầu: " + usernameOf(latest.getBidder()));
+                        updateCurrentLeader(latest.getBidder());
                     }
                 });
             } catch (Exception e) {
@@ -158,15 +181,20 @@ public class BiddingController {
                 if (bid == null) return;
 
                 CurrencyFormatter.setMoneyText(priceLabel, bid.getAmount());
-                leaderLabel.setText("Người dẫn đầu: " + usernameOf(bid.getBidder()));
+                updateCurrentLeader(bid.getBidder(), true);
                 bidHistoryList.getItems().add(0, "Vừa xong - " + formatBid(bid));
+                appendBidPricePoint(bid);
                 if (isCurrentUser(bid.getBidder())) {
                     currentUserDeposited = true;
                     renderAuctionDeposit();
                     loadWalletInfo();
                 }
-                pendingAutoBidLossNotice = bid.getBidType() == BidType.AUTO && !isCurrentUser(bid.getBidder());
+                boolean externalBid = !isCurrentUser(bid.getBidder());
+                pendingAutoBidLossNotice = externalBid;
                 checkAutoBidState();
+                if (externalBid && bid.getBidType() == BidType.MANUAL) {
+                    scheduleDelayedAutoBidCheck();
+                }
                 return;
             }
 
@@ -200,8 +228,36 @@ public class BiddingController {
                 placeBidBtn.setDisable(true);
                 enableAutoBidBtn.setDisable(true);
                 cancelAutoBidBtn.setDisable(true);
+                return;
+            }
+
+            if (push.getPushType() == PushActionType.AUCTION_CANCELED) {
+                PushEvents.AuctionCanceledPush data = push.getDataAs(PushEvents.AuctionCanceledPush.class);
+                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+
+                showCanceledState(data.getReason());
+                currentUserDeposited = false;
+                renderAuctionDeposit();
+                loadWalletInfo();
             }
         });
+    }
+
+    private void showCanceledState(String reason) {
+        if (countdownTimeline != null) countdownTimeline.stop();
+        timeLeftLabel.setText("Đã hủy");
+        statusBadge.setText("ĐÃ HỦY");
+        statusBadge.getStyleClass().remove("status-badge-running");
+        statusBadge.getStyleClass().add("status-badge-canceled");
+        cancelReasonLabel.setText("Lý do hủy: " + (reason != null ? reason : "Chưa rõ"));
+        cancelReasonLabel.setVisible(true);
+        cancelReasonLabel.setManaged(true);
+        bidAmountField.setDisable(true);
+        placeBidBtn.setDisable(true);
+        maxBidField.setDisable(true);
+        incrementField.setDisable(true);
+        enableAutoBidBtn.setDisable(true);
+        cancelAutoBidBtn.setDisable(true);
     }
 
     private void subscribeToAuction(String auctionId) {
@@ -216,6 +272,7 @@ public class BiddingController {
 
     public void cleanup() {
         if (countdownTimeline != null) countdownTimeline.stop();
+        if (delayedAutoBidCheck != null) delayedAutoBidCheck.stop();
         ServerConnection.getInstance().setPushListener(null);
         new Thread(() -> bidClient.unsubscribe(ClientSession.getInstance().getToken(), currentAuctionId)).start();
     }
@@ -238,6 +295,53 @@ public class BiddingController {
         }));
         countdownTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
         countdownTimeline.play();
+    }
+
+    private void setupBidPriceChart() {
+        bidPriceSeries.setName("Giá bid");
+        bidPriceChart.setAnimated(false);
+        bidPriceChart.setCreateSymbols(true);
+        bidPriceChart.getData().clear();
+        bidPriceChart.getData().add(bidPriceSeries);
+    }
+
+    private void appendBidPricePoint(BidDTO bid) {
+        int bidIndex = bidPriceSeries.getData().size() + 1;
+        bidPriceSeries.getData().add(new XYChart.Data<>(bidIndex, bid.getAmount()));
+    }
+
+    private void updateCurrentLeader(UserDTO leader) {
+        updateCurrentLeader(leader, false);
+    }
+
+    private void updateCurrentLeader(UserDTO leader, boolean leaderBidChanged) {
+        String previousLeaderId = currentLeaderId;
+        currentLeaderId = leader != null ? leader.getId() : null;
+        leaderLabel.setText("Người dẫn đầu: " + usernameOf(leader));
+
+        if (isCurrentUser(leader)) {
+            boolean justBecameLeader = previousLeaderId == null || !previousLeaderId.equals(currentLeaderId);
+            if (justBecameLeader || leaderBidChanged) {
+                currentUserLeaderObservedAt = LocalDateTime.now();
+                scheduleDelayedAutoBidCheck(AUTO_BID_STABILITY_CHECK_SECONDS);
+            }
+            return;
+        }
+
+        currentUserLeaderObservedAt = null;
+    }
+
+    private void scheduleDelayedAutoBidCheck() {
+        scheduleDelayedAutoBidCheck(3.5);
+    }
+
+    private void scheduleDelayedAutoBidCheck(double seconds) {
+        if (delayedAutoBidCheck != null) {
+            delayedAutoBidCheck.stop();
+        }
+        delayedAutoBidCheck = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(seconds));
+        delayedAutoBidCheck.setOnFinished(e -> checkAutoBidState());
+        delayedAutoBidCheck.playFromStart();
     }
 
     private void checkAutoBidState() {
@@ -418,9 +522,13 @@ public class BiddingController {
         }
 
         if (status == AutoBidStatus.INEFFECTIVE) {
-            enableAutoBidBtn.setDisable(false);
+            boolean currentUserLeader = isCurrentUserLeader();
+            boolean canTryEnable = currentUserLeader && hasObservedCurrentUserLeadLongEnough();
+            enableAutoBidBtn.setDisable(!canTryEnable);
             cancelAutoBidBtn.setDisable(false);
-            autoBidStatusLabel.setText(AUTO_BID_INEFFECTIVE_NOTICE);
+            autoBidStatusLabel.setText(currentUserLeader
+                    ? (canTryEnable ? AUTO_BID_REENABLE_HINT : AUTO_BID_REGAIN_LEAD_HINT)
+                    : AUTO_BID_INEFFECTIVE_NOTICE);
             autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
             if (shouldNotifyIneffective) {
                 bidHistoryList.getItems().add(0, "Thông báo - " + AUTO_BID_INEFFECTIVE_NOTICE);
@@ -443,6 +551,17 @@ public class BiddingController {
 
     private String formatMoney(double amount) {
         return CurrencyFormatter.format(amount);
+    }
+
+    private boolean isCurrentUserLeader() {
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+        return currentUser != null && currentLeaderId != null && currentLeaderId.equals(currentUser.getId());
+    }
+
+    private boolean hasObservedCurrentUserLeadLongEnough() {
+        return currentUserLeaderObservedAt != null
+                && Duration.between(currentUserLeaderObservedAt, LocalDateTime.now()).toMillis()
+                >= Math.round(AUTO_BID_STABILITY_CHECK_SECONDS * 1000);
     }
 
     private boolean isCurrentUser(UserDTO user) {
