@@ -5,6 +5,7 @@ import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.AuctionStatus;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -154,6 +155,7 @@ public class MyItemsController {
         return text(dto.getName()).contains(keyword)
                 || text(String.valueOf(dto.getType())).contains(keyword)
                 || text(String.valueOf(dto.getCondition())).contains(keyword)
+                || text(formatApprovalStatus(dto.getApprovalStatus())).contains(keyword)
                 || text(item.auctionStatus()).contains(keyword)
                 || text(extraFieldsText(dto.getExtraFields())).contains(keyword);
     }
@@ -203,6 +205,8 @@ public class MyItemsController {
 
         Label auctionStatusBadge = new Label(formatAuctionStatusBadge(data.auctionStatus()));
         applyAuctionStatusStyle(auctionStatusBadge, data.auctionStatus());
+        Label approvalBadge = new Label(formatApprovalStatus(item.getApprovalStatus()));
+        applyApprovalStatusStyle(approvalBadge, item.getApprovalStatus());
 
         VBox details = new VBox(6);
         details.getChildren().addAll(type, condition);
@@ -221,7 +225,12 @@ public class MyItemsController {
             createAuctionButton.getStyleClass().add("button");
             createAuctionButton.setMaxWidth(Double.MAX_VALUE);
             createAuctionButton.setStyle("-fx-font-size: 13px;");
-            if (isBlockingAuctionStatus(data.auctionStatus())) {
+            if (item.getApprovalStatus() != ItemApprovalStatus.APPROVED) {
+                createAuctionButton.setText(item.getApprovalStatus() == ItemApprovalStatus.PENDING
+                        ? "Chờ duyệt"
+                        : "Bị từ chối");
+                createAuctionButton.setDisable(true);
+            } else if (isBlockingAuctionStatus(data.auctionStatus())) {
                 createAuctionButton.setText("Đã có phiên");
                 createAuctionButton.setDisable(true);
             } else {
@@ -237,8 +246,26 @@ public class MyItemsController {
             actions.getChildren().addAll(createAuctionButton, deleteButton);
         }
 
-        card.getChildren().addAll(title, price, auctionStatusBadge, details, actions);
+        card.getChildren().addAll(title, price, approvalBadge, auctionStatusBadge, details, actions);
         return card;
+    }
+
+    private String formatApprovalStatus(ItemApprovalStatus status) {
+        return switch (status) {
+            case PENDING -> "Chờ duyệt";
+            case APPROVED -> "Đã duyệt";
+            case REJECTED -> "Bị từ chối";
+        };
+    }
+
+    private void applyApprovalStatusStyle(Label badge, ItemApprovalStatus status) {
+        if (status == ItemApprovalStatus.APPROVED) {
+            badge.getStyleClass().add("status-badge-finished");
+        } else if (status == ItemApprovalStatus.REJECTED) {
+            badge.getStyleClass().add("error-label");
+        } else {
+            badge.getStyleClass().add("status-badge-open");
+        }
     }
 
     private String formatAuctionStatusBadge(String auctionStatus) {

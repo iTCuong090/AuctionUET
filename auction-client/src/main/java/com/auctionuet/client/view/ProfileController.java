@@ -30,6 +30,7 @@ public class ProfileController {
     @FXML private Label usernameLabel;
     @FXML private Label roleLabel;
     @FXML private Label balanceLabel;
+    @FXML private HBox balanceSummaryBox;
     @FXML private Button btnToggleEditProfile;
     @FXML private Button btnSaveProfile;
     @FXML private Button btnChooseUsernameEdit;
@@ -54,6 +55,7 @@ public class ProfileController {
     public void initialize() {
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
         boolean requiredPasswordChange = ClientSession.getInstance().isMustChangePassword();
+        boolean admin = ClientSession.getInstance().isAdmin();
 
         if (currentUser != null) {
             usernameLabel.setText("@" + currentUser.getUsername());
@@ -76,13 +78,26 @@ public class ProfileController {
             balanceLabel.setText("0 VND");
         }
 
+        if (admin) {
+            hideAdminWallet();
+        }
+
         if (requiredPasswordChange) {
             configureRequiredPasswordChange();
         } else {
             loadProfileStats();
-            loadWalletBalance();
+            if (!admin) {
+                loadWalletBalance();
+            }
         }
         refreshProfileFromServer();
+    }
+
+    private void hideAdminWallet() {
+        balanceSummaryBox.setVisible(false);
+        balanceSummaryBox.setManaged(false);
+        btnTopUp.setVisible(false);
+        btnTopUp.setManaged(false);
     }
 
     private void configureRequiredPasswordChange() {
