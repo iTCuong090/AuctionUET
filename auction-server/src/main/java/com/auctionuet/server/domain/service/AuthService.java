@@ -3,6 +3,7 @@ package com.auctionuet.server.domain.service;
 import com.auctionuet.protocol.dto.response.auth.LoginResponseDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.protocol.enums.UserRole;
+import com.auctionuet.protocol.enums.AccountStatus;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.exception.AuthenticationException;
@@ -41,6 +42,9 @@ public class AuthService {
         if (schema == null) {
             throw new UserNotFoundException(username);
         }
+        if (schema.getStatus() == AccountStatus.BLOCKED) {
+            throw new AuthenticationException("Tài khoản đã bị khóa");
+        }
 
         // Nếu tìm thấy user thì kiểm tra password.
         boolean isValid = PasswordUtils.verify(password, schema.getPasswordSalt(), schema.getHashedPassword());
@@ -57,7 +61,7 @@ public class AuthService {
         String token = sessionManager.createSession(user);
 
         UserDTO dto = userService.toDTO(user);
-        LoginResponseDTO response = new LoginResponseDTO(token, dto);
+        LoginResponseDTO response = new LoginResponseDTO(token, dto, schema.isMustChangePassword());
 
         return response;
     }
