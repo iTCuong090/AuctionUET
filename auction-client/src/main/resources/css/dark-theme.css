@@ -102,6 +102,7 @@
 .footer-label { -fx-text-fill: #7f8c8d; }
 .dark-bg { -fx-background-color: #1a1a2e; }
 .dark-bg-scroll { -fx-background: #1a1a2e; -fx-background-color: #1a1a2e; }
+.dark-bg-scroll > .viewport { -fx-background-color: #1a1a2e; }
 .card-bg { -fx-background-color: #16213e; }
 .card-border { -fx-border-color: #0f3460; }
 
@@ -134,6 +135,106 @@
 .theme-toggle-btn:hover {
     -fx-background-color: #3d4b55;
     -fx-border-color: #718096;
+}
+
+.approval-toolbar {
+    -fx-background-color: #16213e;
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 8;
+}
+
+.approval-switch {
+    -fx-background-color: #43506a;
+}
+
+.approval-switch.enabled {
+    -fx-background-color: #22c55e;
+}
+
+.approval-switch-thumb {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.24), 4, 0.15, 0, 1);
+}
+
+.approval-switch:disabled {
+    -fx-opacity: 0.6;
+}
+
+.approval-card-title,
+.approval-detail-title {
+    -fx-text-fill: #ffffff;
+}
+
+.approval-card-price,
+.approval-detail-price {
+    -fx-text-fill: #4ecdc4;
+}
+
+.approval-detail-panel,
+.approval-detail-image {
+    -fx-background-color: #16213e;
+    -fx-border-color: #0f3460;
+}
+
+.danger-action-button {
+    -fx-background-color: #e94560;
+}
+
+.danger-action-button:hover {
+    -fx-background-color: #ff6b6b;
+}
+
+/* === TABLE VIEW === */
+.table-view {
+    -fx-background-color: #16213e;
+    -fx-control-inner-background: #16213e;
+    -fx-border-color: #0f3460;
+}
+
+.table-view .column-header-background,
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #111b35;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #e0e0e0;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: #16213e;
+    -fx-table-cell-border-color: #233250;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #192641;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #203052;
+}
+
+.table-view .table-row-cell:selected,
+.table-view .table-row-cell:selected:hover {
+    -fx-background-color: #0f3460;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: transparent transparent #233250 transparent;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: #a0a0b0;
+}
+
+.table-view .virtual-flow .scroll-bar .track {
+    -fx-background-color: #111b35;
+}
+
+.table-view .virtual-flow .scroll-bar .thumb {
+    -fx-background-color: #33496d;
+    -fx-background-radius: 99;
 }
 
 /* === MAIN VIEW SPLIT LAYOUT === */
