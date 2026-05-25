@@ -18,7 +18,8 @@ public class TestHelper {
             "data/users.json",
             "data/items.json",
             "data/auctions.json",
-            "data/bids.json"
+            "data/bids.json",
+            "data/system_settings.json"
     };
 
     private static final Map<String, String> ORIGINAL_DATA = new LinkedHashMap<>();
@@ -26,7 +27,15 @@ public class TestHelper {
     private static AuctionServer runningServer;
 
     public static void startTestServer(int port) {
+        startTestServer(port, null);
+    }
+
+    public static void startTestServer(int port, Boolean itemApprovalEnabled) {
         captureOriginalData();
+        if (itemApprovalEnabled != null) {
+            writeDataFile("data/system_settings.json",
+                    "[{\"id\":\"system-settings\",\"itemApprovalEnabled\":" + itemApprovalEnabled + "}]");
+        }
         new Thread(() -> {
             try {
                 runningServer = new AuctionServer(port);
@@ -68,6 +77,9 @@ public class TestHelper {
         }
 
         for (String path : DATA_FILES) {
+            if ("data/system_settings.json".equals(path)) {
+                continue;
+            }
             writeDataFile(path, "[]");
         }
     }

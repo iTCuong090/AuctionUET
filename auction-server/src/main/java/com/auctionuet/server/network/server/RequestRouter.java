@@ -126,6 +126,16 @@ public class RequestRouter {
                 return adminController.handleGetAllUsers(request);
             case UPDATE_USER_STATUS:
                 return adminController.handleUpdateUserStatus(request);
+            case ADMIN_CANCEL_AUCTION:
+                return adminController.handleCancelAuction(request);
+            case GET_ITEM_APPROVAL_SETTINGS:
+                return adminController.handleGetItemApprovalSettings(request);
+            case UPDATE_ITEM_APPROVAL_SETTINGS:
+                return adminController.handleUpdateItemApprovalSettings(request);
+            case GET_ITEMS_FOR_APPROVAL:
+                return adminController.handleGetItemsForApproval(request);
+            case UPDATE_ITEM_APPROVAL_STATUS:
+                return adminController.handleUpdateItemApprovalStatus(request);
             // ── Utils ──
             case PING:
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
