@@ -5,6 +5,7 @@ import com.auctionuet.client.network.AuctionClient;
 import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -408,10 +409,10 @@ public class CreateAuctionController {
                         statusLabel.setText("Bạn chưa có sản phẩm nào. Hãy tạo sản phẩm trước.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     } else if (auctionableItems.isEmpty()) {
-                        statusLabel.setText("Tất cả vật phẩm đang có phiên đấu giá hoạt động.");
+                        statusLabel.setText("Không có vật phẩm đã duyệt sẵn sàng để tạo phiên.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     } else if (initialItemId != null && !selectedInitialItem) {
-                        statusLabel.setText("Vật phẩm này đang có phiên đấu giá hoạt động.");
+                        statusLabel.setText("Vật phẩm này chưa được duyệt hoặc đang có phiên hoạt động.");
                         statusLabel.setStyle("-fx-text-fill: #f39c12;");
                     }
                 });
@@ -429,7 +430,8 @@ public class CreateAuctionController {
         }
 
         for (ItemDTO item : items) {
-            if (!hasBlockingAuction(token, item)) {
+            if (item.getApprovalStatus() == ItemApprovalStatus.APPROVED
+                    && !hasBlockingAuction(token, item)) {
                 result.add(item);
             }
         }

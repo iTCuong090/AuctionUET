@@ -42,6 +42,7 @@
                                 <font><Font name="System Bold" size="18.0" /></font>
                             </Label>
                         </HBox>
+                        <Label fx:id="cancelReasonLabel" managed="false" styleClass="error-label" text="" visible="false" wrapText="true" />
                     </children>
                 </VBox>
 

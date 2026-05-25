@@ -22,6 +22,7 @@ import com.auctionuet.server.persistence.dao.BidDAO;
 import com.auctionuet.server.persistence.dao.ItemDAO;
 import com.auctionuet.server.persistence.dao.TransactionDAO;
 import com.auctionuet.server.persistence.dao.UserDAO;
+import com.auctionuet.server.persistence.dao.SystemSettingDAO;
 import com.auctionuet.server.util.AppLogger;
 
 import java.io.IOException;
@@ -58,6 +59,9 @@ public class AuctionServer {
             TransactionDAO transactionDAO = DataManager.getInstance().getTransactionDAO();
             AppLogger.logInit("TransactionDAO", null);
 
+            SystemSettingDAO systemSettingDAO = DataManager.getInstance().getSystemSettingDAO();
+            AppLogger.logInit("SystemSettingDAO", null);
+
             UserService userService = new UserService(userDAO);
             AppLogger.logInit("UserService", null);
 
@@ -68,7 +72,7 @@ public class AuctionServer {
             AuthService authService = new AuthService(userDAO, userService);
             AppLogger.logInit("AuthService", null);
 
-            ItemService itemService = new ItemService(itemDAO, userService, auctionDAO);
+            ItemService itemService = new ItemService(itemDAO, userService, auctionDAO, systemSettingDAO);
             AppLogger.logInit("ItemService", null);
 
             TransactionService transactionService = new TransactionService(transactionDAO);
@@ -115,7 +119,7 @@ public class AuctionServer {
             UserController userController = new UserController(userService);
             AppLogger.logInit("UserController", null);
 
-            AdminController adminController = new AdminController(adminService);
+            AdminController adminController = new AdminController(adminService, auctionService, itemService);
             AppLogger.logInit("AdminController", null);
 
             this.router = new RequestRouter(

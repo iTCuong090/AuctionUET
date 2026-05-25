@@ -48,6 +48,7 @@ public class BiddingController {
     @FXML private Label timeLeftLabel;
     @FXML private Label sellerLabel;
     @FXML private Label statusBadge;
+    @FXML private Label cancelReasonLabel;
 
     @FXML private Label depositLabel;
     @FXML private Label balanceLabel;
@@ -120,6 +121,9 @@ public class BiddingController {
                     if (auction.getEndTime() != null) {
                         endDateTime = auction.getEndTime();
                         startCountdown();
+                    }
+                    if (auction.getStatus() == com.auctionuet.protocol.enums.AuctionStatus.CANCELED) {
+                        showCanceledState(auction.getCanceledReason());
                     }
                 });
             } catch (Exception e) {
@@ -224,8 +228,36 @@ public class BiddingController {
                 placeBidBtn.setDisable(true);
                 enableAutoBidBtn.setDisable(true);
                 cancelAutoBidBtn.setDisable(true);
+                return;
+            }
+
+            if (push.getPushType() == PushActionType.AUCTION_CANCELED) {
+                PushEvents.AuctionCanceledPush data = push.getDataAs(PushEvents.AuctionCanceledPush.class);
+                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+
+                showCanceledState(data.getReason());
+                currentUserDeposited = false;
+                renderAuctionDeposit();
+                loadWalletInfo();
             }
         });
+    }
+
+    private void showCanceledState(String reason) {
+        if (countdownTimeline != null) countdownTimeline.stop();
+        timeLeftLabel.setText("Đã hủy");
+        statusBadge.setText("ĐÃ HỦY");
+        statusBadge.getStyleClass().remove("status-badge-running");
+        statusBadge.getStyleClass().add("status-badge-canceled");
+        cancelReasonLabel.setText("Lý do hủy: " + (reason != null ? reason : "Chưa rõ"));
+        cancelReasonLabel.setVisible(true);
+        cancelReasonLabel.setManaged(true);
+        bidAmountField.setDisable(true);
+        placeBidBtn.setDisable(true);
+        maxBidField.setDisable(true);
+        incrementField.setDisable(true);
+        enableAutoBidBtn.setDisable(true);
+        cancelAutoBidBtn.setDisable(true);
     }
 
     private void subscribeToAuction(String auctionId) {

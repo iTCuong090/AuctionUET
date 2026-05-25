@@ -19,6 +19,9 @@ public class AuctionSchema extends BaseSchema {
     private List<AuctionDepositRefSchema> depositRefs = new ArrayList<>();
     private LocalDateTime paymentDeadlineAt;
     private LocalDateTime paidAt;
+    private String canceledReason;
+    private String canceledByUserId;
+    private LocalDateTime canceledAt;
     private int antiSnipingWindowSeconds = 60;     // Mặc định 60 giây
     private int antiSnipingExtensionSeconds = 120; // Mặc định gia hạn 2 phút
 
@@ -184,6 +187,15 @@ public class AuctionSchema extends BaseSchema {
 
     public LocalDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
+
+    public String getCanceledReason() { return canceledReason; }
+    public void setCanceledReason(String canceledReason) { this.canceledReason = canceledReason; }
+
+    public String getCanceledByUserId() { return canceledByUserId; }
+    public void setCanceledByUserId(String canceledByUserId) { this.canceledByUserId = canceledByUserId; }
+
+    public LocalDateTime getCanceledAt() { return canceledAt; }
+    public void setCanceledAt(LocalDateTime canceledAt) { this.canceledAt = canceledAt; }
 
     public int getAntiSnipingWindowSeconds() { return antiSnipingWindowSeconds; }
     public void setAntiSnipingWindowSeconds(int antiSnipingWindowSeconds) { this.antiSnipingWindowSeconds = antiSnipingWindowSeconds; }

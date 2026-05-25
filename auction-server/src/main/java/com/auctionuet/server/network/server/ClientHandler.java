@@ -145,6 +145,16 @@ public class ClientHandler implements Runnable, AuctionObserver {
         sendPush(new PushMessage(PushActionType.AUCTION_EXTENDED, dto));
     }
 
+    @Override
+    public void onAuctionCanceled(String auctionId, String reason, LocalDateTime canceledAt) {
+        PushEvents.AuctionCanceledPush dto = new PushEvents.AuctionCanceledPush(
+                auctionId,
+                reason,
+                canceledAt,
+                "Phiên đấu giá đã bị Admin hủy");
+        sendPush(new PushMessage(PushActionType.AUCTION_CANCELED, dto));
+    }
+
     public synchronized void sendPush(PushMessage push) {
         if (push != null) {
             out.println(push.toJson());
