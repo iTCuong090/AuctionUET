@@ -241,5 +241,41 @@
     "id": "d36fdba0-b2a6-473a-af1f-94b244c17cb2",
     "createdAt": "2026-05-23T12:10:10.5124268",
     "updatedAt": "2026-05-23T12:42:13.3934142"
+  },
+  {
+    "name": "xe máy",
+    "description": "mới",
+    "startingPrice": 1000000.0,
+    "type": "ELECTRONICS",
+    "sellerId": "94a7f311-8441-4c3e-84de-c84f64f572bc",
+    "imageUrl": "",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "brand": "Waves",
+      "warrantyMonths": 12.0
+    },
+    "id": "bfe82abd-9ea5-452c-9432-c9743655bc12",
+    "createdAt": "2026-05-24T17:04:58.0650448",
+    "updatedAt": "2026-05-24T17:06:31.1088126"
+  },
+  {
+    "name": "rt",
+    "description": "5e",
+    "startingPrice": 1.0,
+    "type": "ELECTRONICS",
+    "sellerId": "94a7f311-8441-4c3e-84de-c84f64f572bc",
+    "imageUrl": "",
+    "condition": "NEW",
+    "auctionCount": 1,
+    "archived": false,
+    "extraFields": {
+      "brand": "213",
+      "warrantyMonths": 12.0
+    },
+    "id": "130a7e88-6ed4-4ece-b308-d7d132ecf306",
+    "createdAt": "2026-05-24T17:11:17.7803763",
+    "updatedAt": "2026-05-24T17:11:39.6304307"
   }
 ]

@@ -5,6 +5,7 @@ public enum Permission {
     GET_ALL_USERS,
     DELETE_USER,
     UPDATE_ROLE,
+    UPDATE_USER_STATUS,
     VIEW_AUCTION,
     VIEW_BID_HISTORY,
     GET_PROFILE,

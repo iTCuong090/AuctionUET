@@ -19,6 +19,7 @@ public class DashboardController {
 
     // Các nút trên Sidebar
     @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnPayments, btnProfile, btnLogout, btnWallet;
+    @FXML private Button btnAdminUsers;
     @FXML private Button btnToggleTheme;
     private final Consumer<UserDTO> userChangeListener = user ->
             Platform.runLater(() -> renderUserHeader(user));
@@ -31,8 +32,10 @@ public class DashboardController {
         // 2. Phân quyền: Ẩn các nút dựa trên Role (Test D.1, D.2)
         setupPermissions();
 
-        // 3. Mặc định vừa vào thì hiện màn hình Danh sách đấu giá
-        loadView("/fxml/AuctionListView.fxml");
+        // 3. Tài khoản dùng mật khẩu mặc định phải đổi mật khẩu trước.
+        loadView(ClientSession.getInstance().isMustChangePassword()
+                ? "/fxml/ProfileView.fxml"
+                : "/fxml/AuctionListView.fxml");
 
         // 4. Gắn sự kiện cho các nút (Bấm vào đâu thì sáng nút đó)
         btnHome.setOnAction(e -> {
@@ -69,6 +72,13 @@ public class DashboardController {
             });
         }
 
+        if (btnAdminUsers != null) {
+            btnAdminUsers.setOnAction(e -> {
+                loadView("/fxml/AdminUsersView.fxml");
+                setActiveButton(btnAdminUsers);
+            });
+        }
+
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
             setActiveButton(btnProfile);
@@ -76,8 +86,7 @@ public class DashboardController {
 
         btnLogout.setOnAction(e -> handleLogout());
 
-        // Ép nó sáng sẵn nút Auction List khi vừa mở lên
-        setActiveButton(btnAuctionList);
+        setActiveButton(ClientSession.getInstance().isMustChangePassword() ? btnProfile : btnAuctionList);
 
         // 5. Cập nhật icon nút toggle theme theo trạng thái hiện tại
         if (btnToggleTheme != null) {
@@ -99,6 +108,18 @@ public class DashboardController {
         // Sử dụng hàm isSeller() siêu tiện lợi trong ClientSession
         boolean isSeller = ClientSession.getInstance().isSeller();
         boolean isBidder = ClientSession.getInstance().isBidder();
+        boolean isAdmin = ClientSession.getInstance().isAdmin();
+
+        if (ClientSession.getInstance().isMustChangePassword()) {
+            hideButton(btnHome);
+            hideButton(btnMyItems);
+            hideButton(btnCreateAuction);
+            hideButton(btnAuctionList);
+            hideButton(btnPayments);
+            hideButton(btnWallet);
+            hideButton(btnAdminUsers);
+            return;
+        }
 
         if (!isSeller) {
             // Nếu KHÔNG phải Seller (tức là BIDDER hoặc GUEST) -> Ẩn các nút tạo hàng
@@ -106,6 +127,11 @@ public class DashboardController {
         }
         if (!isBidder) {
             hideButton(btnPayments);
+        }
+        if (!isAdmin) {
+            hideButton(btnAdminUsers);
+        } else {
+            hideButton(btnMyItems);
         }
         // Nếu là Seller -> Các nút vẫn hiển thị bình thường (do FXML mặc định là visible)
     }
@@ -144,6 +170,7 @@ public class DashboardController {
         if (btnPayments != null) btnPayments.getStyleClass().remove("active");
         if (btnWallet != null) btnWallet.getStyleClass().remove("active");
         if (btnProfile != null) btnProfile.getStyleClass().remove("active");
+        if (btnAdminUsers != null) btnAdminUsers.getStyleClass().remove("active");
 
         // Khoác áo "active" cho cái nút vừa được bấm
         if (clickedButton != null && !clickedButton.getStyleClass().contains("active")) {

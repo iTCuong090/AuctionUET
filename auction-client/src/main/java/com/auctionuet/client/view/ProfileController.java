@@ -34,6 +34,7 @@ public class ProfileController {
     @FXML private Button btnSaveProfile;
     @FXML private Button btnChooseUsernameEdit;
     @FXML private Button btnChoosePasswordEdit;
+    @FXML private Button btnTopUp;
     @FXML private VBox editProfileBox;
     @FXML private VBox usernameEditBox;
     @FXML private VBox passwordEditBox;
@@ -52,6 +53,7 @@ public class ProfileController {
     @FXML
     public void initialize() {
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
+        boolean requiredPasswordChange = ClientSession.getInstance().isMustChangePassword();
 
         if (currentUser != null) {
             usernameLabel.setText("@" + currentUser.getUsername());
@@ -74,9 +76,29 @@ public class ProfileController {
             balanceLabel.setText("0 VND");
         }
 
-        loadProfileStats();
-        loadWalletBalance();
+        if (requiredPasswordChange) {
+            configureRequiredPasswordChange();
+        } else {
+            loadProfileStats();
+            loadWalletBalance();
+        }
         refreshProfileFromServer();
+    }
+
+    private void configureRequiredPasswordChange() {
+        editProfileBox.setVisible(true);
+        editProfileBox.setManaged(true);
+        btnToggleEditProfile.setVisible(false);
+        btnToggleEditProfile.setManaged(false);
+        btnChooseUsernameEdit.setVisible(false);
+        btnChooseUsernameEdit.setManaged(false);
+        btnTopUp.setVisible(false);
+        btnTopUp.setManaged(false);
+        showUsernameEdit(false);
+        showPasswordEdit(true);
+        balanceLabel.setText("--");
+        setStatsDefault();
+        showProfileMessage("Bạn phải đổi mật khẩu mặc định trước khi sử dụng hệ thống.", false);
     }
 
     private void loadWalletBalance() {
@@ -187,6 +209,10 @@ public class ProfileController {
                     }
                     if (requestedNewPassword != null) {
                         showPasswordEdit(false);
+                        if (ClientSession.getInstance().isMustChangePassword()) {
+                            ClientSession.getInstance().completeRequiredPasswordChange();
+                            SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
+                        }
                     }
                 });
             } catch (Exception e) {

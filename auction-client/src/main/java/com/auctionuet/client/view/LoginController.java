@@ -57,7 +57,10 @@ public class LoginController {
                 LoginResponseDTO loginResponse = client.login(username, password);
 
                 javafx.application.Platform.runLater(() -> {
-                    ClientSession.getInstance().login(loginResponse.getToken(), loginResponse.getUser());
+                    ClientSession.getInstance().login(
+                            loginResponse.getToken(),
+                            loginResponse.getUser(),
+                            loginResponse.isMustChangePassword());
                     SceneManager.getInstance().switchScene("/fxml/DashboardView.fxml");
                     loginButton.setDisable(false);
                 });

@@ -6,10 +6,16 @@ import com.auctionuet.protocol.dto.response.user.UserDTO;
 public class LoginResponseDTO implements ValidatableDTO {
     private final String token;
     private final UserDTO user;
+    private final boolean mustChangePassword;
 
     public LoginResponseDTO(String token, UserDTO user) {
+        this(token, user, false);
+    }
+
+    public LoginResponseDTO(String token, UserDTO user, boolean mustChangePassword) {
         this.token = token;
         this.user = user;
+        this.mustChangePassword = mustChangePassword;
         validate();
     }
 
@@ -26,4 +32,5 @@ public class LoginResponseDTO implements ValidatableDTO {
 
     public String getToken() { return token; }
     public UserDTO getUser() { return user; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
 }
