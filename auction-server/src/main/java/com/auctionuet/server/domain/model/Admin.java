@@ -12,9 +12,10 @@ public class Admin extends User {
     public boolean hasPermission(Permission action) {
         return switch (action) {
             case MANAGE_USERS, GET_ALL_USERS, DELETE_USER, UPDATE_ROLE, UPDATE_USER_STATUS,
+                 CANCEL_AUCTION_AS_ADMIN,
+                 VIEW_ITEM_APPROVAL, MANAGE_ITEM_APPROVAL,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
-                 GET_PROFILE, UPDATE_PROFILE,
-                 GET_WALLET, GET_MY_TRANSACTIONS
+                 GET_PROFILE, UPDATE_PROFILE
                     -> true;
             default -> false;
         };
