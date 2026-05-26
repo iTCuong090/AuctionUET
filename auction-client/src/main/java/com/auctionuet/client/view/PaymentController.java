@@ -170,11 +170,18 @@ public class PaymentController {
 
         LocalDateTime threshold = LocalDateTime.now().minusDays(PAID_VISIBLE_DAYS);
         return auctions.stream()
-                .filter(auction -> auction.getStatus() == AuctionStatus.CANCELED)
-                .filter(auction -> auction.getWinner() != null
-                        && currentUserId.equals(auction.getWinner().getId()))
+                .filter(auction -> isExpiredPaymentForWinner(auction, currentUserId))
                 .filter(auction -> expiredTimeOf(auction) != null && !expiredTimeOf(auction).isBefore(threshold))
                 .toList();
+    }
+
+    static boolean isExpiredPaymentForWinner(AuctionDTO auction, String currentUserId) {
+        return auction != null
+                && auction.getStatus() == AuctionStatus.CANCELED
+                && auction.getCanceledByUserId() == null
+                && auction.getWinner() != null
+                && currentUserId != null
+                && currentUserId.equals(auction.getWinner().getId());
     }
 
     private String currentUserId() {
