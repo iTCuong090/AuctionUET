@@ -397,3 +397,16 @@
     -fx-pref-width: 88;
     -fx-max-width: 96;
 }
+
+/* --- 16. DANH SÁCH (LIST VIEWS) --- */
+.list-view {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+}
+.list-view .list-cell {
+    -fx-padding: 10 15;
+    -fx-font-size: 14px;
+}
+

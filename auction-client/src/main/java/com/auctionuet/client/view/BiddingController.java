@@ -156,7 +156,8 @@ public class BiddingController {
                     bidPriceSeries.getData().clear();
                     if (history != null && !history.isEmpty()) {
                         for (BidDTO entry : history) {
-                            bidHistoryList.getItems().add(formatBid(entry));
+                            // Thêm vào đầu danh sách để hiển thị mới nhất lên trên
+                            bidHistoryList.getItems().add(0, formatBid(entry));
                             appendBidPricePoint(entry);
                         }
 

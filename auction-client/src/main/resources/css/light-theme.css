@@ -237,7 +237,34 @@
     -fx-background-radius: 99;
 }
 
+/* === LIST VIEW === */
+.list-view {
+    -fx-background-color: #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-border-color: #dce8f3;
+}
+
+.list-view .list-cell {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #2d3b45;
+}
+
+.list-view .list-cell:odd {
+    -fx-background-color: #f8fbff;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #eef7fd;
+}
+
+.list-view .list-cell:selected,
+.list-view .list-cell:selected:hover {
+    -fx-background-color: #0374B5;
+    -fx-text-fill: #ffffff;
+}
+
 /* === MAIN VIEW SPLIT LAYOUT === */
+
 .main-banner-left {
     -fx-background-color: linear-gradient(to bottom right, #0374B5, #0261a1, #014f86);
 }
@@ -422,13 +449,16 @@
     -fx-background-color: #e2e8f0;
 }
 
-/* === ẨN THANH CUỘN TOÀN CỤC NHƯNG VẪN CHO PHÉP CUỘN BẰNG CHUỘT === */
-.scroll-pane {
+/* === ẨN THANH CUỘN CHO TRANG CHÍNH VÀ FORM LOGIN/REGISTER NHƯNG VẪN CHO PHÉP CUỘN BẰNG CHUỘT === */
+.dark-bg-scroll,
+.auth-form-scroll {
     -fx-hbar-policy: never;
     -fx-vbar-policy: never;
 }
-.scroll-pane > .scroll-bar:vertical,
-.scroll-pane > .scroll-bar:horizontal {
+.dark-bg-scroll > .scroll-bar:vertical,
+.dark-bg-scroll > .scroll-bar:horizontal,
+.auth-form-scroll > .scroll-bar:vertical,
+.auth-form-scroll > .scroll-bar:horizontal {
     -fx-opacity: 0;
     -fx-padding: 0;
     -fx-pref-width: 0;
@@ -438,4 +468,43 @@
     -fx-max-width: 0;
     -fx-max-height: 0;
 }
+
+/* === SCROLL BAR TOÀN CỤC CHO LIGHT MODE (TRÁNH LỆCH TÔNG VÀ MẤT NÚT CUỘN) === */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical {
+    -fx-width: 8px;
+}
+.scroll-bar:horizontal {
+    -fx-height: 8px;
+}
+.scroll-bar .track {
+    -fx-background-color: #f1f5f9; /* Nền rãnh sáng nhẹ đồng điệu */
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #cbd5e1; /* Màu nút cuộn xám nhẹ */
+    -fx-background-radius: 8px;
+}
+.scroll-bar .thumb:hover {
+    -fx-background-color: #94a3b8; /* Màu đậm hơn khi hover */
+}
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #0374B5; /* Màu xanh Canvas nhấn mạnh khi kéo cuộn */
+}
+/* Làm gọn các nút tăng/giảm ở hai đầu thanh cuộn */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
 
