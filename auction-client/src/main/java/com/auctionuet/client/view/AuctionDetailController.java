@@ -3,6 +3,7 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AdminClient;
 import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.client.network.ImageLoader;
 import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.ServerConnection;
 import com.auctionuet.protocol.PushActionType;
@@ -41,7 +42,7 @@ public class AuctionDetailController {
 
     @FXML private Label nameLabel, sellerLabel, typeLabel, conditionLabel, descriptionLabel;
     @FXML private Label currentPriceLabel, leaderLabel, timeLeftLabel, statusLabel;
-    @FXML private Label cancelReasonLabel;
+    @FXML private Label cancelReasonLabel, imagePlaceholderLabel;
     @FXML private ImageView productImageView;
 
     @FXML private TableView<BidDTO> bidHistoryTable;
@@ -145,15 +146,8 @@ public class AuctionDetailController {
             descriptionLabel.setText(nullToEmpty(dto.getItem().getDescription()));
             renderExtraFields(dto.getItem().getExtraFields());
 
-            // Tải ảnh sản phẩm thực tế từ URL
-            if (productImageView != null) {
-                String imageUrl = dto.getItem().getImageUrl();
-                if (imageUrl != null && !imageUrl.isBlank()) {
-                    productImageView.setImage(new Image(imageUrl, true));
-                } else {
-                    productImageView.setImage(null);
-                }
-            }
+            // Tải hình ảnh sản phẩm thực tế và quản lý placeholder qua ImageLoader
+            ImageLoader.loadImage(productImageView, imagePlaceholderLabel, dto.getItem().getImageUrl());
         }
 
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();

@@ -33,7 +33,7 @@
                         <StackPane prefHeight="220.0" prefWidth="220.0" styleClass="card-bg" style="-fx-background-radius: 12;">
                            <children>
                               <ImageView fx:id="productImageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                              <Label styleClass="text-secondary" text="[Ảnh sản phẩm]" />
+                              <Label fx:id="imagePlaceholderLabel" styleClass="text-secondary" text="[Ảnh sản phẩm]" />
                            </children>
                         </StackPane>
                      </children>

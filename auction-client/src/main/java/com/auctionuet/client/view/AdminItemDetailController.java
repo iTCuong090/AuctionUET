@@ -2,6 +2,7 @@ package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AdminClient;
+import com.auctionuet.client.network.ImageLoader;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import javafx.application.Platform;
@@ -31,6 +32,7 @@ public class AdminItemDetailController {
     @FXML private Label specificationsLabel;
     @FXML private Label approvalStatusLabel;
     @FXML private Label statusMessage;
+    @FXML private Label imagePlaceholderLabel;
     @FXML private ImageView productImageView;
     @FXML private HBox actionArea;
 
@@ -84,16 +86,7 @@ public class AdminItemDetailController {
     }
 
     private void loadImage() {
-        String imageUrl = currentItem.getImageUrl();
-        if (imageUrl == null || imageUrl.isBlank()) {
-            productImageView.setImage(null);
-            return;
-        }
-        try {
-            productImageView.setImage(new Image(imageUrl, true));
-        } catch (IllegalArgumentException e) {
-            productImageView.setImage(null);
-        }
+        ImageLoader.loadImage(productImageView, imagePlaceholderLabel, currentItem.getImageUrl());
     }
 
     private void updateStatus(ItemApprovalStatus status) {

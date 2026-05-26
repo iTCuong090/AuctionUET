@@ -3,6 +3,7 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.ItemClient;
 import com.auctionuet.client.network.ImageUploader;
+import com.auctionuet.client.network.ImageLoader;
 import com.auctionuet.protocol.dto.request.item.CreateItemRequestDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.ItemCondition;
@@ -218,9 +219,6 @@ public class CreateItemController {
         }, "image-upload-thread").start();
     }
 
-    /**
-     * Cập nhật khung xem trước hình ảnh từ đường dẫn URL
-     */
     private void updateImagePreview(String url) {
         if (url == null || url.isBlank()) {
             previewContainer.setVisible(false);
@@ -229,16 +227,8 @@ public class CreateItemController {
             return;
         }
 
-        try {
-            // Tải ảnh bất đồng bộ (backgroundLoading = true) để tránh đơ giao diện
-            Image image = new Image(url, true);
-            previewImageView.setImage(image);
-            previewContainer.setVisible(true);
-            previewContainer.setManaged(true);
-        } catch (Exception e) {
-            previewContainer.setVisible(false);
-            previewContainer.setManaged(false);
-            previewImageView.setImage(null);
-        }
+        previewContainer.setVisible(true);
+        previewContainer.setManaged(true);
+        ImageLoader.loadImage(previewImageView, null, url);
     }
 }
