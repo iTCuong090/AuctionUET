@@ -1073,7 +1073,7 @@ public class AuctionServiceTest {
         assertEquals(1, itemService.getItemsByOwnerId("bidder1").size());
         List<TransactionSchema> bidderTransactions = transactionDAO.findByUserId("bidder1");
         assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_PAYMENT));
-        assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_FORFEIT));
+        assertTrue(bidderTransactions.stream().anyMatch(t -> t.getType() == TransactionType.AUCTION_DEPOSIT_APPLIED));
         assertTrue(transactionDAO.findByUserId("seller1").stream()
                 .anyMatch(t -> t.getType() == TransactionType.SELLER_PAYOUT));
     }

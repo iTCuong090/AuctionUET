@@ -6,6 +6,7 @@ import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.service.BidService;
+import com.auctionuet.server.domain.service.FinancialAuditService;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.service.TransactionService;
 import com.auctionuet.server.domain.service.UserService;
@@ -78,6 +79,14 @@ public class AuctionServer {
             TransactionService transactionService = new TransactionService(transactionDAO);
             AppLogger.logInit("TransactionService", null);
 
+            FinancialAuditService financialAuditService = new FinancialAuditService(
+                    userDAO,
+                    transactionDAO,
+                    auctionDAO,
+                    transactionService);
+            int migratedTransactions = financialAuditService.migratePaidAuctionDepositTransactions();
+            AppLogger.logInit("FinancialAuditService", "Migrated transactions: " + migratedTransactions);
+
             WalletService walletService = new WalletService(userDAO, userService, transactionService);
             AppLogger.logInit("WalletService", null);
 
@@ -119,7 +128,8 @@ public class AuctionServer {
             UserController userController = new UserController(userService);
             AppLogger.logInit("UserController", null);
 
-            AdminController adminController = new AdminController(adminService, auctionService, itemService);
+            AdminController adminController =
+                    new AdminController(adminService, auctionService, itemService, financialAuditService);
             AppLogger.logInit("AdminController", null);
 
             this.router = new RequestRouter(

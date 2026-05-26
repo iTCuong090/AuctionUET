@@ -2,18 +2,21 @@ package com.auctionuet.server.network.controller;
 
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
+import com.auctionuet.protocol.dto.request.admin.GetGlobalTransactionsRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.GetAllUsersRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateUserStatusRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.AdminCancelAuctionRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateItemApprovalSettingsRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateItemApprovalStatusRequestDTO;
 import com.auctionuet.protocol.dto.response.admin.AdminUserDTO;
+import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.SessionManager;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuctionService;
+import com.auctionuet.server.domain.service.FinancialAuditService;
 import com.auctionuet.server.domain.service.ItemService;
 
 import java.util.List;
@@ -22,12 +25,18 @@ public class AdminController {
     private final AdminService adminService;
     private final AuctionService auctionService;
     private final ItemService itemService;
+    private final FinancialAuditService financialAuditService;
     private final SessionManager sessionManager;
 
-    public AdminController(AdminService adminService, AuctionService auctionService, ItemService itemService) {
+    public AdminController(
+            AdminService adminService,
+            AuctionService auctionService,
+            ItemService itemService,
+            FinancialAuditService financialAuditService) {
         this.adminService = adminService;
         this.auctionService = auctionService;
         this.itemService = itemService;
+        this.financialAuditService = financialAuditService;
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -78,6 +87,22 @@ public class AdminController {
         UpdateItemApprovalStatusRequestDTO update =
                 request.getDataAs(UpdateItemApprovalStatusRequestDTO.class);
         return Response.ok(itemService.updateApprovalStatus(update.getItemId(), update.getStatus()));
+    }
+
+    public Response handleGetGlobalTransactions(Request request) {
+        requirePermission(request, Permission.VIEW_FINANCIAL_AUDIT);
+        GetGlobalTransactionsRequestDTO filter = request.getData() == null
+                ? new GetGlobalTransactionsRequestDTO()
+                : request.getDataAs(GetGlobalTransactionsRequestDTO.class);
+        List<TransactionDTO> transactions = financialAuditService.getTransactions(
+                filter.getUserId(),
+                filter.getType());
+        return Response.ok(transactions);
+    }
+
+    public Response handleGetFinancialSummary(Request request) {
+        requirePermission(request, Permission.VIEW_FINANCIAL_AUDIT);
+        return Response.ok(financialAuditService.getSummary());
     }
 
     private User requirePermission(Request request, Permission permission) {

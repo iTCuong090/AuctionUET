@@ -119,7 +119,7 @@
   {
     "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "usernameSnapshot": "ccc456",
-    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "type": "AUCTION_DEPOSIT_APPLIED",
     "amount": 12345.6,
     "auctionId": "1b4f7f0b-9de5-4005-abdb-3b61d6a337c2",
     "relatedTransactionId": "bb691990-6c0c-4854-88c4-424ba243552c",
@@ -345,7 +345,7 @@
   {
     "userId": "d184e0c9-25db-4562-9f98-c67ad426330c",
     "usernameSnapshot": "ccc456",
-    "type": "AUCTION_DEPOSIT_FORFEIT",
+    "type": "AUCTION_DEPOSIT_APPLIED",
     "amount": 99999.90000000001,
     "auctionId": "170cacd8-7358-483e-bc8b-478cee4e160c",
     "relatedTransactionId": "9a7d851a-a3c1-4fae-aa26-d6fb914c8507",

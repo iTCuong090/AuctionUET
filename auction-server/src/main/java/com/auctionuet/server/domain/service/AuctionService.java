@@ -298,7 +298,7 @@ public class AuctionService {
                 walletService.payAuctionRemaining(winner.getId(), remaining, auctionId,
                         "Thanh toan phan con lai cua phien dau gia");
             }
-            walletService.forfeitAuctionDeposit(winner.getId(), retainedDepositAmount, auctionId, relatedTransactionId,
+            walletService.applyAuctionDeposit(winner.getId(), retainedDepositAmount, auctionId, relatedTransactionId,
                     "Ap tien coc vao thanh toan phien dau gia");
             walletService.payoutSeller(schema.getSellerId(), totalPrice, auctionId,
                     "Nhan tien tu nguoi thang dau gia");

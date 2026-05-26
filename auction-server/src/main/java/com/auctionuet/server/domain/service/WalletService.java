@@ -161,6 +161,28 @@ public class WalletService {
                 description != null ? description : "Tich thu tien coc dau gia");
     }
 
+    public synchronized void applyAuctionDeposit(
+            String userId,
+            double amount,
+            String auctionId,
+            String relatedTransactionId,
+            String description) {
+        UserSchema userSchema = requireUser(userId);
+        if (userSchema.getFrozenBalance() < amount) {
+            amount = Math.min(amount, userSchema.getFrozenBalance());
+        }
+        if (amount <= 0) {
+            return;
+        }
+        double balanceBefore = userSchema.getBalance();
+        double frozenBefore = userSchema.getFrozenBalance();
+        userSchema.setFrozenBalance(userSchema.getFrozenBalance() - amount);
+        userDAO.update(userSchema);
+        recordTransaction(userSchema, TransactionType.AUCTION_DEPOSIT_APPLIED, amount, auctionId, relatedTransactionId,
+                balanceBefore, userSchema.getBalance(), frozenBefore, userSchema.getFrozenBalance(),
+                description != null ? description : "Ap tien coc vao thanh toan phien dau gia");
+    }
+
     public synchronized WalletResponseDTO payAuctionRemaining(
             String userId,
             double amount,

@@ -136,6 +136,10 @@ public class RequestRouter {
                 return adminController.handleGetItemsForApproval(request);
             case UPDATE_ITEM_APPROVAL_STATUS:
                 return adminController.handleUpdateItemApprovalStatus(request);
+            case GET_GLOBAL_TRANSACTIONS:
+                return adminController.handleGetGlobalTransactions(request);
+            case GET_FINANCIAL_SUMMARY:
+                return adminController.handleGetFinancialSummary(request);
             // ── Utils ──
             case PING:
                 if (request.getToken() != null && !request.getToken().isEmpty()) {
