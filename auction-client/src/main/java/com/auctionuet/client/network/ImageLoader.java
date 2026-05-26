@@ -133,6 +133,8 @@ public class ImageLoader {
             // ScrollPane cho phép kéo thả di chuyển góc nhìn (Panning) khi zoom lớn
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setPannable(true);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setContent(centeringPane);

@@ -22,11 +22,15 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 
 import java.util.List;
 
 public class ProfileController {
 
+    @FXML private Circle avatarCircle;
     @FXML private Label usernameLabel;
     @FXML private Label roleLabel;
     @FXML private Label balanceLabel;
@@ -60,6 +64,7 @@ public class ProfileController {
         if (currentUser != null) {
             usernameLabel.setText("@" + currentUser.getUsername());
             editUsernameField.setText(currentUser.getUsername());
+            loadUserAvatar(currentUser.getUsername());
 
             String role = currentUser.getRole() != null ? currentUser.getRole().name() : "GUEST";
             roleLabel.setText(role);
@@ -335,6 +340,7 @@ public class ProfileController {
         usernameLabel.setText("@" + user.getUsername());
         roleLabel.setText(user.getRole() != null ? user.getRole().name() : "GUEST");
         editUsernameField.setText(user.getUsername());
+        loadUserAvatar(user.getUsername());
     }
 
     private void clearPasswordFields() {
@@ -445,5 +451,31 @@ public class ProfileController {
         statSecondTitleLabel.setText(getSecondStatTitle(ClientSession.getInstance().getCurrentUser()));
         statActiveLabel.setText("0");
         statReputationLabel.setText("★☆☆☆☆");
+    }
+
+    /**
+     * Tải ảnh đại diện (avatar) bất đồng bộ từ API Dicebear Shapes và lấp đầy hình tròn.
+     */
+    private void loadUserAvatar(String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+
+        // Tải ảnh bất đồng bộ sử dụng luồng nền có sẵn của JavaFX Image (tham số thứ hai là backgroundLoading = true)
+        String avatarUrl = "https://api.dicebear.com/9.x/shapes/png?seed=" + username;
+        Image image = new Image(avatarUrl, true);
+
+        image.progressProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.doubleValue() == 1.0 && !image.isError()) {
+                Platform.runLater(() -> {
+                    avatarCircle.setFill(new ImagePattern(image));
+                });
+            }
+        });
+
+        // Đề phòng trường hợp ảnh được tải hoàn tất ngay lập tức (ví dụ: lấy từ bộ nhớ đệm cache)
+        if (!image.isBackgroundLoading() && !image.isError()) {
+            avatarCircle.setFill(new ImagePattern(image));
+        }
     }
 }
