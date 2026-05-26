@@ -10,18 +10,28 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Consumer;
 
 public class PaymentCheckoutController {
+    // Thông tin ngân hàng nhận thanh toán (MB Bank thực tế)
+    private static final String BANK_ID = "MB";
+    private static final String ACCOUNT_NO = "0090090910909";
+    private static final String ACCOUNT_NAME = "CONG TY AUCTIONUET";
+    private static final String QR_TEMPLATE = "compact";
+
     private static final double CHECKOUT_GAP = 24.0;
     private static final double CHECKOUT_STACK_WIDTH = 820.0;
     private static final double CHECKOUT_RIGHT_WIDTH = 340.0;
@@ -31,6 +41,7 @@ public class PaymentCheckoutController {
 
     private final WalletClient walletClient = new WalletClient();
     private double depositAmount;
+    private String confirmCode; // Mã xác nhận giao dịch gồm 5 ký tự ngẫu nhiên
     private VBox checkoutLeftColumn;
     private VBox checkoutActionCard;
     private Label checkoutMessageLabel;
@@ -46,8 +57,20 @@ public class PaymentCheckoutController {
     public void setDepositData(double amount, Consumer<WalletResponseDTO> walletDepositSuccessCallback) {
         this.depositAmount = amount;
         this.walletDepositSuccessCallback = walletDepositSuccessCallback;
+        this.confirmCode = generateRandomConfirmCode(); // Tạo mã xác thực ngẫu nhiên 5 ký tự
         renderCheckout();
         Platform.runLater(() -> syncCheckoutWidth(checkoutFlow.getWidth()));
+    }
+
+    // Tạo mã xác thực ngẫu nhiên 5 ký tự (chữ in hoa và số)
+    private String generateRandomConfirmCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random rnd = new Random();
+        StringBuilder sb = new StringBuilder(5);
+        for (int i = 0; i < 5; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private void renderCheckout() {
@@ -173,8 +196,45 @@ public class PaymentCheckoutController {
         Label brand = new Label("VIETQR");
         brand.getStyleClass().add("payment-qr-brand");
 
-        GridPane qrMock = createQrMock(depositReference());
-        HBox qrHolder = new HBox(qrMock);
+        // Tạo URL gọi Quicklink API của VietQR.io
+        String url = "";
+        try {
+            String encodedBankId = URLEncoder.encode(BANK_ID, StandardCharsets.UTF_8.name());
+            String encodedAccountNo = URLEncoder.encode(ACCOUNT_NO, StandardCharsets.UTF_8.name());
+            String encodedTemplate = URLEncoder.encode(QR_TEMPLATE, StandardCharsets.UTF_8.name());
+            
+            // Số tiền nạp phải được chuyển về chuỗi số nguyên để quét đúng
+            String amountStr = String.valueOf((int) depositAmount);
+            String encodedAmount = URLEncoder.encode(amountStr, StandardCharsets.UTF_8.name());
+            
+            String reference = depositReference();
+            String encodedAddInfo = URLEncoder.encode(reference, StandardCharsets.UTF_8.name());
+            String encodedAccountName = URLEncoder.encode(ACCOUNT_NAME, StandardCharsets.UTF_8.name());
+
+            url = String.format("https://img.vietqr.io/image/%s-%s-%s.png?amount=%s&addInfo=%s&accountName=%s",
+                    encodedBankId, encodedAccountNo, encodedTemplate,
+                    encodedAmount, encodedAddInfo, encodedAccountName);
+        } catch (Exception e) {
+            // Trường hợp dự phòng nếu encoding gặp lỗi (hầu như không thể xảy ra với UTF-8)
+            url = "https://img.vietqr.io/image/" + BANK_ID + "-" + ACCOUNT_NO + "-" + QR_TEMPLATE + ".png"
+                    + "?amount=" + (int) depositAmount 
+                    + "&addInfo=" + depositReference()
+                    + "&accountName=" + ACCOUNT_NAME;
+        }
+
+        ImageView qrImageView = new ImageView();
+        qrImageView.setFitWidth(220);
+        qrImageView.setFitHeight(220);
+        qrImageView.setPreserveRatio(true);
+        try {
+            // Tải ảnh bất đồng bộ (background loading = true) để tránh nghẽn luồng JavaFX UI
+            Image qrImage = new Image(url, true);
+            qrImageView.setImage(qrImage);
+        } catch (Exception e) {
+            System.err.println("Lỗi tải ảnh QR từ VietQR: " + e.getMessage());
+        }
+
+        HBox qrHolder = new HBox(qrImageView);
         qrHolder.setAlignment(Pos.CENTER);
         qrHolder.setMaxWidth(Double.MAX_VALUE);
 
@@ -188,43 +248,6 @@ public class PaymentCheckoutController {
         ref.setWrapText(true);
 
         return List.of(title, brand, qrHolder, amount, ref);
-    }
-
-    private GridPane createQrMock(String paymentReference) {
-        GridPane grid = new GridPane();
-        grid.getStyleClass().add("payment-qr-grid");
-        grid.setAlignment(Pos.CENTER);
-        grid.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        int seed = paymentReference != null ? Math.abs(paymentReference.hashCode()) : 1;
-        for (int row = 0; row < 17; row++) {
-            for (int col = 0; col < 17; col++) {
-                Region cell = new Region();
-                cell.setMinSize(7, 7);
-                cell.setPrefSize(7, 7);
-                cell.setMaxSize(7, 7);
-                boolean finder = isQrFinderCell(row, col);
-                boolean dark = finder || ((row * 31 + col * 17 + seed) % 5 < 2);
-                cell.getStyleClass().add(dark ? "payment-qr-cell-dark" : "payment-qr-cell-light");
-                grid.add(cell, col, row);
-            }
-        }
-        return grid;
-    }
-
-    private boolean isQrFinderCell(int row, int col) {
-        return isFinderBlock(row, col, 0, 0)
-                || isFinderBlock(row, col, 0, 12)
-                || isFinderBlock(row, col, 12, 0);
-    }
-
-    private boolean isFinderBlock(int row, int col, int startRow, int startCol) {
-        int localRow = row - startRow;
-        int localCol = col - startCol;
-        if (localRow < 0 || localRow > 4 || localCol < 0 || localCol > 4) {
-            return false;
-        }
-        return localRow == 0 || localRow == 4 || localCol == 0 || localCol == 4
-                || (localRow == 2 && localCol == 2);
     }
 
     private void confirmWalletDeposit() {
@@ -273,7 +296,7 @@ public class PaymentCheckoutController {
 
     private String depositReference() {
         UserDTO user = ClientSession.getInstance().getCurrentUser();
-        String userId = user != null ? shortId(user.getId()) : "UNKNOWN";
-        return "NAPVI-" + userId;
+        String username = user != null && user.getUsername() != null ? user.getUsername() : "UNKNOWN";
+        return username + " " + (confirmCode != null ? confirmCode : "");
     }
 }
