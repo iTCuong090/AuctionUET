@@ -2,6 +2,7 @@ package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.client.network.ImageUploader;
 import com.auctionuet.protocol.dto.request.item.CreateItemRequestDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.ItemCondition;
@@ -13,8 +14,13 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +32,9 @@ public class CreateItemController {
     @FXML private TextArea descArea;
     @FXML private Label statusLabel;
     @FXML private Button submitBtn;
+    @FXML private Button uploadBtn;
+    @FXML private ImageView previewImageView;
+    @FXML private StackPane previewContainer;
 
     @FXML private VBox electronicsBox, artBox, vehicleBox;
 
@@ -48,6 +57,11 @@ public class CreateItemController {
 
         typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             switchDynamicForm(newValue);
+        });
+
+        // Tự động lắng nghe thay đổi của ô link ảnh để cập nhật khung xem trước
+        imageUrlField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateImagePreview(newValue);
         });
     }
 
@@ -125,6 +139,7 @@ public class CreateItemController {
                     nameField.clear();
                     priceField.clear();
                     descArea.clear();
+                    imageUrlField.clear();
                     if (successCallback != null) {
                         successCallback.run();
                     }
@@ -162,5 +177,68 @@ public class CreateItemController {
     private void showError(String msg) {
         statusLabel.setText("Lỗi: " + msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
+    }
+
+    /**
+     * Kích hoạt hộp thoại FileChooser để chọn tệp hình ảnh từ máy tính cục bộ
+     * và thực hiện tải lên Cloudflare Worker thông qua luồng nền.
+     */
+    @FXML
+    public void handleUploadImage() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn ảnh sản phẩm");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Ảnh sản phẩm", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp")
+        );
+
+        javafx.stage.Window window = imageUrlField.getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(window);
+
+        if (selectedFile == null) {
+            return;
+        }
+
+        uploadBtn.setDisable(true);
+        statusLabel.setText("Đang tải ảnh lên...");
+        statusLabel.setStyle("-fx-text-fill: #f39c12;");
+
+        new Thread(() -> {
+            try {
+                String uploadedUrl = ImageUploader.upload(selectedFile);
+                Platform.runLater(() -> {
+                    imageUrlField.setText(uploadedUrl);
+                    statusLabel.setText("Tải ảnh lên thành công!");
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Lỗi tải ảnh: " + e.getMessage()));
+            } finally {
+                Platform.runLater(() -> uploadBtn.setDisable(false));
+            }
+        }, "image-upload-thread").start();
+    }
+
+    /**
+     * Cập nhật khung xem trước hình ảnh từ đường dẫn URL
+     */
+    private void updateImagePreview(String url) {
+        if (url == null || url.isBlank()) {
+            previewContainer.setVisible(false);
+            previewContainer.setManaged(false);
+            previewImageView.setImage(null);
+            return;
+        }
+
+        try {
+            // Tải ảnh bất đồng bộ (backgroundLoading = true) để tránh đơ giao diện
+            Image image = new Image(url, true);
+            previewImageView.setImage(image);
+            previewContainer.setVisible(true);
+            previewContainer.setManaged(true);
+        } catch (Exception e) {
+            previewContainer.setVisible(false);
+            previewContainer.setManaged(false);
+            previewImageView.setImage(null);
+        }
     }
 }

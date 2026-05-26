@@ -126,7 +126,7 @@ public class WalletController {
                 popup.initOwner(owner);
             }
 
-            Scene scene = new Scene(root, 980, 560);
+            Scene scene = new Scene(root, 980, 680);
             ThemeManager.getInstance().applyTheme(scene);
             popup.setScene(scene);
             popup.setResizable(false);

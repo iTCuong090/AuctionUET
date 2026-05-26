@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.image.ImageView?>
 
 <ScrollPane fitToWidth="true" prefHeight="600.0" prefWidth="700.0" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.CreateItemController">
     <content>
@@ -45,7 +46,17 @@
 
                 <VBox spacing="5.0">
                     <Label styleClass="text-secondary" text="Link Ảnh (URL)" />
-                    <TextField fx:id="imageUrlField" promptText="https://imgur.com/anh-san-pham.jpg" />
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                            <TextField fx:id="imageUrlField" promptText="https://imgur.com/anh-san-pham.jpg" HBox.hgrow="ALWAYS" />
+                            <Button fx:id="uploadBtn" mnemonicParsing="false" onAction="#handleUploadImage" text="Tải ảnh lên 📤" />
+                        </children>
+                    </HBox>
+                    <StackPane fx:id="previewContainer" managed="false" style="-fx-border-color: #0f3460; -fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 8; -fx-background-color: rgba(15, 52, 96, 0.2); -fx-background-radius: 8;" visible="false">
+                        <children>
+                            <ImageView fx:id="previewImageView" fitHeight="150.0" fitWidth="150.0" preserveRatio="true" />
+                        </children>
+                    </StackPane>
                 </VBox>
 
                 <Separator style="-fx-background-color: #0f3460; -fx-opacity: 0.3;" />

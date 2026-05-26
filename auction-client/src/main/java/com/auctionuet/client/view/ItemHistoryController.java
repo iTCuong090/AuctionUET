@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import java.time.LocalDateTime;
@@ -34,7 +35,6 @@ public class ItemHistoryController {
     public void initialize() {
         setupAuctionHistoryTable();
     }
-
     public void setItem(ItemDTO item) {
         this.currentItem = item;
         updateItemInfo(item);
@@ -53,6 +53,16 @@ public class ItemHistoryController {
         conditionLabel.setText("Tình trạng: " + valueOrEmpty(item.getCondition()));
         descriptionLabel.setText(nullToEmpty(item.getDescription()));
         specLabel.setText("Thông số: " + formatExtraFields(item.getExtraFields()));
+
+        // Tải hình ảnh sản phẩm thực tế từ URL
+        if (productImageView != null) {
+            String imageUrl = item.getImageUrl();
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                productImageView.setImage(new Image(imageUrl, true));
+            } else {
+                productImageView.setImage(null);
+            }
+        }
     }
 
     private void loadAuctionHistory() {

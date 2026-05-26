@@ -25,6 +25,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -143,6 +144,16 @@ public class AuctionDetailController {
             conditionLabel.setText("Tình trạng: " + valueOrEmpty(dto.getItem().getCondition()));
             descriptionLabel.setText(nullToEmpty(dto.getItem().getDescription()));
             renderExtraFields(dto.getItem().getExtraFields());
+
+            // Tải ảnh sản phẩm thực tế từ URL
+            if (productImageView != null) {
+                String imageUrl = dto.getItem().getImageUrl();
+                if (imageUrl != null && !imageUrl.isBlank()) {
+                    productImageView.setImage(new Image(imageUrl, true));
+                } else {
+                    productImageView.setImage(null);
+                }
+            }
         }
 
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();

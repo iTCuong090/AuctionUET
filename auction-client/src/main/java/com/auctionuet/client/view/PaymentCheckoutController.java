@@ -193,9 +193,6 @@ public class PaymentCheckoutController {
         Label title = new Label("Quét mã QR để nạp tiền");
         title.getStyleClass().add("payment-card-title");
 
-        Label brand = new Label("VIETQR");
-        brand.getStyleClass().add("payment-qr-brand");
-
         // Tạo URL gọi Quicklink API của VietQR.io
         String url = "";
         try {
@@ -247,7 +244,7 @@ public class PaymentCheckoutController {
         ref.getStyleClass().add("text-secondary");
         ref.setWrapText(true);
 
-        return List.of(title, brand, qrHolder, amount, ref);
+        return List.of(title, qrHolder, amount, ref);
     }
 
     private void confirmWalletDeposit() {
