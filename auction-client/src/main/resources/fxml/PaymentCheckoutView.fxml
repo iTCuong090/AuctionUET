@@ -17,7 +17,7 @@
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label styleClass="text-heading" text="💳 Trả tiền">
+                        <Label fx:id="checkoutTitleLabel" styleClass="text-heading" text="💳 Nạp tiền">
                             <font><Font name="System Bold" size="24.0" /></font>
                         </Label>
                     </children>

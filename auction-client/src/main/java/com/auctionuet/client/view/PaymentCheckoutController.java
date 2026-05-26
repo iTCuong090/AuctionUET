@@ -1,9 +1,9 @@
 package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
-import com.auctionuet.client.network.AuctionClient;
-import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
+import com.auctionuet.client.network.WalletClient;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
+import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -19,6 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class PaymentCheckoutController {
     private static final double CHECKOUT_GAP = 24.0;
@@ -26,16 +27,15 @@ public class PaymentCheckoutController {
     private static final double CHECKOUT_RIGHT_WIDTH = 340.0;
 
     @FXML private FlowPane checkoutFlow;
+    @FXML private Label checkoutTitleLabel;
 
-    private final AuctionClient auctionClient = new AuctionClient();
-    private AuctionDTO selectedAuction;
-    private PaymentMethod selectedPaymentMethod = PaymentMethod.QR;
-    private boolean methodMenuOpen;
+    private final WalletClient walletClient = new WalletClient();
+    private double depositAmount;
     private VBox checkoutLeftColumn;
     private VBox checkoutActionCard;
     private Label checkoutMessageLabel;
     private Button btnConfirmCheckout;
-    private Runnable paymentSuccessCallback;
+    private Consumer<WalletResponseDTO> walletDepositSuccessCallback;
 
     @FXML
     public void initialize() {
@@ -43,25 +43,21 @@ public class PaymentCheckoutController {
                 syncCheckoutWidth(newWidth.doubleValue()));
     }
 
-    public void setAuctionData(AuctionDTO auction, Runnable paymentSuccessCallback) {
-        this.selectedAuction = auction;
-        this.paymentSuccessCallback = paymentSuccessCallback;
+    public void setDepositData(double amount, Consumer<WalletResponseDTO> walletDepositSuccessCallback) {
+        this.depositAmount = amount;
+        this.walletDepositSuccessCallback = walletDepositSuccessCallback;
         renderCheckout();
         Platform.runLater(() -> syncCheckoutWidth(checkoutFlow.getWidth()));
     }
 
     private void renderCheckout() {
-        if (selectedAuction == null) {
+        if (depositAmount <= 0) {
             return;
         }
 
-        checkoutLeftColumn = new VBox(16);
-        checkoutLeftColumn.getStyleClass().add("payment-checkout-column");
-        checkoutLeftColumn.getChildren().addAll(
-                createPaymentMethodCard(),
-                createPaymentInfoCard(selectedAuction));
-
-        checkoutActionCard = createPaymentActionCard(selectedAuction);
+        checkoutTitleLabel.setText("💳 Nạp tiền");
+        checkoutLeftColumn = createDepositInfoCard();
+        checkoutActionCard = createDepositActionCard();
         checkoutFlow.setHgap(CHECKOUT_GAP);
         checkoutFlow.setVgap(CHECKOUT_GAP);
         checkoutFlow.getStyleClass().add("payment-checkout-flow");
@@ -91,95 +87,23 @@ public class PaymentCheckoutController {
         region.setMaxWidth(width);
     }
 
-    private VBox createPaymentMethodCard() {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("payment-method-card");
-
-        Label title = new Label("Chọn phương thức thanh toán");
-        title.getStyleClass().add("payment-card-title");
-
-        if (methodMenuOpen) {
-            VBox menu = new VBox(8);
-            menu.getStyleClass().add("payment-method-menu");
-            for (PaymentMethod method : PaymentMethod.values()) {
-                HBox option = createPaymentMethodRow(method, method == selectedPaymentMethod);
-                option.getStyleClass().add("payment-method-option");
-                option.setOnMouseClicked(e -> {
-                    selectedPaymentMethod = method;
-                    methodMenuOpen = false;
-                    renderCheckout();
-                });
-                menu.getChildren().add(option);
-            }
-            card.getChildren().addAll(title, menu);
-        } else {
-            HBox selectedRow = createPaymentMethodRow(selectedPaymentMethod, true);
-            selectedRow.getStyleClass().add("payment-method-selected");
-            selectedRow.setOnMouseClicked(e -> {
-                methodMenuOpen = true;
-                renderCheckout();
-            });
-            card.getChildren().addAll(title, selectedRow);
-        }
-        return card;
-    }
-
-    private HBox createPaymentMethodRow(PaymentMethod method, boolean selected) {
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("payment-method-row");
-        if (selected) {
-            row.getStyleClass().add("selected");
-        }
-
-        Label check = new Label(selected ? "✓" : "");
-        check.getStyleClass().add("payment-method-check");
-
-        VBox textBox = new VBox(2);
-        Label name = new Label(method.displayName);
-        name.getStyleClass().add("text-primary");
-        name.setStyle("-fx-font-weight: bold;");
-        Label note = new Label(method.note);
-        note.getStyleClass().add("text-secondary");
-        note.setWrapText(true);
-        textBox.getChildren().addAll(name, note);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label brand = new Label(method.badge);
-        brand.getStyleClass().add(method == PaymentMethod.QR ? "payment-brand-vietqr" : "payment-brand-cash");
-
-        row.getChildren().addAll(check, textBox, spacer, brand);
-        return row;
-    }
-
-    private VBox createPaymentInfoCard(AuctionDTO auction) {
+    private VBox createDepositInfoCard() {
         VBox card = new VBox(12);
-        card.getStyleClass().add("payment-info-card");
+        card.getStyleClass().addAll("payment-info-card", "payment-checkout-column");
 
-        Label title = new Label("Thông tin thanh toán");
+        Label title = new Label("Thông tin nạp tiền");
         title.getStyleClass().add("payment-card-title");
 
-        double deposit = auction.getDepositAmount();
-        double totalPrice = auction.getCurrentPrice();
-        double remaining = remainingPayment(auction);
-
+        UserDTO currentUser = ClientSession.getInstance().getCurrentUser();
         card.getChildren().addAll(
                 title,
-                createInfoRow("Vật phẩm", itemNameOf(auction)),
-                createInfoRow("Người bán", usernameOf(auction.getSeller())),
-                createInfoRow("Mã phiên", shortId(auction.getId())),
+                createInfoRow("Tài khoản", usernameOf(currentUser)),
+                createInfoRow("Nội dung chuyển khoản", depositReference()),
                 createDivider(),
-                createInfoRow(
-                        "Tổng tiền phải trả",
-                        CurrencyFormatter.format(totalPrice) + " (đã bao gồm cọc)",
-                        CurrencyFormatter.formatFull(totalPrice) + " (đã bao gồm cọc)"),
-                createInfoRow("Cọc đã giữ", CurrencyFormatter.format(deposit), CurrencyFormatter.formatFull(deposit)),
                 createAmountDueRow(
-                        "Cần thanh toán thêm",
-                        CurrencyFormatter.format(remaining),
-                        CurrencyFormatter.formatFull(remaining)));
+                        "Số tiền nạp",
+                        CurrencyFormatter.format(depositAmount),
+                        CurrencyFormatter.formatFull(depositAmount)));
         return card;
     }
 
@@ -204,10 +128,6 @@ public class PaymentCheckoutController {
         return row;
     }
 
-    private HBox createAmountDueRow(String labelText, String valueText) {
-        return createAmountDueRow(labelText, valueText, null);
-    }
-
     private HBox createAmountDueRow(String labelText, String valueText, String tooltipText) {
         HBox row = createInfoRow(labelText, valueText, tooltipText);
         row.getStyleClass().add("payment-total-row");
@@ -222,25 +142,20 @@ public class PaymentCheckoutController {
         return divider;
     }
 
-    private VBox createPaymentActionCard(AuctionDTO auction) {
+    private VBox createDepositActionCard() {
         VBox card = new VBox(12);
         card.setAlignment(Pos.TOP_CENTER);
         card.getStyleClass().add("payment-action-card");
-
-        if (selectedPaymentMethod == PaymentMethod.QR) {
-            card.getChildren().addAll(createQrPaymentContent(auction));
-        } else {
-            card.getChildren().addAll(createCashPaymentContent(auction));
-        }
+        card.getChildren().addAll(createDepositQrContent());
 
         checkoutMessageLabel = new Label("");
         checkoutMessageLabel.getStyleClass().add("payment-message");
         checkoutMessageLabel.setWrapText(true);
 
-        btnConfirmCheckout = new Button("Xác nhận đã thanh toán");
+        btnConfirmCheckout = new Button("Xác nhận đã chuyển khoản");
         btnConfirmCheckout.getStyleClass().addAll("button", "payment-confirm-button");
         btnConfirmCheckout.setMaxWidth(Double.MAX_VALUE);
-        btnConfirmCheckout.setOnAction(e -> confirmCheckoutPayment());
+        btnConfirmCheckout.setOnAction(e -> confirmWalletDeposit());
 
         Button btnBack = new Button("Quay về");
         btnBack.getStyleClass().add("payment-back-button");
@@ -251,68 +166,36 @@ public class PaymentCheckoutController {
         return card;
     }
 
-    private List<Node> createQrPaymentContent(AuctionDTO auction) {
-        Label title = new Label("Quét mã QR để thanh toán");
+    private List<Node> createDepositQrContent() {
+        Label title = new Label("Quét mã QR để nạp tiền");
         title.getStyleClass().add("payment-card-title");
 
         Label brand = new Label("VIETQR");
         brand.getStyleClass().add("payment-qr-brand");
 
-        GridPane qrMock = createQrMock(auction.getId());
+        GridPane qrMock = createQrMock(depositReference());
         HBox qrHolder = new HBox(qrMock);
         qrHolder.setAlignment(Pos.CENTER);
         qrHolder.setMaxWidth(Double.MAX_VALUE);
 
-        double remaining = remainingPayment(auction);
         Label amount = new Label();
-        CurrencyFormatter.setMoneyText(amount, "Số tiền: ", remaining);
+        CurrencyFormatter.setMoneyText(amount, "Số tiền nạp: ", depositAmount);
         amount.getStyleClass().add("payment-action-amount");
         amount.setWrapText(true);
 
-        Label ref = new Label("Mã phiên: " + shortId(auction.getId()));
+        Label ref = new Label("Nội dung chuyển khoản: " + depositReference());
         ref.getStyleClass().add("text-secondary");
+        ref.setWrapText(true);
 
         return List.of(title, brand, qrHolder, amount, ref);
     }
 
-    private List<Node> createCashPaymentContent(AuctionDTO auction) {
-        Label title = new Label("Thanh toán trực tiếp");
-        title.getStyleClass().add("payment-card-title");
-
-        VBox instruction = new VBox(8);
-        instruction.getStyleClass().add("payment-cash-box");
-        Label first = new Label("Giao dịch trực tiếp với người bán.");
-        first.getStyleClass().add("text-primary");
-        first.setWrapText(true);
-        Label second = new Label("Sau khi hoàn tất giao dịch, bấm xác nhận để hệ thống ghi nhận thanh toán.");
-        second.getStyleClass().add("text-secondary");
-        second.setWrapText(true);
-        instruction.getChildren().addAll(first, second);
-
-        double remaining = remainingPayment(auction);
-        Label amount = new Label();
-        CurrencyFormatter.setMoneyText(amount, "Số tiền cần thanh toán thêm: ", remaining);
-        amount.getStyleClass().add("payment-action-amount");
-        amount.setWrapText(true);
-
-        Label note = new Label("Tổng tiền phải trả: " + CurrencyFormatter.format(auction.getCurrentPrice())
-                + " (đã bao gồm cọc)");
-        note.getStyleClass().add("text-secondary");
-        note.setWrapText(true);
-        CurrencyFormatter.installTooltip(
-                note,
-                "Tổng tiền phải trả: " + CurrencyFormatter.formatFull(auction.getCurrentPrice())
-                        + " (đã bao gồm cọc)");
-
-        return List.of(title, instruction, amount, note);
-    }
-
-    private GridPane createQrMock(String auctionId) {
+    private GridPane createQrMock(String paymentReference) {
         GridPane grid = new GridPane();
         grid.getStyleClass().add("payment-qr-grid");
         grid.setAlignment(Pos.CENTER);
         grid.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        int seed = auctionId != null ? Math.abs(auctionId.hashCode()) : 1;
+        int seed = paymentReference != null ? Math.abs(paymentReference.hashCode()) : 1;
         for (int row = 0; row < 17; row++) {
             for (int col = 0; col < 17; col++) {
                 Region cell = new Region();
@@ -344,29 +227,24 @@ public class PaymentCheckoutController {
                 || (localRow == 2 && localCol == 2);
     }
 
-    private void confirmCheckoutPayment() {
-        if (selectedAuction == null) {
-            return;
-        }
-
+    private void confirmWalletDeposit() {
         String token = ClientSession.getInstance().getToken();
-        String auctionId = selectedAuction.getId();
         btnConfirmCheckout.setDisable(true);
-        checkoutMessageLabel.setText("Đang xác nhận thanh toán...");
+        checkoutMessageLabel.setText("Đang xác nhận nạp tiền...");
         checkoutMessageLabel.getStyleClass().removeAll("success", "error");
 
         new Thread(() -> {
             try {
-                auctionClient.payAuction(token, auctionId);
+                WalletResponseDTO wallet = walletClient.deposit(token, depositAmount);
                 Platform.runLater(() -> {
-                    if (paymentSuccessCallback != null) {
-                        paymentSuccessCallback.run();
+                    if (walletDepositSuccessCallback != null) {
+                        walletDepositSuccessCallback.accept(wallet);
                     }
                     closePopup();
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    checkoutMessageLabel.setText("Lỗi thanh toán: " + e.getMessage());
+                    checkoutMessageLabel.setText("Lỗi nạp tiền: " + e.getMessage());
                     checkoutMessageLabel.getStyleClass().removeAll("success", "error");
                     checkoutMessageLabel.getStyleClass().add("error");
                     btnConfirmCheckout.setDisable(false);
@@ -382,47 +260,20 @@ public class PaymentCheckoutController {
         }
     }
 
-    private double remainingPayment(AuctionDTO auction) {
-        if (auction == null) {
-            return 0;
-        }
-        return Math.max(0, auction.getCurrentPrice() - auction.getDepositAmount());
-    }
-
-    private String itemNameOf(AuctionDTO auction) {
-        if (auction == null) {
-            return "Chưa rõ";
-        }
-        if (auction.getItem() != null && auction.getItem().getName() != null
-                && !auction.getItem().getName().isBlank()) {
-            return auction.getItem().getName();
-        }
-        return auction.getTitle() != null ? auction.getTitle() : "Chưa rõ";
-    }
-
     private String usernameOf(UserDTO user) {
         return user != null && user.getUsername() != null ? user.getUsername() : "Chưa rõ";
     }
 
     private String shortId(String id) {
         if (id == null || id.isBlank()) {
-            return "Chưa rõ";
+            return "UNKNOWN";
         }
         return id.length() <= 8 ? id : id.substring(0, 8);
     }
 
-    private enum PaymentMethod {
-        QR("Quét mã QR", "Với ứng dụng Ngân hàng hoặc Ví điện tử", "VIETQR"),
-        CASH("Thanh toán bằng tiền mặt", "Giao dịch trực tiếp với người bán", "TRỰC TIẾP");
-
-        private final String displayName;
-        private final String note;
-        private final String badge;
-
-        PaymentMethod(String displayName, String note, String badge) {
-            this.displayName = displayName;
-            this.note = note;
-            this.badge = badge;
-        }
+    private String depositReference() {
+        UserDTO user = ClientSession.getInstance().getCurrentUser();
+        String userId = user != null ? shortId(user.getId()) : "UNKNOWN";
+        return "NAPVI-" + userId;
     }
 }
