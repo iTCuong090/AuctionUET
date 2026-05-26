@@ -12,6 +12,7 @@ import com.auctionuet.protocol.dto.request.admin.UpdateItemApprovalStatusRequest
 import com.auctionuet.protocol.dto.response.admin.ItemApprovalSettingsDTO;
 import com.auctionuet.protocol.dto.response.admin.AdminUserDTO;
 import com.auctionuet.protocol.dto.response.admin.FinancialSummaryDTO;
+import com.auctionuet.protocol.dto.response.admin.SystemMonitorDTO;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
@@ -133,5 +134,22 @@ public class AdminClient {
             return response.getDataListAs(TransactionDTO.class);
         }
         throw new Exception(response.getMessage());
+    }
+
+    public SystemMonitorDTO subscribeSystemMonitor(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.SUBSCRIBE_SYSTEM_MONITOR, null, token));
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataAs(SystemMonitorDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
+
+    public void unsubscribeSystemMonitor(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.UNSUBSCRIBE_SYSTEM_MONITOR, null, token));
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
+        }
     }
 }

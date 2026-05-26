@@ -88,4 +88,27 @@ public class PushEvents {
         public LocalDateTime getCanceledAt() { return canceledAt; }
         public String getMessage() { return message; }
     }
+
+    public static class SystemMonitorUpdatedPush {
+        private int activeConnectionCount;
+        private int liveAuctionCount;
+        private long sequence;
+        private LocalDateTime capturedAt;
+
+        public SystemMonitorUpdatedPush(
+                int activeConnectionCount,
+                int liveAuctionCount,
+                long sequence,
+                LocalDateTime capturedAt) {
+            this.activeConnectionCount = activeConnectionCount;
+            this.liveAuctionCount = liveAuctionCount;
+            this.sequence = sequence;
+            this.capturedAt = capturedAt;
+        }
+
+        public int getActiveConnectionCount() { return activeConnectionCount; }
+        public int getLiveAuctionCount() { return liveAuctionCount; }
+        public long getSequence() { return sequence; }
+        public LocalDateTime getCapturedAt() { return capturedAt; }
+    }
 }

@@ -15,6 +15,7 @@ public class Admin extends User {
                  CANCEL_AUCTION_AS_ADMIN,
                  VIEW_ITEM_APPROVAL, MANAGE_ITEM_APPROVAL,
                  VIEW_FINANCIAL_AUDIT,
+                 VIEW_SYSTEM_MONITOR,
                  VIEW_AUCTION, VIEW_BID_HISTORY,
                  GET_PROFILE, UPDATE_PROFILE
                     -> true;

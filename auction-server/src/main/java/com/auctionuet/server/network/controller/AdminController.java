@@ -13,11 +13,13 @@ import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.Permission;
 import com.auctionuet.server.domain.manager.SessionManager;
+import com.auctionuet.server.domain.model.SystemMonitorObserver;
 import com.auctionuet.server.domain.model.User;
 import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.FinancialAuditService;
 import com.auctionuet.server.domain.service.ItemService;
+import com.auctionuet.server.domain.service.SystemMonitorService;
 
 import java.util.List;
 
@@ -26,17 +28,20 @@ public class AdminController {
     private final AuctionService auctionService;
     private final ItemService itemService;
     private final FinancialAuditService financialAuditService;
+    private final SystemMonitorService systemMonitorService;
     private final SessionManager sessionManager;
 
     public AdminController(
             AdminService adminService,
             AuctionService auctionService,
             ItemService itemService,
-            FinancialAuditService financialAuditService) {
+            FinancialAuditService financialAuditService,
+            SystemMonitorService systemMonitorService) {
         this.adminService = adminService;
         this.auctionService = auctionService;
         this.itemService = itemService;
         this.financialAuditService = financialAuditService;
+        this.systemMonitorService = systemMonitorService;
         this.sessionManager = SessionManager.getInstance();
     }
 
@@ -103,6 +108,17 @@ public class AdminController {
     public Response handleGetFinancialSummary(Request request) {
         requirePermission(request, Permission.VIEW_FINANCIAL_AUDIT);
         return Response.ok(financialAuditService.getSummary());
+    }
+
+    public Response handleSubscribeSystemMonitor(Request request, SystemMonitorObserver observer) {
+        requirePermission(request, Permission.VIEW_SYSTEM_MONITOR);
+        return Response.ok(systemMonitorService.subscribe(observer));
+    }
+
+    public Response handleUnsubscribeSystemMonitor(Request request, SystemMonitorObserver observer) {
+        requirePermission(request, Permission.VIEW_SYSTEM_MONITOR);
+        systemMonitorService.unsubscribe(observer);
+        return Response.ok("Đã hủy theo dõi giám sát hệ thống");
     }
 
     private User requirePermission(Request request, Permission permission) {

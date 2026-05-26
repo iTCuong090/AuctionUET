@@ -19,8 +19,9 @@ public class DashboardController {
 
     // Các nút trên Sidebar
     @FXML private Button btnHome, btnMyItems, btnCreateAuction, btnAuctionList, btnPayments, btnProfile, btnLogout, btnWallet;
-    @FXML private Button btnAdminUsers, btnAdminItems, btnAdminFinancial;
+    @FXML private Button btnAdminUsers, btnAdminItems, btnAdminFinancial, btnAdminSystemMonitor;
     @FXML private Button btnToggleTheme;
+    private DashboardContentLifecycle activeContentLifecycle;
     private final Consumer<UserDTO> userChangeListener = user ->
             Platform.runLater(() -> renderUserHeader(user));
 
@@ -90,6 +91,12 @@ public class DashboardController {
                 setActiveButton(btnAdminFinancial);
             });
         }
+        if (btnAdminSystemMonitor != null) {
+            btnAdminSystemMonitor.setOnAction(e -> {
+                loadView("/fxml/AdminSystemMonitorView.fxml");
+                setActiveButton(btnAdminSystemMonitor);
+            });
+        }
 
         btnProfile.setOnAction(e -> {
             loadView("/fxml/ProfileView.fxml");
@@ -132,6 +139,7 @@ public class DashboardController {
             hideButton(btnAdminUsers);
             hideButton(btnAdminItems);
             hideButton(btnAdminFinancial);
+            hideButton(btnAdminSystemMonitor);
             return;
         }
 
@@ -146,6 +154,7 @@ public class DashboardController {
             hideButton(btnAdminUsers);
             hideButton(btnAdminItems);
             hideButton(btnAdminFinancial);
+            hideButton(btnAdminSystemMonitor);
         } else {
             hideButton(btnMyItems);
             hideButton(btnWallet);
@@ -163,9 +172,14 @@ public class DashboardController {
 
     // Hàm "thần thánh" để đổi ruột màn hình
     private void loadView(String fxmlPath) {
+        cleanupActiveContent();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
+            Object controller = loader.getController();
+            activeContentLifecycle = controller instanceof DashboardContentLifecycle lifecycle
+                    ? lifecycle
+                    : null;
             contentArea.getChildren().setAll(root);
         } catch (Exception e) {
             System.err.println("Lỗi load màn hình: " + fxmlPath);
@@ -190,6 +204,7 @@ public class DashboardController {
         if (btnAdminUsers != null) btnAdminUsers.getStyleClass().remove("active");
         if (btnAdminItems != null) btnAdminItems.getStyleClass().remove("active");
         if (btnAdminFinancial != null) btnAdminFinancial.getStyleClass().remove("active");
+        if (btnAdminSystemMonitor != null) btnAdminSystemMonitor.getStyleClass().remove("active");
         // Khoác áo "active" cho cái nút vừa được bấm
         if (clickedButton != null && !clickedButton.getStyleClass().contains("active")) {
             clickedButton.getStyleClass().add("active");
@@ -197,10 +212,18 @@ public class DashboardController {
     }
 
     private void handleLogout() {
+        cleanupActiveContent();
         // Dọn dẹp session bằng hàm mới clearSession() thay vì setSession()
         ClientSession.getInstance().clearSession();
         // Quay về trang chủ MainView
         SceneManager.getInstance().switchScene("/fxml/MainView.fxml");
+    }
+
+    private void cleanupActiveContent() {
+        if (activeContentLifecycle != null) {
+            activeContentLifecycle.cleanup();
+            activeContentLifecycle = null;
+        }
     }
 
     @FXML
