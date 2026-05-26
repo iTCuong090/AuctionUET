@@ -6,10 +6,12 @@ import com.auctionuet.server.domain.service.AuctionService;
 import com.auctionuet.server.domain.service.AdminService;
 import com.auctionuet.server.domain.service.AuthService;
 import com.auctionuet.server.domain.service.BidService;
+import com.auctionuet.server.domain.service.FinancialAuditService;
 import com.auctionuet.server.domain.service.ItemService;
 import com.auctionuet.server.domain.service.TransactionService;
 import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.domain.service.WalletService;
+import com.auctionuet.server.domain.service.SystemMonitorService;
 import com.auctionuet.server.network.controller.AuctionController;
 import com.auctionuet.server.network.controller.AdminController;
 import com.auctionuet.server.network.controller.AuthController;
@@ -78,6 +80,20 @@ public class AuctionServer {
             TransactionService transactionService = new TransactionService(transactionDAO);
             AppLogger.logInit("TransactionService", null);
 
+            FinancialAuditService financialAuditService = new FinancialAuditService(
+                    userDAO,
+                    transactionDAO,
+                    auctionDAO,
+                    transactionService);
+            int migratedTransactions = financialAuditService.migratePaidAuctionDepositTransactions();
+            AppLogger.logInit("FinancialAuditService", "Migrated transactions: " + migratedTransactions);
+
+            SystemMonitorService systemMonitorService = new SystemMonitorService(
+                    activeConnections::get,
+                    AuctionManager.getInstance()::getLiveAuctionCount);
+            AuctionManager.getInstance().setLiveAuctionCountChangeCallback(systemMonitorService::notifyMetricsChanged);
+            AppLogger.logInit("SystemMonitorService", null);
+
             WalletService walletService = new WalletService(userDAO, userService, transactionService);
             AppLogger.logInit("WalletService", null);
 
@@ -119,7 +135,13 @@ public class AuctionServer {
             UserController userController = new UserController(userService);
             AppLogger.logInit("UserController", null);
 
-            AdminController adminController = new AdminController(adminService, auctionService, itemService);
+            AdminController adminController =
+                    new AdminController(
+                            adminService,
+                            auctionService,
+                            itemService,
+                            financialAuditService,
+                            systemMonitorService);
             AppLogger.logInit("AdminController", null);
 
             this.router = new RequestRouter(
@@ -140,10 +162,16 @@ public class AuctionServer {
             while (isRunning) {
                 Socket clientSocket = serverSocket.accept();
                 int count = activeConnections.incrementAndGet();
+                systemMonitorService.notifyMetricsChanged();
                 String ip = clientSocket.getInetAddress().getHostAddress();
                 AppLogger.logClientConnected(ip, clientSocket.getPort(), count);
 
-                ClientHandler handler = new ClientHandler(clientSocket, this.router, activeConnections, userService);
+                ClientHandler handler = new ClientHandler(
+                        clientSocket,
+                        this.router,
+                        activeConnections,
+                        userService,
+                        systemMonitorService);
                 new Thread(handler, "client-" + ip).start();
             }
 

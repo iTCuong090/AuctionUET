@@ -10,7 +10,6 @@ import javafx.geometry.Bounds;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -18,9 +17,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.Window;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -170,11 +166,18 @@ public class PaymentController {
 
         LocalDateTime threshold = LocalDateTime.now().minusDays(PAID_VISIBLE_DAYS);
         return auctions.stream()
-                .filter(auction -> auction.getStatus() == AuctionStatus.CANCELED)
-                .filter(auction -> auction.getWinner() != null
-                        && currentUserId.equals(auction.getWinner().getId()))
+                .filter(auction -> isExpiredPaymentForWinner(auction, currentUserId))
                 .filter(auction -> expiredTimeOf(auction) != null && !expiredTimeOf(auction).isBefore(threshold))
                 .toList();
+    }
+
+    static boolean isExpiredPaymentForWinner(AuctionDTO auction, String currentUserId) {
+        return auction != null
+                && auction.getStatus() == AuctionStatus.CANCELED
+                && auction.getCanceledByUserId() == null
+                && auction.getWinner() != null
+                && currentUserId != null
+                && currentUserId.equals(auction.getWinner().getId());
     }
 
     private String currentUserId() {
@@ -311,7 +314,7 @@ public class PaymentController {
         payButton.getStyleClass().add("button");
         payButton.setMaxWidth(Double.MAX_VALUE);
         if (auction.getStatus() == AuctionStatus.WAITING_PAYMENT) {
-            payButton.setOnAction(e -> openCheckoutPopup(payButton, auction));
+            payButton.setOnAction(e -> payAuctionFromWallet(payButton, auction));
         } else {
             payButton.setOnAction(e -> openAuctionDetail(payButton, auction.getId()));
         }
@@ -320,32 +323,29 @@ public class PaymentController {
         return card;
     }
 
-    private void openCheckoutPopup(Button source, AuctionDTO auction) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PaymentCheckoutView.fxml"));
-            Parent root = loader.load();
-            PaymentCheckoutController controller = loader.getController();
-            controller.setAuctionData(auction, () -> {
-                statusLabel.setText("Thanh toán thành công. Phiên đã được chuyển sang Đã thanh toán.");
-                loadPaymentData();
-            });
-
-            Stage popup = new Stage();
-            popup.setTitle("Trả tiền");
-            popup.initModality(Modality.WINDOW_MODAL);
-            Window owner = source.getScene() != null ? source.getScene().getWindow() : null;
-            if (owner != null) {
-                popup.initOwner(owner);
-            }
-
-            Scene scene = new Scene(root, 980, 560);
-            ThemeManager.getInstance().applyTheme(scene);
-            popup.setScene(scene);
-            popup.setResizable(false);
-            popup.show();
-        } catch (Exception e) {
-            statusLabel.setText("Lỗi mở giao diện trả tiền: " + e.getMessage());
+    private void payAuctionFromWallet(Button source, AuctionDTO auction) {
+        String token = ClientSession.getInstance().getToken();
+        if (token == null) {
+            statusLabel.setText("Bạn chưa đăng nhập.");
+            return;
         }
+
+        source.setDisable(true);
+        statusLabel.setText("Đang thanh toán bằng số dư ví...");
+        new Thread(() -> {
+            try {
+                auctionClient.payAuction(token, auction.getId());
+                Platform.runLater(() -> {
+                    statusLabel.setText("Thanh toán thành công. Phiên đã được chuyển sang Đã thanh toán.");
+                    loadPaymentData();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    statusLabel.setText("Lỗi thanh toán: " + e.getMessage());
+                    source.setDisable(false);
+                });
+            }
+        }).start();
     }
 
     private void openAuctionDetail(Button source, String auctionId) {

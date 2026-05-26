@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.AdminFinancialController">
+    <content>
+        <VBox spacing="18.0" styleClass="dark-bg">
+            <padding>
+                <Insets bottom="24.0" left="12.0" right="12.0" top="8.0" />
+            </padding>
+            <children>
+                <Label styleClass="text-heading" text="Kiểm toán tài chính">
+                    <font><Font name="System Bold" size="25.0" /></font>
+                </Label>
+
+                <HBox spacing="12.0">
+                    <VBox spacing="8.0" styleClass="card-bg wallet-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="text-secondary" text="Số dư khả dụng" />
+                        <Label fx:id="availableBalanceLabel" styleClass="text-primary" text="0 VNĐ">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                    </VBox>
+                    <VBox spacing="8.0" styleClass="card-bg wallet-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="text-secondary" text="Tiền đang đóng băng" />
+                        <Label fx:id="frozenBalanceLabel" styleClass="text-primary" text="0 VNĐ">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                    </VBox>
+                    <VBox spacing="8.0" styleClass="card-bg wallet-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="text-secondary" text="Doanh thu tiền phạt" />
+                        <Label fx:id="penaltyRevenueLabel" styleClass="text-accent" text="0 VNĐ">
+                            <font><Font name="System Bold" size="18.0" /></font>
+                        </Label>
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="12.0" styleClass="card-bg wallet-card">
+                    <Label styleClass="text-primary" text="Giao dịch toàn hệ thống">
+                        <font><Font name="System Bold" size="18.0" /></font>
+                    </Label>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <ComboBox fx:id="typeFilter" prefWidth="220.0" promptText="Loại giao dịch" />
+                        <ComboBox fx:id="userFilter" prefWidth="200.0" promptText="Người dùng" />
+                        <Button mnemonicParsing="false" onAction="#handleFilter" text="Lọc" />
+                        <Button mnemonicParsing="false" onAction="#handleReset" text="Đặt lại" />
+                    </HBox>
+                    <TableView fx:id="transactionTable" prefHeight="380.0">
+                        <columns>
+                            <TableColumn fx:id="timeColumn" prefWidth="120.0" text="Thời gian" />
+                            <TableColumn fx:id="userColumn" prefWidth="125.0" text="Người dùng" />
+                            <TableColumn fx:id="typeColumn" prefWidth="190.0" text="Loại" />
+                            <TableColumn fx:id="amountColumn" prefWidth="125.0" text="Số tiền" />
+                            <TableColumn fx:id="auctionColumn" prefWidth="170.0" text="Phiên đấu giá" />
+                            <TableColumn fx:id="descriptionColumn" prefWidth="230.0" text="Mô tả" />
+                        </columns>
+                    </TableView>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label fx:id="statusLabel" styleClass="text-secondary" text="" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button mnemonicParsing="false" onAction="#handleRefresh" text="Làm mới" />
+                    </HBox>
+                </VBox>
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>

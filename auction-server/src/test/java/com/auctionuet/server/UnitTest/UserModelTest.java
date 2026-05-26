@@ -59,6 +59,8 @@ public class UserModelTest {
         assertTrue(admin.hasPermission(Permission.CANCEL_AUCTION_AS_ADMIN));
         assertTrue(admin.hasPermission(Permission.VIEW_ITEM_APPROVAL));
         assertTrue(admin.hasPermission(Permission.MANAGE_ITEM_APPROVAL));
+        assertTrue(admin.hasPermission(Permission.VIEW_FINANCIAL_AUDIT));
+        assertTrue(admin.hasPermission(Permission.VIEW_SYSTEM_MONITOR));
 
         assertFalse(admin.hasPermission(Permission.PLACE_BID));
         assertFalse(admin.hasPermission(Permission.CREATE_AUCTION));

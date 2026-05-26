@@ -61,7 +61,7 @@
 .combo-box .arrow { -fx-background-color: #e0e0e0; }
 .combo-box .arrow-button { -fx-background-color: transparent; }
 .combo-box-popup .list-view { -fx-background-color: #16213e; -fx-border-color: #0f3460; }
-.combo-box-popup .list-view .list-cell { -fx-text-fill: #000000; -fx-background-color: #ffffff; }
+.combo-box-popup .list-view .list-cell { -fx-text-fill: #ffffff; -fx-background-color: #16213e; }
 .combo-box-popup .list-view .list-cell:hover { -fx-background-color: #e94560; -fx-text-fill: white; }
 .combo-box-popup .list-view .list-cell:selected { -fx-background-color: #ff6b6b; -fx-text-fill: white; }
 
@@ -97,9 +97,9 @@
 .default-color0.chart-line-symbol { -fx-background-color: #4ecdc4, #16213e; }
 
 .header-bar { -fx-background-color: #1a252f; }
-.content-area { -fx-background-color: #ecf0f1; }
-.footer-bar { -fx-background-color: #bdc3c7; }
-.footer-label { -fx-text-fill: #7f8c8d; }
+.content-area { -fx-background-color: #0d1117; }
+.footer-bar { -fx-background-color: #16213e; }
+.footer-label { -fx-text-fill: #a0a0b0; }
 .dark-bg { -fx-background-color: #1a1a2e; }
 .dark-bg-scroll { -fx-background: #1a1a2e; -fx-background-color: #1a1a2e; }
 .dark-bg-scroll > .viewport { -fx-background-color: #1a1a2e; }
@@ -223,6 +223,9 @@
     -fx-text-fill: #e0e0e0;
     -fx-border-color: transparent transparent #233250 transparent;
 }
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
 
 .table-view .placeholder .label {
     -fx-text-fill: #a0a0b0;
@@ -237,7 +240,34 @@
     -fx-background-radius: 99;
 }
 
+/* === LIST VIEW === */
+.list-view {
+    -fx-background-color: #16213e;
+    -fx-control-inner-background: #16213e;
+    -fx-border-color: #0f3460;
+}
+
+.list-view .list-cell {
+    -fx-background-color: #16213e;
+    -fx-text-fill: #ffffff;
+}
+
+.list-view .list-cell:odd {
+    -fx-background-color: #192641;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #203052;
+}
+
+.list-view .list-cell:selected,
+.list-view .list-cell:selected:hover {
+    -fx-background-color: #0f3460;
+    -fx-text-fill: #ffffff;
+}
+
 /* === MAIN VIEW SPLIT LAYOUT === */
+
 .main-banner-left {
     -fx-background-color: linear-gradient(to bottom right, #0f3460, #1a1a2e, #e94560);
 }
@@ -418,3 +448,63 @@
 .payment-back-button:hover {
     -fx-background-color: #24375f;
 }
+
+/* === ẨN THANH CUỘN CHO TRANG CHÍNH VÀ FORM LOGIN/REGISTER NHƯNG VẪN CHO PHÉP CUỘN BẰNG CHUỘT === */
+.dark-bg-scroll,
+.auth-form-scroll {
+    -fx-hbar-policy: never;
+    -fx-vbar-policy: never;
+}
+.dark-bg-scroll > .scroll-bar:vertical,
+.dark-bg-scroll > .scroll-bar:horizontal,
+.auth-form-scroll > .scroll-bar:vertical,
+.auth-form-scroll > .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-min-width: 0;
+    -fx-min-height: 0;
+    -fx-max-width: 0;
+    -fx-max-height: 0;
+}
+
+/* === SCROLL BAR TOÀN CỤC CHO DARK MODE (TRÁNH LỆCH TÔNG VÀ MẤT NÚT CUỘN) === */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical {
+    -fx-width: 8px;
+}
+.scroll-bar:horizontal {
+    -fx-height: 8px;
+}
+.scroll-bar .track {
+    -fx-background-color: #111827; /* Nền rãnh tối màu đồng điệu */
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #33496d; /* Màu nút cuộn xanh xám của dark theme */
+    -fx-background-radius: 8px;
+}
+.scroll-bar .thumb:hover {
+    -fx-background-color: #4f6f9c; /* Màu xanh xám sáng hơn khi hover */
+}
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #e94560; /* Màu đỏ hồng nhấn mạnh khi kéo cuộn */
+}
+/* Làm gọn các nút tăng/giảm ở hai đầu thanh cuộn */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+

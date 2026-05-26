@@ -6,10 +6,13 @@ import com.auctionuet.protocol.PushMessage;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.protocol.dto.push.PushEvents;
+import com.auctionuet.protocol.dto.response.admin.SystemMonitorDTO;
 import com.auctionuet.protocol.dto.response.bid.BidDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
 import com.auctionuet.server.domain.model.AuctionObserver;
 import com.auctionuet.server.domain.model.BidRecord;
+import com.auctionuet.server.domain.model.SystemMonitorObserver;
+import com.auctionuet.server.domain.service.SystemMonitorService;
 import com.auctionuet.server.domain.service.UserService;
 import com.auctionuet.server.util.AppLogger;
 
@@ -21,7 +24,7 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ClientHandler implements Runnable, AuctionObserver {
+public class ClientHandler implements Runnable, AuctionObserver, SystemMonitorObserver {
 
     private final Socket socket;
     private final PrintWriter out;
@@ -29,16 +32,22 @@ public class ClientHandler implements Runnable, AuctionObserver {
     private final RequestRouter router;
     private final AtomicInteger activeConnections;
     private final UserService userService;
+    private final SystemMonitorService systemMonitorService;
 
     private final String clientIp;
     private final long connectedAt;
 
-    public ClientHandler(Socket socket, RequestRouter router, AtomicInteger activeConnections,
-            UserService userService) throws IOException {
+    public ClientHandler(
+            Socket socket,
+            RequestRouter router,
+            AtomicInteger activeConnections,
+            UserService userService,
+            SystemMonitorService systemMonitorService) throws IOException {
         this.socket = socket;
         this.router = router;
         this.activeConnections = activeConnections;
         this.userService = userService;
+        this.systemMonitorService = systemMonitorService;
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.clientIp = socket.getInetAddress().getHostAddress();
@@ -95,7 +104,9 @@ public class ClientHandler implements Runnable, AuctionObserver {
     }
 
     private void cleanup() {
+        systemMonitorService.unsubscribe(this);
         int remaining = activeConnections.decrementAndGet();
+        systemMonitorService.notifyMetricsChanged();
         long durationMs = System.currentTimeMillis() - connectedAt;
         AppLogger.logClientDisconnected(clientIp, durationMs, remaining);
 
@@ -153,6 +164,16 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 canceledAt,
                 "Phiên đấu giá đã bị Admin hủy");
         sendPush(new PushMessage(PushActionType.AUCTION_CANCELED, dto));
+    }
+
+    @Override
+    public void onSystemMonitorUpdated(SystemMonitorDTO snapshot) {
+        PushEvents.SystemMonitorUpdatedPush dto = new PushEvents.SystemMonitorUpdatedPush(
+                snapshot.getActiveConnectionCount(),
+                snapshot.getLiveAuctionCount(),
+                snapshot.getSequence(),
+                snapshot.getCapturedAt());
+        sendPush(new PushMessage(PushActionType.SYSTEM_MONITOR_UPDATED, dto));
     }
 
     public synchronized void sendPush(PushMessage push) {

@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="560.0" prefWidth="980.0" style="-fx-border-color: transparent;" styleClass="dark-bg-scroll" vbarPolicy="AS_NEEDED" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.PaymentCheckoutController">
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="680.0" prefWidth="980.0" style="-fx-border-color: transparent;" styleClass="dark-bg-scroll" vbarPolicy="AS_NEEDED" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.PaymentCheckoutController">
     <content>
         <VBox spacing="18.0" styleClass="dark-bg">
             <padding>
@@ -17,7 +17,7 @@
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label styleClass="text-heading" text="💳 Trả tiền">
+                        <Label fx:id="checkoutTitleLabel" styleClass="text-heading" text="💳 Nạp tiền">
                             <font><Font name="System Bold" size="24.0" /></font>
                         </Label>
                     </children>

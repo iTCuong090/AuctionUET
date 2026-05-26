@@ -28,7 +28,7 @@
                     <children>
                         <StackPane prefHeight="250.0" prefWidth="250.0" styleClass="approval-detail-image">
                             <children>
-                                <Label styleClass="text-secondary" text="Chưa có ảnh" />
+                                <Label fx:id="imagePlaceholderLabel" styleClass="text-secondary" text="Chưa có ảnh" />
                                 <ImageView fx:id="productImageView" fitHeight="230.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true" />
                             </children>
                         </StackPane>

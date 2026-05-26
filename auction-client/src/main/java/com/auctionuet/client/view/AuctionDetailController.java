@@ -3,6 +3,7 @@ package com.auctionuet.client.view;
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.AdminClient;
 import com.auctionuet.client.network.AuctionClient;
+import com.auctionuet.client.network.ImageLoader;
 import com.auctionuet.client.network.BidClient;
 import com.auctionuet.client.network.ServerConnection;
 import com.auctionuet.protocol.PushActionType;
@@ -25,6 +26,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -40,7 +42,7 @@ public class AuctionDetailController {
 
     @FXML private Label nameLabel, sellerLabel, typeLabel, conditionLabel, descriptionLabel;
     @FXML private Label currentPriceLabel, leaderLabel, timeLeftLabel, statusLabel;
-    @FXML private Label cancelReasonLabel;
+    @FXML private Label cancelReasonLabel, imagePlaceholderLabel;
     @FXML private ImageView productImageView;
 
     @FXML private TableView<BidDTO> bidHistoryTable;
@@ -143,6 +145,9 @@ public class AuctionDetailController {
             conditionLabel.setText("Tình trạng: " + valueOrEmpty(dto.getItem().getCondition()));
             descriptionLabel.setText(nullToEmpty(dto.getItem().getDescription()));
             renderExtraFields(dto.getItem().getExtraFields());
+
+            // Tải hình ảnh sản phẩm thực tế và quản lý placeholder qua ImageLoader
+            ImageLoader.loadImage(productImageView, imagePlaceholderLabel, dto.getItem().getImageUrl());
         }
 
         UserDTO currentUser = ClientSession.getInstance().getCurrentUser();

@@ -4,16 +4,21 @@ import com.auctionuet.protocol.ActionType;
 import com.auctionuet.protocol.Request;
 import com.auctionuet.protocol.Response;
 import com.auctionuet.protocol.dto.request.admin.GetAllUsersRequestDTO;
+import com.auctionuet.protocol.dto.request.admin.GetGlobalTransactionsRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.AdminCancelAuctionRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateUserStatusRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateItemApprovalSettingsRequestDTO;
 import com.auctionuet.protocol.dto.request.admin.UpdateItemApprovalStatusRequestDTO;
 import com.auctionuet.protocol.dto.response.admin.ItemApprovalSettingsDTO;
 import com.auctionuet.protocol.dto.response.admin.AdminUserDTO;
+import com.auctionuet.protocol.dto.response.admin.FinancialSummaryDTO;
+import com.auctionuet.protocol.dto.response.admin.SystemMonitorDTO;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
+import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.enums.AccountStatus;
 import com.auctionuet.protocol.enums.ItemApprovalStatus;
+import com.auctionuet.protocol.enums.TransactionType;
 import com.auctionuet.protocol.enums.UserRole;
 
 import java.util.List;
@@ -104,5 +109,47 @@ public class AdminClient {
             return response.getDataAs(ItemDTO.class);
         }
         throw new Exception(response.getMessage());
+    }
+
+    public FinancialSummaryDTO getFinancialSummary(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.GET_FINANCIAL_SUMMARY, null, token));
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataAs(FinancialSummaryDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
+
+    public List<TransactionDTO> getGlobalTransactions(
+            String token,
+            String userId,
+            TransactionType type) throws Exception {
+        GetGlobalTransactionsRequestDTO filter = new GetGlobalTransactionsRequestDTO();
+        filter.setUserId(userId);
+        filter.setType(type);
+
+        Response response = ServerConnection.getInstance()
+                .sendRequest(Request.fromDto(ActionType.GET_GLOBAL_TRANSACTIONS, filter, token));
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataListAs(TransactionDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
+
+    public SystemMonitorDTO subscribeSystemMonitor(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.SUBSCRIBE_SYSTEM_MONITOR, null, token));
+        if ("OK".equals(response.getStatus())) {
+            return response.getDataAs(SystemMonitorDTO.class);
+        }
+        throw new Exception(response.getMessage());
+    }
+
+    public void unsubscribeSystemMonitor(String token) throws Exception {
+        Response response = ServerConnection.getInstance()
+                .sendRequest(new Request(ActionType.UNSUBSCRIBE_SYSTEM_MONITOR, null, token));
+        if (!"OK".equals(response.getStatus())) {
+            throw new Exception(response.getMessage());
+        }
     }
 }

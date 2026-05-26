@@ -2,6 +2,7 @@ package com.auctionuet.client.view;
 
 import com.auctionuet.client.model.ClientSession;
 import com.auctionuet.client.network.ItemClient;
+import com.auctionuet.client.network.ImageLoader;
 import com.auctionuet.protocol.dto.response.auction.AuctionDTO;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.dto.response.user.UserDTO;
@@ -11,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import java.time.LocalDateTime;
@@ -22,7 +24,7 @@ import java.util.Map;
 public class ItemHistoryController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    @FXML private Label nameLabel, ownerLabel, typeLabel, specLabel, conditionLabel, descriptionLabel, statusLabel;
+    @FXML private Label nameLabel, ownerLabel, typeLabel, specLabel, conditionLabel, descriptionLabel, statusLabel, imagePlaceholderLabel;
     @FXML private ImageView productImageView;
     @FXML private TableView<AuctionDTO> auctionHistoryTable;
     @FXML private TableColumn<AuctionDTO, String> titleCol, priceCol, statusCol, timeCol;
@@ -34,7 +36,6 @@ public class ItemHistoryController {
     public void initialize() {
         setupAuctionHistoryTable();
     }
-
     public void setItem(ItemDTO item) {
         this.currentItem = item;
         updateItemInfo(item);
@@ -53,6 +54,9 @@ public class ItemHistoryController {
         conditionLabel.setText("Tình trạng: " + valueOrEmpty(item.getCondition()));
         descriptionLabel.setText(nullToEmpty(item.getDescription()));
         specLabel.setText("Thông số: " + formatExtraFields(item.getExtraFields()));
+
+        // Tải hình ảnh sản phẩm thực tế và quản lý placeholder qua ImageLoader
+        ImageLoader.loadImage(productImageView, imagePlaceholderLabel, item.getImageUrl());
     }
 
     private void loadAuctionHistory() {

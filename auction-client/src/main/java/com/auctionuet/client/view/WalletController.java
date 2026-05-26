@@ -8,11 +8,16 @@ import com.auctionuet.protocol.dto.response.transaction.TransactionDTO;
 import com.auctionuet.protocol.dto.response.wallet.WalletResponseDTO;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -30,9 +35,7 @@ public class WalletController {
     @FXML private Label totalLabel;
 
     @FXML private TextField depositAmountField;
-    @FXML private Button generateQrBtn;
-    @FXML private VBox qrPlaceholder;
-    @FXML private Button confirmDepositBtn;
+    @FXML private Button depositBtn;
 
     @FXML private TextField withdrawAmountField;
     @FXML private Label statusLabel;
@@ -80,7 +83,7 @@ public class WalletController {
     }
 
     @FXML
-    private void handleGenerateQr() {
+    private void handleOpenDepositPopup() {
         String amountText = depositAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
             statusLabel.setText("Vui lòng nhập số tiền cần nạp.");
@@ -94,53 +97,42 @@ public class WalletController {
                 return;
             }
 
-            qrPlaceholder.setVisible(true);
-            qrPlaceholder.setManaged(true);
-            confirmDepositBtn.setVisible(true);
-            confirmDepositBtn.setManaged(true);
-            generateQrBtn.setVisible(false);
-            generateQrBtn.setManaged(false);
-
-            statusLabel.setText("Vui lòng quét mã QR, sau đó nhấn Xác nhận.");
-            statusLabel.setStyle("-fx-text-fill: #22c55e;");
+            openDepositPopup(amount);
         } catch (NumberFormatException ex) {
             statusLabel.setText("Số tiền không hợp lệ.");
         }
     }
 
-    @FXML
-    private void handleDeposit() {
-        String amountText = depositAmountField.getText().replace(",", "").trim();
+    private void openDepositPopup(double amount) {
         try {
-            double amount = Double.parseDouble(amountText);
-            String token = ClientSession.getInstance().getToken();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PaymentCheckoutView.fxml"));
+            Parent root = loader.load();
+            PaymentCheckoutController controller = loader.getController();
+            controller.setDepositData(amount, wallet -> {
+                renderWallet(wallet);
+                statusLabel.setText("Nạp tiền thành công!");
+                statusLabel.setStyle("-fx-text-fill: #22c55e;");
+                depositAmountField.clear();
+                loadTransactionHistory();
+            });
 
-            new Thread(() -> {
-                try {
-                    WalletResponseDTO newWallet = walletClient.deposit(token, amount);
-                    Platform.runLater(() -> {
-                        renderWallet(newWallet);
-                        statusLabel.setText("Nạp tiền thành công!");
-                        statusLabel.setStyle("-fx-text-fill: #22c55e;");
+            Stage popup = new Stage();
+            popup.setTitle("Nạp tiền");
+            popup.initModality(Modality.WINDOW_MODAL);
+            Window owner = depositBtn != null && depositBtn.getScene() != null
+                    ? depositBtn.getScene().getWindow()
+                    : null;
+            if (owner != null) {
+                popup.initOwner(owner);
+            }
 
-                        depositAmountField.clear();
-                        qrPlaceholder.setVisible(false);
-                        qrPlaceholder.setManaged(false);
-                        confirmDepositBtn.setVisible(false);
-                        confirmDepositBtn.setManaged(false);
-                        generateQrBtn.setVisible(true);
-                        generateQrBtn.setManaged(true);
-                        loadTransactionHistory();
-                    });
-                } catch (Exception e) {
-                    Platform.runLater(() -> {
-                        statusLabel.setText("Lỗi nạp tiền: " + e.getMessage());
-                        statusLabel.setStyle("-fx-text-fill: #dc2626;");
-                    });
-                }
-            }).start();
-        } catch (NumberFormatException ex) {
-            statusLabel.setText("Số tiền không hợp lệ.");
+            Scene scene = new Scene(root, 980, 680);
+            ThemeManager.getInstance().applyTheme(scene);
+            popup.setScene(scene);
+            popup.setResizable(false);
+            popup.show();
+        } catch (Exception e) {
+            statusLabel.setText("Lỗi mở giao diện nạp tiền: " + e.getMessage());
             statusLabel.setStyle("-fx-text-fill: #dc2626;");
         }
     }

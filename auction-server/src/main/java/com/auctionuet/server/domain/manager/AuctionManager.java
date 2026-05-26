@@ -41,6 +41,7 @@ public class AuctionManager implements AuctionObserver {
     private java.util.function.Consumer<String> endAuctionCallback;
     private java.util.function.Consumer<String> paymentDeadlineCallback;
     private Runnable reconcileCallback;
+    private Runnable liveAuctionCountChangeCallback;
 
     public void setStartAuctionCallback(java.util.function.Consumer<String> callback) {
         this.startAuctionCallback = callback;
@@ -56,6 +57,14 @@ public class AuctionManager implements AuctionObserver {
 
     public void setReconcileCallback(Runnable callback) {
         this.reconcileCallback = callback;
+    }
+
+    public void setLiveAuctionCountChangeCallback(Runnable callback) {
+        this.liveAuctionCountChangeCallback = callback;
+    }
+
+    public int getLiveAuctionCount() {
+        return liveAuctions.size();
     }
 
     public void scheduleAuctionStart(String auctionId, LocalDateTime startTime) {
@@ -134,9 +143,12 @@ public class AuctionManager implements AuctionObserver {
     public LiveAuction loadAuction(AuctionSchema schema, double startingPrice, LocalDateTime currentLeaderSince) {
         LiveAuction auction = toDomain(schema, startingPrice, currentLeaderSince);
         auction.markDeposited(schema.getDepositedBidderIds());
-        liveAuctions.put(auction.getId(), auction);
+        LiveAuction previous = liveAuctions.put(auction.getId(), auction);
         auction.addObserver(this);
         scheduleAuctionEnd(auction.getId(), schema.getEndTime());
+        if (previous == null) {
+            notifyLiveAuctionCountChanged();
+        }
         return auction;
     }
 
@@ -156,13 +168,16 @@ public class AuctionManager implements AuctionObserver {
         if (auction != null) {
             auction.setStatus(AuctionStatus.FINISHED);
             auction.notifyAuctionEnded();
+            notifyLiveAuctionCountChanged();
         }
     }
 
     public void removeLiveAuction(String auctionId) {
         cancelAuctionEnd(auctionId);
         cancelAutoBidResponse(auctionId);
-        liveAuctions.remove(auctionId);
+        if (liveAuctions.remove(auctionId) != null) {
+            notifyLiveAuctionCountChanged();
+        }
     }
 
     public void notifyAuctionCanceled(String auctionId, String reason, LocalDateTime canceledAt) {
@@ -248,6 +263,12 @@ public class AuctionManager implements AuctionObserver {
         ScheduledFuture<?> task = tasks.remove(auctionId);
         if (task != null) {
             task.cancel(false);
+        }
+    }
+
+    private void notifyLiveAuctionCountChanged() {
+        if (liveAuctionCountChangeCallback != null) {
+            liveAuctionCountChangeCallback.run();
         }
     }
 

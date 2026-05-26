@@ -20,7 +20,7 @@
     <children>
         <VBox alignment="TOP_CENTER" prefWidth="300.0" spacing="15.0" styleClass="card-bg" style="-fx-background-radius: 15; -fx-padding: 40 20; -fx-border-color: #0f3460; -fx-border-radius: 15; -fx-border-width: 2;">
             <children>
-                <Circle fill="#4ecdc4" radius="65.0" stroke="#1a1a2e" strokeType="INSIDE" strokeWidth="4.0" />
+                <Circle fx:id="avatarCircle" fill="#4ecdc4" radius="65.0" stroke="#1a1a2e" strokeType="INSIDE" strokeWidth="4.0" />
                 <Label fx:id="usernameLabel" styleClass="text-primary" text="\@nguyencaocong">
                     <font><Font name="System Bold" size="22.0" /></font>
                     <VBox.margin><Insets top="10.0" /></VBox.margin>
