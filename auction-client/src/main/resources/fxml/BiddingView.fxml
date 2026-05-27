@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.control.ComboBox?>
 
 <ScrollPane fitToWidth="true" styleClass="dark-bg-scroll" style="-fx-border-color: transparent;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.BiddingController">
     <content>
@@ -74,6 +75,42 @@
                     </children>
                 </VBox>
 
+                <!-- CẤU HÌNH TRỢ LÝ GIỌNG NÓI GEMINI -->
+                <VBox spacing="15.0" styleClass="card-bg wallet-card">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="20.0">
+                            <Label styleClass="text-primary" text="⚙️ CẤU HÌNH TRỢ LÝ GIỌNG NÓI GEMINI">
+                                <font><Font name="System Bold" size="16.0" /></font>
+                            </Label>
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button fx:id="btnToggleGeminiConfig" mnemonicParsing="false" styleClass="button" text="Ẩn cấu hình" onAction="#handleToggleGeminiConfig" />
+                        </HBox>
+                        
+                        <VBox fx:id="geminiConfigContent" spacing="12.0">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                    <Label styleClass="text-secondary" text="Mô hình Gemini:" prefWidth="150.0" />
+                                    <ComboBox fx:id="geminiModelComboBox" prefWidth="250.0" onAction="#handleModelChanged" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                </HBox>
+                                
+                                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                    <Label styleClass="text-secondary" text="Mô tả mô hình:" prefWidth="150.0" />
+                                    <Label fx:id="geminiModelDescLabel" styleClass="text-accent" text="" wrapText="true" HBox.hgrow="ALWAYS" />
+                                </HBox>
+                                
+                                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                                    <Label styleClass="text-secondary" text="Gemini API Key:" prefWidth="150.0" />
+                                    <TextField fx:id="geminiApiKeyField" promptText="Nhập API Key của Gemini (lưu tạm thời trong RAM)..." styleClass="text-field" HBox.hgrow="ALWAYS" />
+                                    <Button fx:id="btnSaveGeminiConfig" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #22c55e; -fx-text-fill: white;" text="Lưu Cấu Hình" onAction="#handleSaveGeminiConfig" />
+                                </HBox>
+                                
+                                <Label fx:id="geminiConfigStatusLabel" styleClass="error-label" text="" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
                 <!-- FORM ĐẶT GIÁ -->
                 <HBox spacing="25.0">
                     <!-- Cột Trái: Đặt giá thủ công -->
@@ -84,6 +121,7 @@
                             </Label>
                             <HBox spacing="10.0" alignment="CENTER_LEFT">
                                 <TextField fx:id="bidAmountField" promptText="Nhập số tiền..." styleClass="text-field" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                                <Button fx:id="btnMic" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #4f46e5; -fx-text-fill: white;" text="🎙️ Ấn F để nói" onAction="#handleMicClicked" />
                                 <Button fx:id="placeBidBtn" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #e94560;" text="🔨 Đặt giá" onAction="#handlePlaceBid" />
                             </HBox>
                             <Label fx:id="bidStatusLabel" styleClass="error-label" text="" />

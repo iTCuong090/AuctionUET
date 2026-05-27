@@ -200,6 +200,17 @@ public class AuctionListController {
 
         AuctionStatus status = item.getStatus();
         String statusStr = status != null ? status.name() : "UNKNOWN";
+        if (status == AuctionStatus.OPEN) {
+            statusStr = "SẮP DIỄN RA (OPEN)";
+        } else if (status == AuctionStatus.RUNNING) {
+            statusStr = "ĐANG DIỄN RA (RUNNING)";
+        } else if (status == AuctionStatus.FINISHED) {
+            statusStr = "ĐÃ KẾT THÚC (FINISHED)";
+        } else if (status == AuctionStatus.PAID) {
+            statusStr = "ĐÃ THANH TOÁN (PAID)";
+        } else if (status == AuctionStatus.CANCELED) {
+            statusStr = "ĐÃ HỦY (CANCELED)";
+        }
         Label statusBadge = new Label(statusStr);
 
         if (status == AuctionStatus.RUNNING) {
@@ -220,7 +231,14 @@ public class AuctionListController {
         sellerLabel.setStyle(subStyle);
         sellerLabel.getStyleClass().add("text-secondary");
 
-        infoBox.getChildren().addAll(timeLabel, sellerLabel);
+        if (status == AuctionStatus.OPEN) {
+            Label startTimeLabel = new Label("Bắt đầu: " + formatTime(item.getStartTime()));
+            startTimeLabel.setStyle(subStyle);
+            startTimeLabel.getStyleClass().add("text-secondary");
+            infoBox.getChildren().addAll(startTimeLabel, timeLabel, sellerLabel);
+        } else {
+            infoBox.getChildren().addAll(timeLabel, sellerLabel);
+        }
 
         card.getChildren().addAll(title, price, statusBadge, infoBox);
         if (ClientSession.getInstance().isBidder()) {

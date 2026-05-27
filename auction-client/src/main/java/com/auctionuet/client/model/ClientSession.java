@@ -13,6 +13,8 @@ public class ClientSession {
     private String token;
     private UserDTO currentUser;
     private boolean mustChangePassword;
+    private String geminiApiKey = "";
+    private String geminiModel = "gemini-2.5-flash-lite";
     private final List<Consumer<UserDTO>> userChangeListeners = new CopyOnWriteArrayList<>();
 
     private ClientSession() {}
@@ -22,6 +24,22 @@ public class ClientSession {
             instance = new ClientSession();
         }
         return instance;
+    }
+
+    public String getGeminiApiKey() {
+        return geminiApiKey;
+    }
+
+    public void setGeminiApiKey(String apiKey) {
+        this.geminiApiKey = apiKey != null ? apiKey.trim() : "";
+    }
+
+    public String getGeminiModel() {
+        return geminiModel;
+    }
+
+    public void setGeminiModel(String geminiModel) {
+        this.geminiModel = geminiModel != null && !geminiModel.isBlank() ? geminiModel.trim() : "gemini-2.5-flash-lite";
     }
 
     public String getToken() {

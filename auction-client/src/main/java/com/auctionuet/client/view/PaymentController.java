@@ -10,9 +10,12 @@ import javafx.geometry.Bounds;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import java.util.Optional;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.TilePane;
@@ -327,6 +330,25 @@ public class PaymentController {
         String token = ClientSession.getInstance().getToken();
         if (token == null) {
             statusLabel.setText("Bạn chưa đăng nhập.");
+            return;
+        }
+
+        double deposit = auction.getDepositAmount();
+        double remaining = Math.max(0, auction.getCurrentPrice() - deposit);
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Xác nhận thanh toán");
+        alert.setHeaderText("XÁC NHẬN THANH TOÁN PHIÊN ĐẤU GIÁ");
+        alert.setContentText("Bạn có chắc chắn muốn thực hiện thanh toán cho phiên đấu giá này?\n\n"
+                + "• Tên phiên: " + auction.getTitle() + "\n"
+                + "• Giá thắng thầu: " + CurrencyFormatter.format(auction.getCurrentPrice()) + "\n"
+                + "• Tiền cọc đã giữ: " + CurrencyFormatter.format(deposit) + "\n"
+                + "• Số tiền cần thanh toán thêm: " + CurrencyFormatter.format(remaining) + "\n\n"
+                + "Hệ thống sẽ khấu trừ số tiền thực tế phải trả (" + CurrencyFormatter.format(remaining) 
+                + ") trực tiếp từ số dư ví tài khoản của bạn.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
             return;
         }
 

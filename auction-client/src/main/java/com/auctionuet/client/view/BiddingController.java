@@ -21,16 +21,27 @@ import javafx.scene.Parent;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
+import com.auctionuet.client.util.AudioRecorder;
+import com.auctionuet.client.network.GeminiVoiceServiceClient;
 
 public class BiddingController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -54,6 +65,7 @@ public class BiddingController {
     @FXML private Label balanceLabel;
 
     @FXML private TextField bidAmountField;
+    @FXML private Button btnMic;
     @FXML private Button placeBidBtn;
     @FXML private Label bidStatusLabel;
 
@@ -63,10 +75,19 @@ public class BiddingController {
     @FXML private Button cancelAutoBidBtn;
     @FXML private Label autoBidStatusLabel;
 
+    @FXML private Button btnToggleGeminiConfig;
+    @FXML private VBox geminiConfigContent;
+    @FXML private ComboBox<String> geminiModelComboBox;
+    @FXML private Label geminiModelDescLabel;
+    @FXML private TextField geminiApiKeyField;
+    @FXML private Button btnSaveGeminiConfig;
+    @FXML private Label geminiConfigStatusLabel;
+
     @FXML private LineChart<Number, Number> bidPriceChart;
     @FXML private ListView<String> bidHistoryList;
 
     private String currentAuctionId;
+    private String auctionDescription;
     private final BidClient bidClient = new BidClient();
     private final AuctionClient auctionClient = new AuctionClient();
     private final WalletClient walletClient = new WalletClient();
@@ -83,9 +104,16 @@ public class BiddingController {
     private LocalDateTime currentUserLeaderObservedAt;
     private javafx.animation.PauseTransition delayedAutoBidCheck;
 
+    private boolean isRecording = false;
+    private AudioRecorder audioRecorder;
+    private File tempVoiceFile;
+    private final GeminiVoiceServiceClient voiceServiceClient = new GeminiVoiceServiceClient();
+    private javafx.event.EventHandler<KeyEvent> keyHandler;
+
     @FXML
     public void initialize() {
         setupBidPriceChart();
+        setupGeminiConfig();
     }
 
     public void setAuctionId(String auctionId) {
@@ -97,6 +125,19 @@ public class BiddingController {
         subscribeToAuction(auctionId);
         ServerConnection.getInstance().setPushListener(this::onPushMessage);
         checkAutoBidState();
+
+        this.tempVoiceFile = new File(System.getProperty("java.io.tmpdir"), "uet_voice_bid.wav");
+        Platform.runLater(() -> {
+            if (btnMic != null && btnMic.getScene() != null) {
+                keyHandler = event -> {
+                    if (event.getCode() == KeyCode.F) {
+                        handleVoiceBiddingToggle();
+                        event.consume();
+                    }
+                };
+                btnMic.getScene().addEventHandler(KeyEvent.KEY_PRESSED, keyHandler);
+            }
+        });
     }
 
     private void loadAuctionDetail() {
@@ -108,6 +149,7 @@ public class BiddingController {
                     titleLabel.setText(auction.getTitle());
                     sellerLabel.setText("Seller: " + usernameOf(auction.getSeller()));
                     CurrencyFormatter.setMoneyText(priceLabel, auction.getCurrentPrice());
+                    auctionDescription = auction.getDescription();
                     auctionDepositAmount = auction.getDepositAmount() > 0
                             ? auction.getDepositAmount()
                             : auction.getItem() != null ? auction.getItem().getStartingPrice() * 0.10 : 0;
@@ -276,6 +318,13 @@ public class BiddingController {
         if (delayedAutoBidCheck != null) delayedAutoBidCheck.stop();
         ServerConnection.getInstance().setPushListener(null);
         new Thread(() -> bidClient.unsubscribe(ClientSession.getInstance().getToken(), currentAuctionId)).start();
+
+        if (keyHandler != null && btnMic != null && btnMic.getScene() != null) {
+            btnMic.getScene().removeEventHandler(KeyEvent.KEY_PRESSED, keyHandler);
+        }
+        if (tempVoiceFile != null && tempVoiceFile.exists()) {
+            tempVoiceFile.delete();
+        }
     }
 
     private void startCountdown() {
@@ -369,10 +418,166 @@ public class BiddingController {
     }
 
     @FXML
+    private void handleMicClicked() {
+        handleVoiceBiddingToggle();
+    }
+
+    private void handleVoiceBiddingToggle() {
+        // 1. Kiểm tra API Key trong RAM
+        String apiKey = ClientSession.getInstance().getGeminiApiKey();
+        if (apiKey.isEmpty()) {
+            // Hiển thị Dialog yêu cầu nhập Key lần đầu
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Cấu hình Google Gemini API Key");
+            dialog.setHeaderText("Tính năng Voice Bidding yêu cầu API Key của Gemini.");
+            dialog.setContentText("Vui lòng nhập API Key của bạn (Key sẽ chỉ lưu trong RAM phiên chạy này):");
+            
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent() && !result.get().isBlank()) {
+                ClientSession.getInstance().setGeminiApiKey(result.get());
+                apiKey = ClientSession.getInstance().getGeminiApiKey();
+                if (geminiApiKeyField != null) {
+                    geminiApiKeyField.setText(apiKey);
+                }
+            } else {
+                bidStatusLabel.setText("Đã hủy cấu hình API Key.");
+                bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+                return;
+            }
+        }
+
+        // 2. Chuyển đổi trạng thái thu âm (Toggle)
+        if (!isRecording) {
+            startVoiceRecording();
+        } else {
+            stopVoiceRecordingAndProcess(apiKey);
+        }
+    }
+
+    private void startVoiceRecording() {
+        try {
+            isRecording = true;
+            bidStatusLabel.setText("🎙️ Đang thu âm... Ấn F hoặc click Mic để dừng");
+            bidStatusLabel.setStyle("-fx-text-fill: #3b82f6;");
+            btnMic.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;"); // Đổi màu nút sang đỏ khi đang ghi âm
+            btnMic.setText("🎙️ Đang ghi âm...");
+            
+            audioRecorder = new AudioRecorder(tempVoiceFile);
+            audioRecorder.startRecording();
+        } catch (Exception e) {
+            isRecording = false;
+            btnMic.setStyle("-fx-background-color: #4f46e5; -fx-text-fill: white;");
+            btnMic.setText("🎙️ Ấn F để nói");
+            bidStatusLabel.setText("Lỗi khởi động mic: " + e.getMessage());
+            bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+        }
+    }
+
+    private void stopVoiceRecordingAndProcess(String apiKey) {
+        if (audioRecorder == null) return;
+        
+        try {
+            isRecording = false;
+            btnMic.setStyle("-fx-background-color: #4f46e5; -fx-text-fill: white;");
+            btnMic.setText("🎙️ Ấn F để nói");
+            audioRecorder.stopRecording();
+            
+            bidStatusLabel.setText("⏳ Đang gửi âm thanh phân tích qua Gemini...");
+            bidStatusLabel.setStyle("-fx-text-fill: #f59e0b;");
+
+            String selectedModel = ClientSession.getInstance().getGeminiModel();
+
+            new Thread(() -> {
+                try {
+                    long amount = voiceServiceClient.processVoiceBid(tempVoiceFile, apiKey, selectedModel);
+                    Platform.runLater(() -> {
+                        if (amount > 0) {
+                            bidAmountField.setText(String.valueOf(amount));
+                            bidStatusLabel.setText("✅ Đã điền giá: " + CurrencyFormatter.format(amount));
+                            bidStatusLabel.setStyle("-fx-text-fill: #10b981;");
+                        } else {
+                            bidStatusLabel.setText("❌ Gemini không phát hiện số tiền hợp lệ. Hãy thử lại!");
+                            bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+                        }
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        bidStatusLabel.setText("Lỗi: " + e.getMessage());
+                        bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+                    });
+                } finally {
+                    if (tempVoiceFile.exists()) {
+                        tempVoiceFile.delete();
+                    }
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            isRecording = false;
+            btnMic.setStyle("-fx-background-color: #4f46e5; -fx-text-fill: white;");
+            btnMic.setText("🎙️ Ấn F để nói");
+            bidStatusLabel.setText("Lỗi dừng mic: " + e.getMessage());
+            bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
+        }
+    }
+
+    private boolean confirmDepositIfNeeded() {
+        if (currentUserDeposited) {
+            return true;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Xác nhận Đăng ký Đấu giá & Đặt cọc");
+        alert.setHeaderText("ĐĂNG KÝ THAM GIA PHIÊN ĐẤU GIÁ");
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(10));
+
+        Label ruleLabel = new Label("Bằng việc đặt giá, bạn đồng ý với các điều khoản tham gia:");
+        ruleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        Label rule1 = new Label("• Tuân thủ toàn bộ quy định và thời gian của phiên đấu giá.");
+        Label rule2 = new Label("• Đồng ý đặt cọc 10% giá khởi điểm của sản phẩm.");
+
+        // Tính toán và hiển thị số tiền đặt cọc cụ thể
+        String depositMoneyStr = CurrencyFormatter.format(auctionDepositAmount);
+        Label depositDetail = new Label("• Số tiền đặt cọc cần cọc cho phiên này: " + depositMoneyStr);
+        depositDetail.setStyle("-fx-font-weight: bold; -fx-text-fill: #dc2626; -fx-font-size: 14px;"); // Màu đỏ cảnh báo
+
+        Label rule3 = new Label("• Nếu thắng: Tiền cọc được khấu trừ khi thanh toán hóa đơn sản phẩm.");
+        Label rule4 = new Label("• Nếu thua: Tiền cọc được hoàn trả đầy đủ vào ví tài khoản.");
+
+        content.getChildren().addAll(ruleLabel, rule1, rule2, depositDetail, rule3, rule4);
+
+        // Nếu có mô tả phiên (quy định phiên từ DTO)
+        if (auctionDescription != null && !auctionDescription.isBlank()) {
+            Label descTitle = new Label("Quy định cụ thể của phiên này:");
+            descTitle.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 0 0; -fx-font-size: 13px;");
+            Label descDetail = new Label(auctionDescription);
+            descDetail.setWrapText(true);
+            descDetail.setMaxWidth(450);
+            content.getChildren().addAll(descTitle, descDetail);
+        }
+
+        alert.getDialogPane().setContent(content);
+        alert.getDialogPane().getStyleClass().add("card-bg");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+
+    @FXML
     private void handlePlaceBid() {
         String amountText = bidAmountField.getText().replace(",", "").trim();
         if (amountText.isEmpty()) {
             bidStatusLabel.setText("Vui lòng nhập số tiền.");
+            return;
+        }
+
+        // Kiểm tra và yêu cầu cọc cho lần bid đầu tiên
+        if (!confirmDepositIfNeeded()) {
+            bidStatusLabel.setText("Đã hủy đặt giá do không đồng ý điều khoản đặt cọc.");
+            bidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
             return;
         }
 
@@ -414,6 +619,13 @@ public class BiddingController {
 
         if (maxText.isEmpty() || incText.isEmpty()) {
             autoBidStatusLabel.setText("Vui lòng nhập đủ thông tin.");
+            return;
+        }
+
+        // Kiểm tra và yêu cầu cọc trước khi thiết lập Auto-Bid
+        if (!confirmDepositIfNeeded()) {
+            autoBidStatusLabel.setText("Đã hủy thiết lập Auto-Bid do không đồng ý điều khoản đặt cọc.");
+            autoBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
             return;
         }
 
@@ -572,5 +784,114 @@ public class BiddingController {
 
     private String usernameOf(UserDTO user) {
         return user != null ? user.getUsername() : "Chưa rõ";
+    }
+
+    private void setupGeminiConfig() {
+        if (geminiModelComboBox != null) {
+            geminiModelComboBox.getItems().clear();
+            geminiModelComboBox.getItems().addAll(
+                "Gemini 3.1 Pro",
+                "Gemini 3.5 Flash",
+                "Gemini 3 Flash",
+                "Gemini 3.1 Flash-Lite",
+                "Gemini 2.5 Flash",
+                "Gemini 2.5 Flash-Lite"
+            );
+
+            // Tải giá trị từ ClientSession
+            String currentModel = ClientSession.getInstance().getGeminiModel();
+            String displayModel = mapModelIdToDisplay(currentModel);
+            geminiModelComboBox.setValue(displayModel);
+            updateModelDescription(displayModel);
+
+            String currentApiKey = ClientSession.getInstance().getGeminiApiKey();
+            if (geminiApiKeyField != null) {
+                geminiApiKeyField.setText(currentApiKey);
+            }
+        }
+    }
+
+    private String mapModelIdToDisplay(String modelId) {
+        if (modelId == null) return "Gemini 2.5 Flash-Lite";
+        return switch (modelId) {
+            case "gemini-3.1-pro" -> "Gemini 3.1 Pro";
+            case "gemini-3.5-flash" -> "Gemini 3.5 Flash";
+            case "gemini-3-flash" -> "Gemini 3 Flash";
+            case "gemini-3.1-flash-lite" -> "Gemini 3.1 Flash-Lite";
+            case "gemini-2.5-flash" -> "Gemini 2.5 Flash";
+            default -> "Gemini 2.5 Flash-Lite";
+        };
+    }
+
+    private String mapDisplayToModelId(String display) {
+        if (display == null) return "gemini-2.5-flash-lite";
+        return switch (display) {
+            case "Gemini 3.1 Pro" -> "gemini-3.1-pro";
+            case "Gemini 3.5 Flash" -> "gemini-3.5-flash";
+            case "Gemini 3 Flash" -> "gemini-3-flash";
+            case "Gemini 3.1 Flash-Lite" -> "gemini-3.1-flash-lite";
+            case "Gemini 2.5 Flash" -> "gemini-2.5-flash";
+            default -> "gemini-2.5-flash-lite";
+        };
+    }
+
+    @FXML
+    private void handleModelChanged() {
+        if (geminiModelComboBox != null) {
+            String selected = geminiModelComboBox.getValue();
+            updateModelDescription(selected);
+        }
+    }
+
+    private void updateModelDescription(String displayModel) {
+        if (geminiModelDescLabel == null) return;
+        if (displayModel == null) {
+            geminiModelDescLabel.setText("");
+            return;
+        }
+
+        String desc = switch (displayModel) {
+            case "Gemini 3.1 Pro" -> "Trí tuệ tiên tiến, kỹ năng giải quyết vấn đề phức tạp và khả năng tác nhân mạnh mẽ cùng khả năng lập trình theo cảm hứng. [Xem trước]";
+            case "Gemini 3.5 Flash" -> "Mô hình thông minh nhất để duy trì hiệu suất tiên tiến cho các tác vụ tác nhân và lập trình. [Ổn định]";
+            case "Gemini 3 Flash" -> "Hiệu suất ở cấp độ tiên tiến, ngang bằng với các mô hình lớn hơn nhưng chỉ tốn một phần chi phí. [Xem trước]";
+            case "Gemini 3.1 Flash-Lite" -> "Hiệu suất ở cấp độ tiên tiến, ngang bằng với các mô hình lớn hơn nhưng chỉ tốn một phần chi phí. [Ổn định]";
+            case "Gemini 2.5 Flash" -> "Cân bằng xuất sắc giữa tốc độ xử lý nhanh và độ chính xác cao. [Ổn định]";
+            case "Gemini 2.5 Flash-Lite" -> "Mô hình cực kỳ nhanh, nhẹ và tiết kiệm chi phí, giảm thiểu tối đa giới hạn cuộc gọi. [Ổn định]";
+            default -> "";
+        };
+        geminiModelDescLabel.setText(desc);
+    }
+
+    @FXML
+    private void handleSaveGeminiConfig() {
+        if (geminiApiKeyField == null || geminiModelComboBox == null) return;
+        
+        String apiKey = geminiApiKeyField.getText().trim();
+        String displayModel = geminiModelComboBox.getValue();
+        String modelId = mapDisplayToModelId(displayModel);
+
+        ClientSession.getInstance().setGeminiApiKey(apiKey);
+        ClientSession.getInstance().setGeminiModel(modelId);
+
+        if (geminiConfigStatusLabel != null) {
+            if (apiKey.isEmpty()) {
+                geminiConfigStatusLabel.setText("⚠️ Đã cập nhật mô hình: " + displayModel + ". Chưa cấu hình API Key.");
+                geminiConfigStatusLabel.setStyle("-fx-text-fill: #f59e0b;");
+            } else {
+                geminiConfigStatusLabel.setText("✅ Đã lưu cấu hình trợ lý giọng nói Gemini thành công!");
+                geminiConfigStatusLabel.setStyle("-fx-text-fill: #10b981;");
+            }
+        }
+    }
+
+    @FXML
+    private void handleToggleGeminiConfig() {
+        if (geminiConfigContent == null) return;
+        boolean currentlyVisible = geminiConfigContent.isVisible();
+        geminiConfigContent.setVisible(!currentlyVisible);
+        geminiConfigContent.setManaged(!currentlyVisible);
+        if (btnToggleGeminiConfig != null) {
+            btnToggleGeminiConfig.setText(currentlyVisible ? "🛠️ Hiện cấu hình" : "Ẩn cấu hình");
+        }
     }
 }

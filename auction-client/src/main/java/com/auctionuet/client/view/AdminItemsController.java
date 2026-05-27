@@ -5,6 +5,8 @@ import com.auctionuet.client.network.AdminClient;
 import com.auctionuet.protocol.dto.response.item.ItemDTO;
 import com.auctionuet.protocol.enums.ItemApprovalStatus;
 import javafx.application.Platform;
+import javafx.animation.TranslateTransition;
+import javafx.util.Duration;
 import javafx.geometry.Bounds;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -70,6 +72,8 @@ public class AdminItemsController {
         if (!enabled && !confirmDisableApproval()) {
             return;
         }
+        // Cập nhật giao diện phản hồi tức thì
+        renderSwitch(enabled);
         updateSetting(enabled);
     }
 
@@ -108,7 +112,11 @@ public class AdminItemsController {
         if (enabled) {
             approvalSwitch.getStyleClass().add("enabled");
         }
-        approvalThumb.setTranslateX(enabled ? 13 : 0);
+        
+        // Tạo hiệu ứng trượt mượt mà (micro-animation) cho toggle switch
+        TranslateTransition transition = new TranslateTransition(Duration.millis(150), approvalThumb);
+        transition.setToX(enabled ? 24 : 0);
+        transition.play();
     }
 
     private void renderItems(List<ItemDTO> items) {
