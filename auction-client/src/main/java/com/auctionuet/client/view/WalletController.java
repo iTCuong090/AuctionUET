@@ -19,6 +19,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import com.auctionuet.client.util.CurrencyInputHelper;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,8 @@ public class WalletController {
     public void initialize() {
         loadWalletInfo();
         loadTransactionHistory();
+        CurrencyInputHelper.setupCurrencyInput(depositAmountField);
+        CurrencyInputHelper.setupCurrencyInput(withdrawAmountField);
     }
 
     private void loadWalletInfo() {

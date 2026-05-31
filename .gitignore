@@ -61,3 +61,12 @@ Thumbs.db
 
 # VS Code
 .vscode/
+
+# Thư mục cấu hình Claude
+.claude/
+
+# Cấu hình API Gemini cá nhân
+gemini_config.json
+
+# Script tiện ích cá nhân
+open-git-bash-here.bat

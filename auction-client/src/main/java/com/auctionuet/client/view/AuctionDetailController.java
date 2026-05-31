@@ -33,6 +33,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import com.auctionuet.client.util.CurrencyInputHelper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -79,6 +80,7 @@ public class AuctionDetailController {
         btnPayAuction.setOnAction(e -> handlePayAuction());
         setupBidHistoryTable();
         setupBidPriceChart();
+        CurrencyInputHelper.setupCurrencyInput(bidAmountField);
     }
 
     public void setAuctionData(String auctionId) {
