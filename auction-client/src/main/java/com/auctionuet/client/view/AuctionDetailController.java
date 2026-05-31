@@ -20,6 +20,8 @@ import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -31,6 +33,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import com.auctionuet.client.util.CurrencyInputHelper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -77,6 +80,7 @@ public class AuctionDetailController {
         btnPayAuction.setOnAction(e -> handlePayAuction());
         setupBidHistoryTable();
         setupBidPriceChart();
+        CurrencyInputHelper.setupCurrencyInput(bidAmountField);
     }
 
     public void setAuctionData(String auctionId) {
@@ -129,7 +133,11 @@ public class AuctionDetailController {
 
         AuctionStatus status = dto.getStatus();
         renderStatusBadge(status);
-        timeLeftLabel.setText("Kết thúc: " + formatTime(dto.getEndTime()));
+        if (status == AuctionStatus.OPEN) {
+            timeLeftLabel.setText("Bắt đầu: " + formatTime(dto.getStartTime()) + " | Kết thúc: " + formatTime(dto.getEndTime()));
+        } else {
+            timeLeftLabel.setText("Kết thúc: " + formatTime(dto.getEndTime()));
+        }
 
         if (status == AuctionStatus.CANCELED && dto.getWinner() != null) {
             leaderLabel.setText("Dẫn đầu trước khi hủy: " + usernameOf(dto.getWinner()));
@@ -231,6 +239,27 @@ public class AuctionDetailController {
     }
 
     private void handlePayAuction() {
+        if (currentAuction == null) return;
+
+        double deposit = currentAuction.getDepositAmount();
+        double remaining = Math.max(0, currentAuction.getCurrentPrice() - deposit);
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Xác nhận thanh toán");
+        alert.setHeaderText("XÁC NHẬN THANH TOÁN PHIÊN ĐẤU GIÁ");
+        alert.setContentText("Bạn có chắc chắn muốn thực hiện thanh toán cho phiên đấu giá này?\n\n"
+                + "• Tên phiên: " + currentAuction.getTitle() + "\n"
+                + "• Giá thắng thầu: " + CurrencyFormatter.format(currentAuction.getCurrentPrice()) + "\n"
+                + "• Tiền cọc đã giữ: " + CurrencyFormatter.format(deposit) + "\n"
+                + "• Số tiền cần thanh toán thêm: " + CurrencyFormatter.format(remaining) + "\n\n"
+                + "Hệ thống sẽ khấu trừ số tiền thực tế phải trả (" + CurrencyFormatter.format(remaining) 
+                + ") trực tiếp từ số dư ví tài khoản của bạn.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+
         String token = ClientSession.getInstance().getToken();
         btnPayAuction.setDisable(true);
         paymentErrorLabel.setText("Đang thanh toán...");
@@ -515,7 +544,21 @@ public class AuctionDetailController {
     private void renderStatusBadge(AuctionStatus status) {
         clearStatusBadgeStyle();
         statusLabel.setTextFill(null);
-        statusLabel.setText(status != null ? status.name() : "UNKNOWN");
+        
+        String statusText = status != null ? status.name() : "UNKNOWN";
+        if (status == AuctionStatus.OPEN) {
+            statusText = "SẮP DIỄN RA (OPEN)";
+        } else if (status == AuctionStatus.RUNNING) {
+            statusText = "ĐANG DIỄN RA (RUNNING)";
+        } else if (status == AuctionStatus.FINISHED) {
+            statusText = "ĐÃ KẾT THÚC (FINISHED)";
+        } else if (status == AuctionStatus.PAID) {
+            statusText = "ĐÃ THANH TOÁN (PAID)";
+        } else if (status == AuctionStatus.CANCELED) {
+            statusText = "ĐÃ HỦY (CANCELED)";
+        }
+        statusLabel.setText(statusText);
+        
         if (status == AuctionStatus.RUNNING) {
             statusLabel.getStyleClass().add("status-badge-running");
         } else if (status == AuctionStatus.FINISHED || status == AuctionStatus.PAID) {

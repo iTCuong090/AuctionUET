@@ -507,4 +507,27 @@
     -fx-padding: 0;
 }
 
+/* === VOICE BIDDING BUTTONS === */
+.btn-mic {
+    -fx-background-color: #6366f1;
+    -fx-text-fill: white;
+}
+.btn-mic:hover {
+    -fx-background-color: #4f46e5;
+}
+.btn-mic.recording {
+    -fx-background-color: #ef4444;
+    -fx-effect: dropshadow(gaussian, #ef4444, 8, 0.4, 0, 0);
+}
+.btn-settings {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #4a5568;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+}
+.btn-settings:hover {
+    -fx-background-color: #cbd5e1;
+    -fx-text-fill: #2d3b45;
+}
+
 

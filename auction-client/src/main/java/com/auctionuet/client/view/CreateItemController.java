@@ -21,6 +21,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
+import com.auctionuet.client.util.CurrencyInputHelper;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +65,9 @@ public class CreateItemController {
         imageUrlField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateImagePreview(newValue);
         });
+
+        // Cài đặt định dạng số tiền cho priceField
+        CurrencyInputHelper.setupCurrencyInput(priceField);
     }
 
     private void switchDynamicForm(String type) {
@@ -85,7 +89,7 @@ public class CreateItemController {
     public void handleSubmit() {
         String typeValue = typeComboBox.getValue();
         String name = nameField.getText();
-        String priceStr = priceField.getText();
+        String priceStr = priceField.getText().replace(",", "").trim();
 
         if (typeValue == null || name.isBlank() || priceStr.isBlank()) {
             showError("Vui lòng nhập tên, giá và chọn loại sản phẩm.");

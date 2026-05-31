@@ -410,3 +410,30 @@
     -fx-font-size: 14px;
 }
 
+/* --- 17. MICROPHONE & SETTINGS GEAR BUTTONS --- */
+.btn-mic {
+    -fx-min-width: 65px;
+    -fx-min-height: 45px;
+    -fx-max-height: 45px;
+    -fx-background-radius: 22.5;
+    -fx-border-radius: 22.5;
+    -fx-padding: 0 10;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.btn-settings {
+    -fx-min-width: 45px;
+    -fx-max-width: 45px;
+    -fx-min-height: 45px;
+    -fx-max-height: 45px;
+    -fx-background-radius: 50;
+    -fx-border-radius: 50;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+

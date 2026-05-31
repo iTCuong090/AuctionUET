@@ -1,0 +1,16 @@
+[
+  {
+    "username": "admin",
+    "hashedPassword": "55fed9f00599e2c61a4b354e455fadf2b51bfe404fcc8ba091eecdcfa4be0975",
+    "passwordSalt": "d1119cc347cd0cb5a4cc7fd2119a8da6",
+    "email": "admin@auctionuet.com",
+    "role": "ADMIN",
+    "status": "ACTIVE",
+    "mustChangePassword": true,
+    "balance": 0.0,
+    "frozenBalance": 0.0,
+    "id": "ab63b451-18e2-4a8b-92ae-99f0f7aad87b",
+    "createdAt": "2026-05-27T13:38:33.2250274",
+    "updatedAt": "2026-05-27T13:38:33.2250274"
+  }
+]

@@ -117,6 +117,9 @@ public class ItemDTO implements ValidatableDTO {
 
     @Override
     public String toString() {
-        return name + " (" + startingPrice + ")";
+        // Định dạng số tiền bắt đầu với dấu phân cách hàng nghìn và bỏ phần thập phân .0 thừa
+        java.text.DecimalFormatSymbols symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US);
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.##########", symbols);
+        return name + " (" + df.format(startingPrice) + " VND)";
     }
 }

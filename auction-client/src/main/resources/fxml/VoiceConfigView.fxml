@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefWidth="480.0" spacing="20.0" styleClass="dark-bg" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auctionuet.client.view.VoiceConfigController">
+    <padding>
+        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+    </padding>
+    <children>
+        <!-- Header -->
+        <VBox spacing="5.0">
+            <children>
+                <Label styleClass="text-heading" text="⚙ CẤU HÌNH NHẬN DIỆN GIỌNG NÓI">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                </Label>
+                <Label styleClass="text-secondary" text="Thiết lập API Key và mô hình Gemini AI để nhận diện giọng nói đặt bid" wrapText="true" />
+            </children>
+        </VBox>
+
+        <!-- Form fields inside a card container -->
+        <VBox spacing="15.0" styleClass="card-bg, card-border" style="-fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 20;">
+            <children>
+                <!-- ComboBox Mô hình -->
+                <VBox spacing="8.0">
+                    <children>
+                        <Label styleClass="text-primary" style="-fx-font-weight: bold;" text="Mô hình Gemini AI:" />
+                        <ComboBox fx:id="geminiModelComboBox" prefWidth="400.0" onAction="#handleModelChanged" />
+                    </children>
+                </VBox>
+
+                <!-- Mô tả mô hình -->
+                <VBox spacing="5.0">
+                    <children>
+                        <Label styleClass="text-secondary" text="Mô tả mô hình:" />
+                        <Label fx:id="geminiModelDescLabel" styleClass="text-accent" style="-fx-font-size: 13px;" text="Đang tải..." wrapText="true" />
+                    </children>
+                </VBox>
+
+                <!-- API Key -->
+                <VBox spacing="8.0">
+                    <children>
+                        <Label styleClass="text-primary" style="-fx-font-weight: bold;" text="Gemini API Key:" />
+                        <TextField fx:id="geminiApiKeyField" promptText="Nhập API Key của bạn (AIzaSy...)" styleClass="text-field" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+
+        <!-- Status & Buttons -->
+        <VBox spacing="15.0" alignment="CENTER">
+            <children>
+                <Label fx:id="geminiConfigStatusLabel" styleClass="error-label" text="" wrapText="true" alignment="CENTER" textAlignment="CENTER" />
+                <HBox spacing="15.0" alignment="CENTER_RIGHT">
+                    <children>
+                        <Button mnemonicParsing="false" styleClass="button" style="-fx-background-color: #64748b;" text="Đóng" onAction="#handleClose" />
+                        <Button fx:id="btnSaveGeminiConfig" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #22c55e;" text="Lưu cấu hình" onAction="#handleSaveGeminiConfig" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</VBox>
