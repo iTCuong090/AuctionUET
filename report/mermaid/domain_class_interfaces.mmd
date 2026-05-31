@@ -1,0 +1,49 @@
+classDiagram
+    class User {
+      <<abstract>>
+      -String id
+      -String username
+      -UserRole role
+      +hasPermission(Permission) boolean
+      +getDisplayInfo() String
+    }
+    class Bidder
+    class Seller
+    class Admin
+    User <|-- Bidder
+    User <|-- Seller
+    User <|-- Admin
+
+    class AuctionObserver {
+      <<interface>>
+      +onBidPlaced(String, BidRecord)
+      +onAuctionEnded(String, String, double)
+      +onAuctionExtended(String, LocalDateTime)
+    }
+    class LiveAuction {
+      -ReentrantLock bidLock
+      -ConcurrentHashMap autoBids
+      +placeBid(User, double) BidPlacementResult
+      +addAutoBid(AutoBidConfig)
+      +extendIfSniping() boolean
+      +addObserver(AuctionObserver)
+    }
+    class AuctionManager {
+      <<singleton>>
+      -ConcurrentHashMap liveAuctions
+      -ScheduledExecutorService scheduler
+      +scheduleAuctionStart(String, LocalDateTime)
+      +scheduleAuctionEnd(String, LocalDateTime)
+      +addObserver(String, AuctionObserver)
+    }
+    class BidRecord
+    class AutoBidConfig
+    class WalletService
+    class BidService
+
+    LiveAuction o-- BidRecord
+    LiveAuction o-- AutoBidConfig
+    LiveAuction ..> AuctionObserver
+    AuctionManager ..|> AuctionObserver
+    BidService --> LiveAuction
+    BidService --> WalletService

@@ -39,7 +39,7 @@ OPEN → RUNNING → FINISHED → WAITING_PAYMENT → PAID
 ```
 
 **Điểm nâng cao đã làm**:
-- Auto-Bidding (proxy bidding kiểu eBay, dùng `PriorityQueue`).
+- Auto-Bidding (proxy bidding kiểu eBay, dùng cơ chế Trạng thái Chờ Pending State bảo vệ người dẫn đầu).
 - Anti-Sniping (gia hạn phiên nếu bid trong X giây cuối).
 - Realtime push qua TCP (Observer pattern + thread-safe `CopyOnWriteArrayList`).
 - Wallet + Frozen Balance + Deposit 10% (escrow).
@@ -310,7 +310,7 @@ return switch (action) {
 | **Inheritance** | `User → Bidder/Seller/Admin`; `BaseSchema → UserSchema/...`; `ItemSchema → ElectronicsSchema/ArtSchema/VehicleSchema` | Cây kế thừa 3 cấp |
 | **Polymorphism** | `User u = new Bidder(...); u.hasPermission(...)` — gọi theo dynamic type. `AuctionObserver` interface: `LiveAuction` không biết observer cụ thể là `ClientHandler` hay `AuctionManager` | — |
 | **Abstraction** | `abstract class User`, `abstract class BaseSchema`, `abstract class ItemSchema`, `interface GenericDAO<T>`, `interface AuctionObserver` | — |
-| **Composition over Inheritance** | `LiveAuction` *có* `ReentrantLock`, *có* `PriorityQueue<AutoBidConfig>` — không kế thừa | — |
+| **Composition over Inheritance** | `LiveAuction` *có* `ReentrantLock` — không kế thừa | — |
 | **`final` keyword** | Field bất biến (`id`, `username` trong User; `bidderId`, `amount`, `timestamp` trong BidRecord) | Đảm bảo thread-safe không cần lock cho immutable object |
 | **Generics** | `GenericDAO<T extends BaseSchema>`, `JsonFileHelper.readList(String, Class<T>)` | Type-safe, tránh cast |
 | **Enum + behavior** | `UserRole`, `AuctionStatus`, `Permission`, `BidType`, `ItemType`, `TransactionType` | Type-safe constants |
@@ -486,11 +486,10 @@ public AuthService(UserDAO userDAO, UserService userService) { ... }
 - `LocalDateTime.now()` có thể trả cùng nano nếu 2 thread đăng ký gần nhau → comparator hòa → priority queue không deterministic.
 - `AtomicLong.incrementAndGet()` đảm bảo thứ tự nghiêm ngặt giữa các đăng ký.
 
-### 5.11 Vì sao Auto-Bid dùng `PriorityQueue` chứ không phải `TreeSet`/`List`?
+### 5.11 Vì sao Auto-Bid dùng Trạng thái Chờ (Pending State) thay vì chạy vòng lặp đấu giá vô hạn?
 
-- `PriorityQueue` cho `peek` O(1), `poll` O(log n) — phù hợp khi chỉ cần config có priority cao nhất.
-- `TreeSet` cũng được nhưng cần `Comparator` nhất quán với `equals`.
-- `List` + sort → O(n log n) mỗi lần — chậm nếu có nhiều auto-bid.
+- Tránh xung đột luồng và hiện tượng nghẽn mạng (bidding wars) khi hai robot liên tục tự động trả giá đè nhau.
+- Chỉ cho phép người dẫn đầu kích hoạt Auto-Bid, giúp hệ thống luôn hoạt động theo luồng tuần tự, bất đồng bộ và kiểm soát mức giá tối đa một cách an toàn và tối ưu.
 
 ### 5.12 Vì sao có `endAuction` vẫn cần `removeLiveAuction` và `cancelAllTasks`?
 
@@ -592,33 +591,24 @@ public boolean extendIfSniping() {
 
 ### 6.5 Auto-Bidding (Proxy Bidding kiểu eBay)
 
-**Mô hình**: bidder cài đặt `(maxBid, increment)`. Khi có ai bid, hệ thống *thay mặt* bidder bid tự động để bidder dẫn đầu — nhưng không vượt `maxBid`.
+**Mô hình**: Chỉ người đang dẫn đầu (high bidder) mới được phép thiết lập hoặc kích hoạt Auto-Bid.
 
 **Cấu trúc dữ liệu**:
-- `LiveAuction.autoBidQueue: PriorityQueue<AutoBidConfig>` — ưu tiên `maxBid` cao trước; bằng nhau thì người đăng ký sớm hơn (`registeredAt` + `registrationOrder`).
-- `LiveAuction.autoBids: Map<bidderId, AutoBidConfig>` — lookup nhanh.
+- `LiveAuction.autoBids: Map<bidderId, AutoBidConfig>` — lưu cấu hình Auto-Bid của người dùng.
+- `LiveAuction.pendingAutoBid: PendingAutoBid` — cấu trúc lưu giữ trạng thái phản hồi chờ xử lý (Pending State) khi người dẫn đầu cũ bị vượt mặt.
 
-**Thuật toán `resolveAutoBids`** (gọi cuối `placeBid` và sau `addAutoBid`, dưới `bidLock`):
+**Thuật toán phản ứng và khớp Auto-Bid**:
+1. Khi một bidder B mới đặt một lượt bid thủ công và vượt lên dẫn đầu:
+   - Hệ thống xác định xem người dẫn đầu cũ A có đang bật Auto-Bid hay không.
+   - Nếu có, hệ thống tạo một đối tượng trạng thái phản ứng chờ `PendingAutoBid` đại diện cho A.
+2. Một tác vụ chạy bất đồng bộ ngoài luồng chính của client B (để tránh nghẽn giao diện của B) sẽ gửi yêu cầu xử lý cú phản hồi tự động này thông qua `resolvePendingAutoBid(sequenceId, ...)` dưới sự bảo vệ của `bidLock`.
+3. Trong `resolvePendingAutoBid`:
+   - Hệ thống kiểm tra tính hợp lệ và tính toán giá đấu tự động tiếp theo cho A: `nextAutoBidAmount = currentHighestBid + A.increment`.
+   - Nếu giá đấu tiếp theo này vượt quá giới hạn tối đa `maxBid` đã cài đặt của A, hệ thống sẽ tự động hủy kích hoạt cấu hình Auto-Bid của A.
+   - Ngược lại, hệ thống sẽ tự động ghi nhận cú bid `AUTO` của A, nâng `currentHighestBid` lên mức mới và đưa A trở lại vị trí dẫn đầu.
+4. Quá trình này hoàn toàn tuần tự, rõ ràng và triệt tiêu hoàn toàn khả năng xảy ra vòng lặp vô hạn (bidding wars) giữa 2 robot tự động.
 
-1. `deactivateAutoBidsBelowCurrentPrice()`: bỏ những config có `maxBid < currentPrice` (đã "kiệt" — không còn đủ chỗ).
-2. `findBestAutoBidConfig()`: poll config có priority cao nhất từ queue (active filter).
-3. Nếu không có → return.
-4. `calculateProxyAutoBidAmount(winningConfig)`:
-   - Tìm `competingConfig` (best config của bidder khác).
-   - Nếu winner đang là chính mình *và* không có đối thủ → giữ giá hiện tại (không tăng thêm vô nghĩa).
-   - Nếu winner đang là chính mình *và* có đối thủ → bid `min(myMaxBid, competingMaxBid + myIncrement)`.
-   - Nếu winner khác mình → đè giá đối thủ: bid `min(myMaxBid, max(currentPrice, competingMaxBid) + myIncrement)`.
-5. `canApplyAutoBid`: kiểm tra `newBidAmount > currentPrice` (hoặc tie-break trường hợp `=`).
-6. Nếu pass → tạo `BidRecord(... BidType.AUTO)`, update state, save vào DB qua `onAutoBidPlaced` callback, `extendIfSniping()` (auto cũng kích anti-sniping), notify observer.
-7. `deactivateExhaustedAutoBids` cleanup.
-
-**Logic ưu tiên khi tie maxBid**: người đăng ký auto-bid trước thắng (eBay convention).
-
-**Vì sao có `canClaimCurrentPriceTie`?** — Khi 2 auto-bid có cùng `maxBid` và đối thủ đã đạt tới đó: cả 2 không thể bid cao hơn. Người đăng ký *sớm hơn* được giữ vị trí dẫn đầu — chỉ khi đối thủ thực sự đến giá đó trước, bidder sớm hơn không bị truất ngôi.
-
-**Xử lý xung đột bid đồng thời với auto-bid**: vì cả `placeBid` (manual) và `addAutoBid` đều giữ `bidLock`, và `resolveAutoBids` chỉ chạy *trong* lock, các bid không bao giờ chen vào giữa.
-
-**Nếu không có auto-bid?** → Tradeoff: code đơn giản hơn 200 dòng, nhưng mất một tính năng nâng cao 0.5đ và trải nghiệm chính của auction platform.
+**Xử lý xung đột bid đồng thời với auto-bid**: vì cả `placeBid` (manual) và `resolvePendingAutoBid` đều giữ `bidLock`, các bid không bao giờ chen vào giữa.
 
 ### 6.6 Concurrent Bidding (đấu giá đồng thời)
 
@@ -885,7 +875,7 @@ Ném ngay trong `LiveAuction.placeBid` — không kể vai trò Bidder hay Selle
 | Maven, coding convention | 0.5 | ✅ Multi-module Maven |
 | Unit Test (JUnit) | 0.5 | ✅ 9 test files |
 | CI/CD | 0.5 | ✅ GitHub Actions `ci.yml` |
-| **Auto-Bidding** | 0.5 | ✅ PriorityQueue + proxy logic |
+| **Auto-Bidding** | 0.5 | ✅ Pending State + proxy logic |
 | **Anti-sniping** | 0.5 | ✅ X-Y config per auction |
 | **Bid history visualization** | 0.5 | ⚠️ Có biểu đồ (cần kiểm tra `BiddingController`) |
 | **Tự sáng tạo** | 0.5 | ✅ Wallet + Deposit + Forfeit + Payment deadline + Reconcile |
@@ -948,7 +938,7 @@ A: Cần push từ server → REST phải thêm WebSocket/SSE. TCP raw chỉ m�
 ### Business logic
 
 **Q15. Auto-bid hoạt động thế nào?**
-A: Mỗi bidder cài `(maxBid, increment)` → cấu hình vào `PriorityQueue` của LiveAuction (priority theo maxBid cao trước, hòa thì đăng ký sớm trước). Mỗi bid mới trigger `resolveAutoBids` (trong bidLock): tìm config best, tính `min(maxBid, max(currentPrice, competingMaxBid) + myIncrement)`, nếu > currentPrice → tạo BidRecord với BidType.AUTO, notify observer. Auto-bid cũng kích anti-sniping.
+A: Hệ thống áp dụng quy tắc: **chỉ người dẫn đầu (high bidder) mới được phép kích hoạt Auto-Bid**. Khi đối thủ đặt bid thủ công vượt mặt, server tạo một trạng thái chờ (`PendingAutoBid`) cho người dẫn đầu cũ. Sau đó, một thread bất đồng bộ gọi `resolvePendingAutoBid` trong `bidLock` để nâng giá đè lên (bằng `currentHighestBid + increment`). Nếu vượt quá `maxBid`, cấu hình Auto-Bid tự động bị tắt. Cơ chế này loại bỏ hoàn toàn bidding wars vô hạn của 2 robot tự động.
 
 **Q16. Anti-sniping?**
 A: Mỗi auction lưu (X, Y). Trong `placeBid`, sau khi update giá nếu `endTime - now ≤ X giây` → `endTime += Y giây`, notify `onAuctionExtended` → AuctionManager cancel end task cũ + schedule cái mới.
@@ -974,7 +964,7 @@ A: Encapsulation. Trả reference gốc → caller có thể `bidHistory.clear()
 A: Thread-safe miễn phí. Lưu vào nhiều list (`bidHistory`, observer payload) không lo race. Không setter → không lost update.
 
 **Q23. AtomicLong trong AutoBidConfig dùng làm gì?**
-A: `REGISTRATION_SEQUENCE` đảm bảo mỗi config có thứ tự đăng ký nghiêm ngặt — `LocalDateTime.now()` có thể hòa nano khi 2 thread đăng ký gần nhau, phá comparator của PriorityQueue.
+A: `REGISTRATION_SEQUENCE` đảm bảo mỗi config có số thứ tự đăng ký duy nhất và nghiêm ngặt khi người dùng cập nhật cấu hình, làm mốc deterministic so sánh hoặc định danh nếu có tích hợp mở rộng trong tương lai.
 
 **Q24. Vì sao có 2 lớp synchronized (BidService + LiveAuction)?**
 A: BidService.synchronized bảo vệ multi-resource transaction (deposit hold + bid + ghi DB). LiveAuction.bidLock bảo vệ in-RAM state riêng phiên. Nếu chỉ 1 lớp: hoặc không atomic deposit-bid, hoặc 2 phiên không xử lý song song được.

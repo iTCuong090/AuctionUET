@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant BidderClient as Bidder Client
+    participant ServerConnection as ServerConnection
+    participant ClientHandler as ClientHandler
+    participant Router as RequestRouter
+    participant BidController as BidController
+    participant BidService as BidService
+    participant LiveAuction as LiveAuction
+    participant ObserverClient as Subscribed Clients
+
+    BidderClient->>ServerConnection: PLACE_BID Request(token, auctionId, amount)
+    ServerConnection->>ClientHandler: TCP JSON line
+    ClientHandler->>Router: route(request)
+    Router->>BidController: handlePlaceBid
+    BidController->>BidService: placeBid(user, auctionId, amount)
+    BidService->>LiveAuction: placeBid(user, amount)
+    LiveAuction->>LiveAuction: lock + validate + update leader
+    LiveAuction-->>BidService: BidPlacementResult
+    BidService->>BidService: save BidSchema, sync AuctionSchema
+    LiveAuction-->>ClientHandler: Observer onBidPlaced
+    ClientHandler-->>ObserverClient: PUSH BID_UPDATE
+    ObserverClient->>ObserverClient: Platform.runLater update price/list/chart
