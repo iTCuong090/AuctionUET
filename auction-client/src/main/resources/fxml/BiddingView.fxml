@@ -85,8 +85,8 @@
                             </Label>
                             <HBox spacing="10.0" alignment="CENTER_LEFT">
                                 <TextField fx:id="bidAmountField" promptText="Nhập số tiền..." styleClass="text-field" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                                <Button fx:id="btnMic" mnemonicParsing="false" styleClass="btn-mic" text="🎙️" onAction="#handleMicClicked" />
-                                <Button fx:id="btnVoiceSettings" mnemonicParsing="false" styleClass="btn-settings" text="⚙️" onAction="#handleVoiceSettingsClicked" />
+                                <Button fx:id="btnMic" mnemonicParsing="false" styleClass="btn-mic" text="Nói" onAction="#handleMicClicked" />
+                                <Button fx:id="btnVoiceSettings" mnemonicParsing="false" styleClass="btn-settings" text="⚙" onAction="#handleVoiceSettingsClicked" />
                                 <Button fx:id="placeBidBtn" mnemonicParsing="false" styleClass="button" style="-fx-background-color: #e94560;" text="🔨 Đặt giá" onAction="#handlePlaceBid" />
                             </HBox>
                             <Label fx:id="voiceBidStatusLabel" styleClass="text-accent" style="-fx-font-size: 13px;" text="" />

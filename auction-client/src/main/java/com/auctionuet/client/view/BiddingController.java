@@ -47,40 +47,59 @@ import com.auctionuet.client.network.GeminiVoiceServiceClient;
 public class BiddingController {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final double AUTO_BID_STABILITY_CHECK_SECONDS = 3.2;
-    private static final String AUTO_BID_INEFFECTIVE_NOTICE =
-            "Auto-Bid đã hết hiệu lực vì giá hiện tại vượt trần. Hãy dẫn đầu lại, giữ vị trí 3 giây, rồi bật Auto-Bid mới.";
-    private static final String AUTO_BID_REGAIN_LEAD_HINT =
-            "Bạn đang dẫn đầu trở lại. Giữ vị trí đủ 3 giây rồi bật lại Auto-Bid.";
-    private static final String AUTO_BID_REENABLE_HINT =
-            "Bạn đang dẫn đầu ổn định. Có thể bật Auto-Bid mới.";
+    private static final String AUTO_BID_INEFFECTIVE_NOTICE = "Auto-Bid đã hết hiệu lực vì giá hiện tại vượt trần. Hãy dẫn đầu lại, giữ vị trí 3 giây, rồi bật Auto-Bid mới.";
+    private static final String AUTO_BID_REGAIN_LEAD_HINT = "Bạn đang dẫn đầu trở lại. Giữ vị trí đủ 3 giây rồi bật lại Auto-Bid.";
+    private static final String AUTO_BID_REENABLE_HINT = "Bạn đang dẫn đầu ổn định. Có thể bật Auto-Bid mới.";
 
-    @FXML private Label titleLabel;
-    @FXML private Label priceLabel;
-    @FXML private Label leaderLabel;
-    @FXML private Label timeLeftLabel;
-    @FXML private Label sellerLabel;
-    @FXML private Label statusBadge;
-    @FXML private Label cancelReasonLabel;
+    @FXML
+    private Label titleLabel;
+    @FXML
+    private Label priceLabel;
+    @FXML
+    private Label leaderLabel;
+    @FXML
+    private Label timeLeftLabel;
+    @FXML
+    private Label sellerLabel;
+    @FXML
+    private Label statusBadge;
+    @FXML
+    private Label cancelReasonLabel;
 
-    @FXML private Label depositLabel;
-    @FXML private Label balanceLabel;
+    @FXML
+    private Label depositLabel;
+    @FXML
+    private Label balanceLabel;
 
-    @FXML private TextField bidAmountField;
-    @FXML private Button btnMic;
-    @FXML private Button placeBidBtn;
-    @FXML private Label bidStatusLabel;
+    @FXML
+    private TextField bidAmountField;
+    @FXML
+    private Button btnMic;
+    @FXML
+    private Button placeBidBtn;
+    @FXML
+    private Label bidStatusLabel;
 
-    @FXML private TextField maxBidField;
-    @FXML private TextField incrementField;
-    @FXML private Button enableAutoBidBtn;
-    @FXML private Button cancelAutoBidBtn;
-    @FXML private Label autoBidStatusLabel;
+    @FXML
+    private TextField maxBidField;
+    @FXML
+    private TextField incrementField;
+    @FXML
+    private Button enableAutoBidBtn;
+    @FXML
+    private Button cancelAutoBidBtn;
+    @FXML
+    private Label autoBidStatusLabel;
 
-    @FXML private Button btnVoiceSettings;
-    @FXML private Label voiceBidStatusLabel;
+    @FXML
+    private Button btnVoiceSettings;
+    @FXML
+    private Label voiceBidStatusLabel;
 
-    @FXML private LineChart<Number, Number> bidPriceChart;
-    @FXML private ListView<String> bidHistoryList;
+    @FXML
+    private LineChart<Number, Number> bidPriceChart;
+    @FXML
+    private ListView<String> bidHistoryList;
 
     private String currentAuctionId;
     private String auctionDescription;
@@ -163,7 +182,8 @@ public class BiddingController {
 
     private void loadWalletInfo() {
         String token = ClientSession.getInstance().getToken();
-        if (token == null) return;
+        if (token == null)
+            return;
 
         new Thread(() -> {
             try {
@@ -201,14 +221,17 @@ public class BiddingController {
     }
 
     private void onPushMessage(PushMessage push) {
-        if (push == null || push.getPushType() == null) return;
+        if (push == null || push.getPushType() == null)
+            return;
 
         Platform.runLater(() -> {
             if (push.getPushType() == PushActionType.BID_UPDATE) {
                 PushEvents.BidUpdatePush data = push.getDataAs(PushEvents.BidUpdatePush.class);
-                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+                if (data == null || !currentAuctionId.equals(data.getAuctionId()))
+                    return;
                 BidDTO bid = data.getBid();
-                if (bid == null) return;
+                if (bid == null)
+                    return;
 
                 CurrencyFormatter.setMoneyText(priceLabel, bid.getAmount());
                 updateCurrentLeader(bid.getBidder(), true);
@@ -230,20 +253,24 @@ public class BiddingController {
 
             if (push.getPushType() == PushActionType.AUCTION_EXTENDED) {
                 PushEvents.AuctionExtendedPush data = push.getDataAs(PushEvents.AuctionExtendedPush.class);
-                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+                if (data == null || !currentAuctionId.equals(data.getAuctionId()))
+                    return;
 
                 try {
                     endDateTime = data.getNewEndTime();
                     startCountdown();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 return;
             }
 
             if (push.getPushType() == PushActionType.AUCTION_ENDED) {
                 PushEvents.AuctionEndedPush data = push.getDataAs(PushEvents.AuctionEndedPush.class);
-                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+                if (data == null || !currentAuctionId.equals(data.getAuctionId()))
+                    return;
 
-                if (countdownTimeline != null) countdownTimeline.stop();
+                if (countdownTimeline != null)
+                    countdownTimeline.stop();
                 timeLeftLabel.setText("Đã kết thúc");
                 statusBadge.setText("ĐÃ KẾT THÚC");
                 statusBadge.getStyleClass().remove("status-badge-running");
@@ -263,7 +290,8 @@ public class BiddingController {
 
             if (push.getPushType() == PushActionType.AUCTION_CANCELED) {
                 PushEvents.AuctionCanceledPush data = push.getDataAs(PushEvents.AuctionCanceledPush.class);
-                if (data == null || !currentAuctionId.equals(data.getAuctionId())) return;
+                if (data == null || !currentAuctionId.equals(data.getAuctionId()))
+                    return;
 
                 showCanceledState(data.getReason());
                 currentUserDeposited = false;
@@ -274,7 +302,8 @@ public class BiddingController {
     }
 
     private void showCanceledState(String reason) {
-        if (countdownTimeline != null) countdownTimeline.stop();
+        if (countdownTimeline != null)
+            countdownTimeline.stop();
         timeLeftLabel.setText("Đã hủy");
         statusBadge.setText("ĐÃ HỦY");
         statusBadge.getStyleClass().remove("status-badge-running");
@@ -301,8 +330,10 @@ public class BiddingController {
     }
 
     public void cleanup() {
-        if (countdownTimeline != null) countdownTimeline.stop();
-        if (delayedAutoBidCheck != null) delayedAutoBidCheck.stop();
+        if (countdownTimeline != null)
+            countdownTimeline.stop();
+        if (delayedAutoBidCheck != null)
+            delayedAutoBidCheck.stop();
         ServerConnection.getInstance().setPushListener(null);
         new Thread(() -> bidClient.unsubscribe(ClientSession.getInstance().getToken(), currentAuctionId)).start();
 
@@ -315,18 +346,19 @@ public class BiddingController {
         if (countdownTimeline != null) {
             countdownTimeline.stop();
         }
-        countdownTimeline = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
-            long secs = Duration.between(LocalDateTime.now(), endDateTime).getSeconds();
-            if (secs <= 0) {
-                timeLeftLabel.setText("Đã kết thúc");
-                countdownTimeline.stop();
-            } else {
-                long h = secs / 3600;
-                long m = (secs % 3600) / 60;
-                long s = secs % 60;
-                timeLeftLabel.setText(String.format("Còn: %02d:%02d:%02d", h, m, s));
-            }
-        }));
+        countdownTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
+                    long secs = Duration.between(LocalDateTime.now(), endDateTime).getSeconds();
+                    if (secs <= 0) {
+                        timeLeftLabel.setText("Đã kết thúc");
+                        countdownTimeline.stop();
+                    } else {
+                        long h = secs / 3600;
+                        long m = (secs % 3600) / 60;
+                        long s = secs % 60;
+                        timeLeftLabel.setText(String.format("Còn: %02d:%02d:%02d", h, m, s));
+                    }
+                }));
         countdownTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
         countdownTimeline.play();
     }
@@ -397,7 +429,8 @@ public class BiddingController {
                         pendingAutoBidLossNotice = false;
                     }
                 });
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }).start();
     }
 
@@ -411,12 +444,12 @@ public class BiddingController {
         String apiKey = ClientSession.getInstance().getGeminiApiKey();
         if (apiKey.isEmpty()) {
             if (voiceBidStatusLabel != null) {
-                voiceBidStatusLabel.setText("⚠️ Chưa cấu hình API Key. Vui lòng thiết lập cấu hình.");
+                voiceBidStatusLabel.setText("Chưa cấu hình API Key. Vui lòng thiết lập cấu hình.");
                 voiceBidStatusLabel.setStyle("-fx-text-fill: #f59e0b;");
             }
             // Mở popup cấu hình để nhập key
             handleVoiceSettingsClicked();
-            
+
             // Kiểm tra lại sau khi đóng popup
             apiKey = ClientSession.getInstance().getGeminiApiKey();
             if (apiKey.isEmpty()) {
@@ -436,18 +469,18 @@ public class BiddingController {
         try {
             isRecording = true;
             if (voiceBidStatusLabel != null) {
-                voiceBidStatusLabel.setText("🎙️ Đang thu âm... Click lại nút Mic để dừng");
+                voiceBidStatusLabel.setText("Đang thu âm... Click lại nút Nói để dừng");
                 voiceBidStatusLabel.setStyle("-fx-text-fill: #3b82f6;");
             }
             btnMic.getStyleClass().add("recording");
-            btnMic.setText("🛑");
-            
+            btnMic.setText("Dừng");
+
             audioRecorder = new AudioRecorder(tempVoiceFile);
             audioRecorder.startRecording();
         } catch (Exception e) {
             isRecording = false;
             btnMic.getStyleClass().remove("recording");
-            btnMic.setText("🎙️");
+            btnMic.setText("Nói");
             if (voiceBidStatusLabel != null) {
                 voiceBidStatusLabel.setText("Lỗi khởi động mic: " + e.getMessage());
                 voiceBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
@@ -456,16 +489,17 @@ public class BiddingController {
     }
 
     private void stopVoiceRecordingAndProcess(String apiKey) {
-        if (audioRecorder == null) return;
-        
+        if (audioRecorder == null)
+            return;
+
         try {
             isRecording = false;
             btnMic.getStyleClass().remove("recording");
-            btnMic.setText("🎙️");
+            btnMic.setText("Nói");
             audioRecorder.stopRecording();
-            
+
             if (voiceBidStatusLabel != null) {
-                voiceBidStatusLabel.setText("⏳ Đang gửi âm thanh phân tích qua Gemini...");
+                voiceBidStatusLabel.setText("Đang phân tích...");
                 voiceBidStatusLabel.setStyle("-fx-text-fill: #f59e0b;");
             }
 
@@ -478,12 +512,13 @@ public class BiddingController {
                         if (amount > 0) {
                             bidAmountField.setText(String.valueOf(amount));
                             if (voiceBidStatusLabel != null) {
-                                voiceBidStatusLabel.setText("✅ Đã phát hiện số tiền: " + CurrencyFormatter.format(amount));
+                                voiceBidStatusLabel
+                                        .setText("Đã ghi nhận số tiền: " + CurrencyFormatter.format(amount));
                                 voiceBidStatusLabel.setStyle("-fx-text-fill: #10b981;");
                             }
                         } else {
                             if (voiceBidStatusLabel != null) {
-                                voiceBidStatusLabel.setText("❌ Gemini không phát hiện số tiền hợp lệ. Hãy thử lại!");
+                                voiceBidStatusLabel.setText("Gemini không phát hiện số tiền hợp lệ. Hãy thử lại!");
                                 voiceBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
                             }
                         }
@@ -491,7 +526,7 @@ public class BiddingController {
                 } catch (Exception e) {
                     Platform.runLater(() -> {
                         if (voiceBidStatusLabel != null) {
-                            voiceBidStatusLabel.setText("Lỗi xử lý âm thanh: " + e.getMessage());
+                            voiceBidStatusLabel.setText("Lỗi xử lý: " + e.getMessage());
                             voiceBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
                         }
                     });
@@ -501,11 +536,11 @@ public class BiddingController {
                     }
                 }
             }).start();
-            
+
         } catch (Exception e) {
             isRecording = false;
             btnMic.getStyleClass().remove("recording");
-            btnMic.setText("🎙️");
+            btnMic.setText("Nói");
             if (voiceBidStatusLabel != null) {
                 voiceBidStatusLabel.setText("Lỗi dừng mic: " + e.getMessage());
                 voiceBidStatusLabel.setStyle("-fx-text-fill: #dc2626;");
@@ -516,9 +551,10 @@ public class BiddingController {
     @FXML
     private void handleVoiceSettingsClicked() {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/VoiceConfigView.fxml"));
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/VoiceConfigView.fxml"));
             Parent root = loader.load();
-            
+
             javafx.stage.Stage stage = new javafx.stage.Stage();
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             if (btnMic != null && btnMic.getScene() != null) {
@@ -526,7 +562,7 @@ public class BiddingController {
             }
             stage.setTitle("Cấu hình Nhận diện giọng nói Gemini");
             stage.setResizable(false);
-            
+
             javafx.scene.Scene scene = new javafx.scene.Scene(root);
             ThemeManager.getInstance().applyTheme(scene);
             stage.setScene(scene);
@@ -561,7 +597,8 @@ public class BiddingController {
         // Tính toán và hiển thị số tiền đặt cọc cụ thể
         String depositMoneyStr = CurrencyFormatter.format(auctionDepositAmount);
         Label depositDetail = new Label("• Số tiền đặt cọc cần cọc cho phiên này: " + depositMoneyStr);
-        depositDetail.setStyle("-fx-font-weight: bold; -fx-text-fill: #dc2626; -fx-font-size: 14px;"); // Màu đỏ cảnh báo
+        depositDetail.setStyle("-fx-font-weight: bold; -fx-text-fill: #dc2626; -fx-font-size: 14px;"); // Màu đỏ cảnh
+                                                                                                       // báo
 
         Label rule3 = new Label("• Nếu thắng: Tiền cọc được khấu trừ khi thanh toán hóa đơn sản phẩm.");
         Label rule4 = new Label("• Nếu thua: Tiền cọc được hoàn trả đầy đủ vào ví tài khoản.");
@@ -701,14 +738,15 @@ public class BiddingController {
     private void handleBack() {
         cleanup();
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AuctionListView.fxml"));
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/fxml/AuctionListView.fxml"));
             Parent listRoot = loader.load();
 
             Parent currentRoot = titleLabel.getScene().getRoot();
             if (currentRoot instanceof HBox) {
                 VBox mainCard = (VBox) ((HBox) currentRoot).getChildren().get(1);
-                javafx.scene.layout.StackPane contentArea =
-                        (javafx.scene.layout.StackPane) mainCard.getChildren().get(1);
+                javafx.scene.layout.StackPane contentArea = (javafx.scene.layout.StackPane) mainCard.getChildren()
+                        .get(1);
                 contentArea.getChildren().setAll(listRoot);
             }
         } catch (Exception e) {
@@ -792,8 +830,8 @@ public class BiddingController {
 
     private boolean hasObservedCurrentUserLeadLongEnough() {
         return currentUserLeaderObservedAt != null
-                && Duration.between(currentUserLeaderObservedAt, LocalDateTime.now()).toMillis()
-                >= Math.round(AUTO_BID_STABILITY_CHECK_SECONDS * 1000);
+                && Duration.between(currentUserLeaderObservedAt, LocalDateTime.now()).toMillis() >= Math
+                        .round(AUTO_BID_STABILITY_CHECK_SECONDS * 1000);
     }
 
     private boolean isCurrentUser(UserDTO user) {
@@ -805,4 +843,3 @@ public class BiddingController {
         return user != null ? user.getUsername() : "Chưa rõ";
     }
 }
-
