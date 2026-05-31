@@ -322,7 +322,7 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT-shaded.jar
 - [x] Proper package structure
 
 #### Testing
-- [x] 27 JUnit test files
+- [x] 29 JUnit test files
 - [x] Unit tests cho Service layer
 - [x] Integration tests cho Auction flow
 - [x] DAO tests với mock data
@@ -348,8 +348,7 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT-shaded.jar
 | **Observer** | `LiveAuction`, `AuctionObserver`, `SystemMonitorObserver` | Real-time updates cho tất cả clients đang theo dõi |
 | **Factory** | `GsonFactory` | Tạo Gson instance với custom adapters |
 | **MVC** | Toàn bộ Client & Server | Tách biệt Model-View-Controller |
-| **DAO** | `UserDAO`, `AuctionDAO`, `BidDAO`, `TransactionDAO` | Abstraction layer cho data persistence |
-| **Strategy** | `AutoBidConfig` với PriorityQueue | Xử lý các chiến lược đấu giá tự động khác nhau |
+| **State / Lock** | `AutoBidConfig` kết hợp `PendingAutoBid` | Lưu cấu hình tự động đấu giá của người dẫn đầu và phản ứng thời gian thực khi có người đặt giá mới |
 
 ---
 
@@ -360,7 +359,7 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT-shaded.jar
   - Server: 64 files
   - Client: 43 files
   - Protocol: 50 files
-- **Số lượng tests**: 27 test files
+- **Số lượng tests**: 29 test files
 - **FXML views**: 22 views
 - **Controllers**: 22 controllers
 - **Services**: 10 service classes
@@ -392,11 +391,11 @@ Xem file đầy đủ tại: [TASK.md](TASK.md)
 ## Báo cáo và Demo
 
 ### Báo cáo PDF
-- **Link**: [Đang cập nhật]
+- **Link**: [AuctionUET_Report.pdf](report/AuctionUET_Report.pdf)
 - Nội dung: Phân tích thiết kế, kiến trúc hệ thống, design patterns, kết quả testing
 
 ### Video Demo
-- **Link**: [Đang cập nhật]
+- **Link**: [Xem Video Demo trên YouTube](https://www.youtube.com/watch?v=mM9AWSJR8LM)
 - Nội dung: Demo đầy đủ các chức năng, concurrent bidding, real-time updates
 
 ---
@@ -408,7 +407,7 @@ Xem file đầy đủ tại: [TASK.md](TASK.md)
 | Tạ Hữu Cường | 25020053 | Team Leader & Core Architect | Phát triển tầng dịch vụ (Auction, Wallet, Bid), tái cấu trúc sản phẩm (flat ItemSchema), tích hợp Gemini Voice Input & Bidding, kiểm soát concurrency và luồng thanh toán. |
 | Ngô Duy Anh | 25020015 | Lead Backend & Quality | Thiết kế OOP Domain models (User, LiveAuction), hệ thống Admin quản trị nâng cao, viết bộ Integration Tests toàn diện và tài liệu ôn tập Viva Guide. |
 | Nguyễn Cao Công | 25020046 | Frontend Lead & Client Dev | Phát triển toàn bộ 22 giao diện JavaFX (FXML & CSS), quản lý Client Network connection, Theme Manager (Light/Dark mode) và luồng xử lý UI luân phiên (Platform.runLater). |
-| Đào Đình Khánh | 25020211 | Network & DevOps Lead | Thiết kế giao thức Protocol truyền tin (Request/Response), triển khai Socket Server & Request Routing, thuật toán Auto-Bidding nâng cao (PriorityQueue) và thiết lập CI/CD GitHub Actions. |
+| Đào Đình Khánh | 25020211 | Network & DevOps Lead | Thiết kế giao thức Protocol truyền tin (Request/Response), triển khai Socket Server & Request Routing, thuật toán Auto-Bidding bảo vệ người dẫn đầu (Pending Auto-Bid) và thiết lập CI/CD GitHub Actions. |
 
 ---
 

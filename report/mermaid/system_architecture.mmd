@@ -1,0 +1,35 @@
+flowchart LR
+    subgraph Client["auction-client: JavaFX MVC"]
+        FXML["FXML Views"]
+        Controllers["View Controllers"]
+        Adapters["Network Adapters\nAuth/Auction/Bid/Wallet/Admin"]
+        ServerConnection["ServerConnection\nSocket listener + response queue"]
+        FXML --> Controllers --> Adapters --> ServerConnection
+    end
+
+    subgraph Protocol["auction-protocol: shared contract"]
+        ActionType["ActionType"]
+        Request["Request / Response"]
+        DTO["Request/Response DTOs"]
+        Push["PushMessage / PushEvents"]
+    end
+
+    subgraph Server["auction-server"]
+        AuctionServer["AuctionServer"]
+        ClientHandler["ClientHandler"]
+        Router["RequestRouter"]
+        NetControllers["Network Controllers"]
+        Services["Domain Services"]
+        Domain["Domain Models\nLiveAuction/User/BidRecord"]
+        DAO["DAO + JSON Schema"]
+        Data["JSON data files"]
+        AuctionServer --> ClientHandler --> Router --> NetControllers --> Services
+        Services --> Domain
+        Services --> DAO --> Data
+    end
+
+    ServerConnection <-->|TCP Socket JSON| ClientHandler
+    Client -. uses .-> Protocol
+    Server -. uses .-> Protocol
+    Domain -->|Observer events| ClientHandler
+    ClientHandler -->|PushMessage| ServerConnection
