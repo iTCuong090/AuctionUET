@@ -391,7 +391,7 @@ Xem file đầy đủ tại: [TASK.md](TASK.md)
 ## Báo cáo và Demo
 
 ### Báo cáo PDF
-- **Link**: [AuctionUET_Report.pdf](report/AuctionUET_Report.pdf)
+- **Link**: [AuctionUET_Report.pdf](https://drive.google.com/file/d/1I8kn-tHSeL0e8ji8r_qH9RtA9QPxbw1z/view?usp=sharing)
 - Nội dung: Phân tích thiết kế, kiến trúc hệ thống, design patterns, kết quả testing
 
 ### Video Demo
